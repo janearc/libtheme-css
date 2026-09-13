@@ -3,9 +3,22 @@
 // is the door to hex, and to the two cylinders, hsl and hsv, which are
 // the same lamps described by angle. A swatch may fall outside what the
 // lamps can make; every exit here says whether it did.
+//
+// The standard, IEC 61966-2-1, states four things and this package types
+// in only those: where each lamp sits on the 1931 chromaticity diagram
+// (x and y for red, green and blue), and the curve. The white is the
+// swatch's own D65. The 3x3 matrix everyone else copies is derived from
+// the four, below.
 package srgb
 
-import "github.com/janearc/libtheme-css/primitives/swatch"
+import (
+	"fmt"
+	"math"
+	"strings"
+
+	"github.com/janearc/libtheme-css/internal/mat"
+	"github.com/janearc/libtheme-css/primitives/swatch"
+)
 
 // RGB is the three lamp levels as fractions, 0 off to 1 full.
 type RGB struct {
@@ -24,15 +37,185 @@ type HSV struct {
 	H, S, V float64
 }
 
+// The three primaries as the standard states them: where on the 1931
+// diagram each lamp's light falls. x and y are XYZ with the brightness
+// divided out, so a lamp is a place, not an amount.
+var (
+	redXY   = [2]float64{0.6400, 0.3300}
+	greenXY = [2]float64{0.3000, 0.6000}
+	blueXY  = [2]float64{0.1500, 0.0600}
+)
+
+// rgbToXYZ is derived: each primary's column is its chromaticity turned
+// back into XYZ at unit brightness, and the three columns are then
+// scaled so that all three lamps at full add up to exactly the white.
+// That one constraint fixes the nine numbers.
+var rgbToXYZ = func() mat.M {
+	col := func(c [2]float64) [3]float64 {
+		x, y := c[0], c[1]
+		return [3]float64{x / y, 1, (1 - x - y) / y}
+	}
+	r, g, b := col(redXY), col(greenXY), col(blueXY)
+	p := mat.M{{r[0], g[0], b[0]}, {r[1], g[1], b[1]}, {r[2], g[2], b[2]}}
+	sr, sg, sb := p.Inverse().Apply(swatch.White.XYZ())
+	return p.Scale(sr, sg, sb)
+}()
+
+var xyzToRGB = rgbToXYZ.Inverse()
+
+// The curve. A lamp level is not light: the standard spends more of its
+// numbers on the dark end, where eyes can tell shades apart, by a
+// straight piece near zero and a power of 2.4 above it. These four
+// constants are the standard's.
+func toLinear(c float64) float64 {
+	if c <= 0.04045 {
+		return c / 12.92
+	}
+	return math.Pow((c+0.055)/1.055, 2.4)
+}
+
+func fromLinear(c float64) float64 {
+	if c <= 0.0031308 {
+		return 12.92 * c
+	}
+	return 1.055*math.Pow(c, 1/2.4) - 0.055
+}
+
 // FromSwatch is the swatch as lamp levels, and whether the lamps can
-// make it. Not yet.
-func FromSwatch(s swatch.Swatch) (c RGB, inGamut bool) { return RGB{}, false }
+// make it. Out of gamut, the levels are clipped to 0..1 and inGamut is
+// false: the nearest thing the lamps can do, and an honest word that it
+// is not the same colour. The tolerance is a millionth, so a colour on
+// the edge of the triangle, like a primary at full, counts as in.
+func FromSwatch(s swatch.Swatch) (c RGB, inGamut bool) {
+	r, g, b := xyzToRGB.Apply(s.XYZ())
+	inGamut = true
+	clip := func(v float64) float64 {
+		if v < -1e-6 || v > 1+1e-6 {
+			inGamut = false
+		}
+		return math.Max(0, math.Min(1, v))
+	}
+	return RGB{fromLinear(clip(r)), fromLinear(clip(g)), fromLinear(clip(b))}, inGamut
+}
 
-// Swatch stores the lamp levels back as a swatch. Not yet.
-func (c RGB) Swatch() swatch.Swatch { return swatch.Black }
+// Swatch stores the lamp levels back as a swatch.
+func (c RGB) Swatch() swatch.Swatch {
+	return swatch.FromXYZ(rgbToXYZ.Apply(toLinear(c.R), toLinear(c.G), toLinear(c.B)))
+}
 
-// Hex is the lamps as "#rrggbb". Not yet.
-func (c RGB) Hex() string { return "" }
+// Bytes is the lamps as the three bytes a terminal wants.
+func (c RGB) Bytes() (r, g, b uint8) {
+	round := func(v float64) uint8 { return uint8(math.Round(math.Max(0, math.Min(1, v)) * 255)) }
+	return round(c.R), round(c.G), round(c.B)
+}
 
-// FromHex reads "#rrggbb". Not yet.
-func FromHex(h string) (RGB, error) { return RGB{}, nil }
+// Hex is the lamps as "#rrggbb".
+func (c RGB) Hex() string {
+	r, g, b := c.Bytes()
+	return fmt.Sprintf("#%02x%02x%02x", r, g, b)
+}
+
+// FromHex reads "#rrggbb" or "rrggbb", which is what every hex code you
+// have ever typed silently was: three lamp levels in this space.
+func FromHex(h string) (RGB, error) {
+	h = strings.TrimPrefix(strings.TrimSpace(h), "#")
+	if len(h) != 6 {
+		return RGB{}, fmt.Errorf("hex colour wants six digits, not %q", h)
+	}
+	var r, g, b uint8
+	if _, err := fmt.Sscanf(h, "%02x%02x%02x", &r, &g, &b); err != nil {
+		return RGB{}, fmt.Errorf("hex colour %q: %v", h, err)
+	}
+	return RGB{float64(r) / 255, float64(g) / 255, float64(b) / 255}, nil
+}
+
+// The lamps at full, and all three at once, which the derived matrix
+// makes come out as exactly the white.
+var (
+	Red   = RGB{1, 0, 0}
+	Green = RGB{0, 1, 0}
+	Blue  = RGB{0, 0, 1}
+	White = RGB{1, 1, 1}
+	Black = RGB{0, 0, 0}
+)
+
+// hueAndRange is the arithmetic the two cylinders share: which lamp is
+// brightest decides the sixth of the wheel, and the spread between the
+// brightest and dimmest lamp is the colourfulness.
+func (c RGB) hueAndRange() (h, max, min float64) {
+	max = math.Max(c.R, math.Max(c.G, c.B))
+	min = math.Min(c.R, math.Min(c.G, c.B))
+	d := max - min
+	if d < 1e-12 {
+		return 0, max, min
+	}
+	switch max {
+	case c.R:
+		h = math.Mod((c.G-c.B)/d, 6)
+	case c.G:
+		h = (c.B-c.R)/d + 2
+	default:
+		h = (c.R-c.G)/d + 4
+	}
+	h *= 60
+	if h < 0 {
+		h += 360
+	}
+	return h, max, min
+}
+
+// HSL is the lamps as hue, saturation, lightness.
+func (c RGB) HSL() HSL {
+	h, max, min := c.hueAndRange()
+	l := (max + min) / 2
+	var s float64
+	if d := max - min; d > 1e-12 {
+		s = d / (1 - math.Abs(2*l-1))
+	}
+	return HSL{h, s, l}
+}
+
+// HSV is the lamps as hue, saturation, value.
+func (c RGB) HSV() HSV {
+	h, max, min := c.hueAndRange()
+	var s float64
+	if max > 1e-12 {
+		s = (max - min) / max
+	}
+	return HSV{h, s, max}
+}
+
+// fromHue is the shared reverse: a hue, a colourfulness and a floor
+// become three lamps.
+func fromHue(h, chroma, m float64) RGB {
+	h = math.Mod(math.Mod(h, 360)+360, 360) / 60
+	x := chroma * (1 - math.Abs(math.Mod(h, 2)-1))
+	var r, g, b float64
+	switch {
+	case h < 1:
+		r, g = chroma, x
+	case h < 2:
+		r, g = x, chroma
+	case h < 3:
+		g, b = chroma, x
+	case h < 4:
+		g, b = x, chroma
+	case h < 5:
+		r, b = x, chroma
+	default:
+		r, b = chroma, x
+	}
+	return RGB{r + m, g + m, b + m}
+}
+
+// RGB is the cylinder back as lamps.
+func (c HSL) RGB() RGB {
+	chroma := (1 - math.Abs(2*c.L-1)) * c.S
+	return fromHue(c.H, chroma, c.L-chroma/2)
+}
+
+// RGB is the cylinder back as lamps.
+func (c HSV) RGB() RGB {
+	chroma := c.V * c.S
+	return fromHue(c.H, chroma, c.V-chroma)
+}

@@ -13,9 +13,11 @@ branches, and read as it goes. what exists:
                           css-normalising theme library.
 
     spaces/ok             the same colour on the axes an eye agrees with:
-                          oklab, and its polar form oklch. a stub.
+                          oklab, and its polar form oklch.
     spaces/srgb           the same colour as a screen's three lamps, and
-                          the hex, hsl and hsv forms of that. a stub.
+                          the hex, hsl and hsv forms of that. its matrix
+                          is derived from the standard's four chromaticities
+                          and the swatch's white.
 
     make                  gofmt, go vet, go test
 
