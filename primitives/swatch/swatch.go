@@ -40,8 +40,4 @@ func FromXYZ(x, y, z float64) Swatch { return Swatch{x, y, z} }
 // XYZ is the swatch as stored.
 func (s Swatch) XYZ() (x, y, z float64) { return s.x, s.y, s.z }
 
-// White is D65, the white every screen assumes: Y exactly 1.
-var White = Swatch{0.95047, 1.0, 1.08883}
-
-// Black is no light at all.
-var Black = Swatch{}
+// White and Black are in observer.go, where White is derived.
