@@ -19,6 +19,11 @@ branches, and read as it goes. what exists:
                           is derived from the standard's four chromaticities
                           and the swatch's white.
 
+    cmd/libtheme          the console end: show a colour in every form,
+                          painted, or draw the line between two colours
+                          in oklab and in the lamps side by side.
+
     make                  gofmt, go vet, go test
+    make build            bin/libtheme
 
 jane michelle arc, 2026.
