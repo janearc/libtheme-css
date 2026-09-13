@@ -6,7 +6,11 @@ one primitive, the swatch, and works up from it, so the same colour is
 the same colour everywhere it lands.
 
 it is being written from the bottom, one primitive at a time, on
-branches, and read as it goes. nothing is here yet but the makefile.
+branches, and read as it goes. what exists:
+
+    primitives/swatch     one colour, complete, stored as cie xyz (1931),
+                          which makes this the world's only pre-war
+                          css-normalising theme library.
 
     make                  gofmt, go vet, go test
 
