@@ -64,7 +64,21 @@ func TestInvisibleLightIsNoLight(t *testing.T) {
 	for nm, p := range ultraviolet {
 		lit[nm] = p
 	}
-	if Illuminant(lit) != White {
+	// Not a bare != on the struct: a map is summed in whatever order Go
+	// walks it, so the last bits of a float sum can differ between two
+	// runs over the same numbers. The test is about the range, not the
+	// rounding, so it asks whether the white moved by more than nothing.
+	if !sameToTheEye(Illuminant(lit), White) {
 		t.Errorf("daylight plus invisible light moved the white to %v", Illuminant(lit))
 	}
+}
+
+// sameToTheEye is equality for swatches that came from float sums: the
+// same to a billionth, which is a hundred million times finer than any
+// screen or eye can tell apart.
+func sameToTheEye(a, b Swatch) bool {
+	ax, ay, az := a.XYZ()
+	bx, by, bz := b.XYZ()
+	const eps = 1e-9
+	return math.Abs(ax-bx) < eps && math.Abs(ay-by) < eps && math.Abs(az-bz) < eps
 }
