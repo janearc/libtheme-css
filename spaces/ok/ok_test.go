@@ -97,3 +97,13 @@ func TestDistance(t *testing.T) {
 		t.Errorf("a tenth of lightness should be visible")
 	}
 }
+
+// String is what CSS accepts, with none for a hue no eye could see.
+func TestString(t *testing.T) {
+	if got := (OKLCH{0.74, 0.2, 345.3}).String(); got != "oklch(74% 0.200 345.3)" {
+		t.Errorf("String = %q", got)
+	}
+	if got := Grey(1).Polar().String(); got != "oklch(100% 0.000 none)" {
+		t.Errorf("grey String = %q", got)
+	}
+}

@@ -31,7 +31,7 @@ func TestString(t *testing.T) {
 	s.Set("ground", swatch.Black)
 	s.Set("red", srgb.Red.Swatch())
 	want := ":root {\n" +
-		"  --ground: #000000; /* oklch(0% 0.000 0.0) */\n" +
+		"  --ground: #000000; /* oklch(0% 0.000 none) */\n" +
 		"  --red: #ff0000; /* oklch(63% 0.258 29.2) */\n" +
 		"}\n"
 	if got := s.String(); got != want {

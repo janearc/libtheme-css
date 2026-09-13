@@ -57,7 +57,7 @@ func (s *Sheet) String() string {
 		if !in {
 			note = ", clipped"
 		}
-		fmt.Fprintf(&b, "  --%s: %s; /* oklch(%.0f%% %.3f %.1f)%s */\n", name, rgb.Hex(), lch.L*100, lch.C, lch.H, note)
+		fmt.Fprintf(&b, "  --%s: %s; /* %s%s */\n", name, rgb.Hex(), lch, note)
 	}
 	b.WriteString("}\n")
 	return b.String()

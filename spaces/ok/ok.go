@@ -10,6 +10,7 @@
 package ok
 
 import (
+	"fmt"
 	"math"
 
 	"github.com/janearc/libtheme-css/internal/mat"
@@ -61,6 +62,16 @@ func (c OKLab) Polar() OKLCH {
 		h += 360
 	}
 	return OKLCH{c.L, ch, h}
+}
+
+// String is the colour as CSS says it: oklch(74% 0.200 345.3). Below Eye
+// there is not enough chroma for an eye to see a hue, the angle is
+// arithmetic on noise, and CSS has a word for exactly that: none.
+func (c OKLCH) String() string {
+	if c.C < Eye {
+		return fmt.Sprintf("oklch(%.0f%% %.3f none)", c.L*100, c.C)
+	}
+	return fmt.Sprintf("oklch(%.0f%% %.3f %.1f)", c.L*100, c.C, c.H)
 }
 
 // Rect is the same colour back in rectangular form.

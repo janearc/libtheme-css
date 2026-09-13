@@ -96,18 +96,10 @@ func parse(s string) (swatch.Swatch, error) {
 	return c.Swatch(), nil
 }
 
-// hue prints a hue only when there is enough chroma for an eye to see
-// one; below ok.Eye the angle is arithmetic on noise, and the honest
-// print is a dash. This is where the derived white shows its seam: its
-// chroma in ok is about 9e-5, because the fit was normalised to a white
-// rounded to four places and the swatch's white is the 1 nm integration.
-// Far below anything an eye could see; not zero.
-func hue(c ok.OKLCH) string {
-	if c.C < ok.Eye {
-		return "-"
-	}
-	return fmt.Sprintf("%.1f", c.H)
-}
+// The derived white shows a seam here: its chroma in ok is about 9e-5,
+// because the fit was normalised to a white rounded to four places and
+// the swatch's white is the 1 nm integration. Far below anything an eye
+// could see; not zero; and OKLCH.String prints its hue as none.
 
 // percentOrNumber reads "74%" as 0.74 and "0.74" as itself.
 func percentOrNumber(s string) (float64, error) {
@@ -144,7 +136,7 @@ func show(arg string) error {
 	fmt.Printf("%s  %s\n", paint(s, 12), arg)
 	fmt.Printf("  xyz     %.5f %.5f %.5f\n", x, y, z)
 	fmt.Printf("  oklab   %.4f %.4f %.4f\n", lab.L, lab.A, lab.B)
-	fmt.Printf("  oklch   %.0f%% %.3f %s\n", lch.L*100, lch.C, hue(lch))
+	fmt.Printf("  oklch   %s\n", lch)
 	fmt.Printf("  srgb    %.4f %.4f %.4f  %s\n", c.R, c.G, c.B, gamut)
 	fmt.Printf("  hex     %s\n", c.Hex())
 	h, v := c.HSL(), c.HSV()
@@ -219,7 +211,7 @@ func known(asCSS bool) error {
 	for _, e := range list {
 		lch := ok.FromSwatch(e.s).Polar()
 		c, _ := srgb.FromSwatch(e.s)
-		fmt.Printf("%s  %-6s %s   oklch %.0f%% %.3f %-5s  %s\n", paint(e.s, 8), e.name, c.Hex(), lch.L*100, lch.C, hue(lch), e.from)
+		fmt.Printf("%s  %-6s %s   %-24s %s\n", paint(e.s, 8), e.name, c.Hex(), lch, e.from)
 	}
 	var line strings.Builder
 	const steps = 24
