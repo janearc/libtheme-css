@@ -12,8 +12,10 @@ branches, and read as it goes. what exists:
                           which makes this the world's only pre-war
                           css-normalising theme library.
 
-    primitives/oklab      the same colour in the coordinates an eye agrees
-                          with: lightness, green-to-red, blue-to-yellow.
+    spaces/ok             the same colour on the axes an eye agrees with:
+                          oklab, and its polar form oklch. a stub.
+    spaces/srgb           the same colour as a screen's three lamps, and
+                          the hex, hsl and hsv forms of that. a stub.
 
     make                  gofmt, go vet, go test
 
