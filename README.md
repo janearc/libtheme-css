@@ -19,6 +19,10 @@ branches, and read as it goes. what exists:
                           is derived from the standard's four chromaticities
                           and the swatch's white.
 
+    css                   the container everything normalises to: a sheet
+                          of named swatches, written out as custom
+                          properties with the oklch beside each.
+
     cmd/libtheme          the console end: show a colour in every form,
                           painted, or draw the line between two colours
                           in oklab and in the lamps side by side.

@@ -10,6 +10,7 @@
 //	libtheme known                          everything the library can derive
 //	                                        without being told a colour: the
 //	                                        visual test, run by make visualtest
+//	libtheme known --css                    the same set, as a css sheet
 package main
 
 import (
@@ -18,6 +19,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/janearc/libtheme-css/css"
 	"github.com/janearc/libtheme-css/primitives/swatch"
 	"github.com/janearc/libtheme-css/spaces/ok"
 	"github.com/janearc/libtheme-css/spaces/srgb"
@@ -31,7 +33,7 @@ func main() {
 	var err error
 	switch os.Args[1] {
 	case "known":
-		err = known()
+		err = known(len(os.Args) > 2 && os.Args[2] == "--css")
 	case "show":
 		if len(os.Args) < 3 {
 			usage()
@@ -62,7 +64,7 @@ func main() {
 }
 
 func usage() {
-	fmt.Fprintln(os.Stderr, "libtheme known | show COLOUR | ramp COLOUR COLOUR [steps]\n  COLOUR is #rrggbb or oklch(L% C H)")
+	fmt.Fprintln(os.Stderr, "libtheme known [--css] | show COLOUR | ramp COLOUR COLOUR [steps]\n  COLOUR is #rrggbb or oklch(L% C H)")
 }
 
 // parse reads the two spellings a person types: a hex code, or css's
@@ -194,7 +196,7 @@ func ramp(a, b string, n int) error {
 // oklab's, the only line the space defines on its own. A grey by itself
 // is not on the list, because "grey" is not a colour until you say how
 // light, and the line says that better than any one point.
-func known() error {
+func known(asCSS bool) error {
 	type entry struct {
 		name, from string
 		s          swatch.Swatch
@@ -205,6 +207,14 @@ func known() error {
 		{"red", "srgb: the red lamp at full", srgb.Red.Swatch()},
 		{"green", "srgb: the green lamp at full", srgb.Green.Swatch()},
 		{"blue", "srgb: the blue lamp at full", srgb.Blue.Swatch()},
+	}
+	if asCSS {
+		sheet := css.New()
+		for _, e := range list {
+			sheet.Set(e.name, e.s)
+		}
+		fmt.Print(sheet.String())
+		return nil
 	}
 	for _, e := range list {
 		lch := ok.FromSwatch(e.s).Polar()
