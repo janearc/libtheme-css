@@ -74,3 +74,26 @@ func TestPolar(t *testing.T) {
 		t.Errorf("%+v came back as %+v", in, out)
 	}
 }
+
+// Distance is zero to itself, symmetric, and the tolerances mean what
+// they say: a round trip is within Exact, a step of 0.01 in lightness is
+// within Eye, and a step of 0.1 is not.
+func TestDistance(t *testing.T) {
+	a := OKLab{0.6, 0.1, -0.05}
+	if Distance(a, a) != 0 {
+		t.Errorf("distance to self = %v", Distance(a, a))
+	}
+	b := OKLab{0.2, -0.1, 0.1}
+	if Distance(a, b) != Distance(b, a) {
+		t.Errorf("distance is not symmetric")
+	}
+	if !Same(a, FromSwatch(a.Swatch()), Exact) {
+		t.Errorf("round trip is not exact: %v", Distance(a, FromSwatch(a.Swatch())))
+	}
+	if !Same(a, OKLab{0.61, 0.1, -0.05}, Eye) {
+		t.Errorf("a hundredth of lightness should be invisible")
+	}
+	if Same(a, OKLab{0.7, 0.1, -0.05}, Eye) {
+		t.Errorf("a tenth of lightness should be visible")
+	}
+}

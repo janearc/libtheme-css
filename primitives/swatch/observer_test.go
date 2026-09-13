@@ -68,15 +68,17 @@ func TestInvisibleLightIsNoLight(t *testing.T) {
 	// walks it, so the last bits of a float sum can differ between two
 	// runs over the same numbers. The test is about the range, not the
 	// rounding, so it asks whether the white moved by more than nothing.
-	if !sameToTheEye(Illuminant(lit), White) {
+	if !withinFloatNoise(Illuminant(lit), White) {
 		t.Errorf("daylight plus invisible light moved the white to %v", Illuminant(lit))
 	}
 }
 
-// sameToTheEye is equality for swatches that came from float sums: the
-// same to a billionth, which is a hundred million times finer than any
-// screen or eye can tell apart.
-func sameToTheEye(a, b Swatch) bool {
+// withinFloatNoise is equality for swatches that came from float sums:
+// the same to a billionth. This is about arithmetic, not eyes; the swatch
+// package has no opinion about what an eye can see, and the tolerance
+// that does is ok.Eye. (measured on darwin/arm64; the sums differ in the
+// last bits by summation order, which is far below this.)
+func withinFloatNoise(a, b Swatch) bool {
 	ax, ay, az := a.XYZ()
 	bx, by, bz := b.XYZ()
 	const eps = 1e-9
