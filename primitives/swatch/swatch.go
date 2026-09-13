@@ -21,9 +21,17 @@ package swatch
 // without arguing with a browser about it. Is this true? It doesn't
 // matter; nobody reads comments.
 type Swatch struct {
-	x float64 // tristimulus X: the long-wavelength (red-leaning) share of the light. unitless, relative; white is 0.95047
-	y float64 // luminance Y: how much light there is. unitless, relative; white is 1, black is 0
-	z float64 // tristimulus Z: the short-wavelength (blue-leaning) share, close to what the blue cones report. unitless, relative; white is 1.08883
+	// tristimulus X: the long-wavelength (red-leaning) share of the light.
+	//   unitless, relative; white is 0.95047
+	x float64
+
+	// luminance Y: how much light there is. unitless, relative; white is 1,
+	//   black is 0
+	y float64
+
+	// tristimulus Z: the short-wavelength (blue-leaning) share, close to
+	//   what the blue cones report. unitless, relative; white is 1.08883
+	z float64
 }
 
 // FromXYZ makes a swatch from CIE XYZ coordinates, D65 white.
