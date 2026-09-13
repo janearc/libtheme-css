@@ -1,26 +1,17 @@
 // Package swatch is the most primitive primitive: one colour, complete,
 // with nothing in it about the device that shows it or the eye that reads
-// it. Everything else in libtheme is built on it and translates out of it.
+// it. Everything else in libtheme is built on it.
 package swatch
 
-// Swatch is one colour, stored as CIE XYZ: the three numbers the 1931
-// standard observer reduces any spectrum to. Y is luminance, how much
-// light, with white at 1 and black at 0. X and Z carry the rest of what
-// the eye's three cone types report; on their own they are not "red" or
-// "blue", they are the other two axes of a space chosen in 1931 so that
-// every number is non-negative. Every device space a screen or a lamp
-// uses is defined by its relationship to these three, which is why they
-// are the root and not sRGB.
-//
-// The white is D65, daylight, the one sRGB and every screen assume.
-//
-// The fields are unexported on purpose. XYZ is where the truth is kept,
-// not where the arithmetic is done: the straight line between two XYZ
-// points does not look straight to an eye, so averaging two of these
-// gives mud. Operations that need a straight line live in a space built
-// for that, and come back here to store the answer.
+// Swatch is one colour, stored as CIE XYZ (1931), the three numbers a
+// standard human eye reduces any light to. White is D65, daylight. The
+// fields are unexported because XYZ is where the truth is kept, not
+// where arithmetic is done: the straight line between two XYZ points
+// does not look straight to an eye.
 type Swatch struct {
-	x, y, z float64
+	x float64 // tristimulus X: the long-wavelength (red-leaning) share of the light. unitless, relative; white is 0.95047
+	y float64 // luminance Y: how much light there is. unitless, relative; white is 1, black is 0
+	z float64 // tristimulus Z: the short-wavelength (blue-leaning) share, close to what the blue cones report. unitless, relative; white is 1.08883
 }
 
 // FromXYZ makes a swatch from CIE XYZ coordinates, D65 white.
