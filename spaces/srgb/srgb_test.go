@@ -73,6 +73,11 @@ func TestHexRoundTrip(t *testing.T) {
 	if _, err := FromHex("#12345"); err == nil {
 		t.Errorf("five digits accepted")
 	}
+	short, _ := FromHex("#f6c")
+	long, _ := FromHex("#ff66cc")
+	if short != long {
+		t.Errorf("#f6c read as %+v, #ff66cc as %+v", short, long)
+	}
 }
 
 // A colour the lamps cannot make says so: a green more colourful than the
