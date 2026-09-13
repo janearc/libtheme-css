@@ -7,6 +7,9 @@
 //	libtheme ramp '#160d2b' '#ffa2ff' 24    the line between two colours,
 //	                                        drawn in oklab and, for contrast,
 //	                                        in the lamps, so the mud is visible
+//	libtheme known                          everything the library can derive
+//	                                        without being told a colour: the
+//	                                        visual test, run by make visualtest
 package main
 
 import (
@@ -21,13 +24,19 @@ import (
 )
 
 func main() {
-	if len(os.Args) < 3 {
+	if len(os.Args) < 2 {
 		usage()
 		os.Exit(2)
 	}
 	var err error
 	switch os.Args[1] {
+	case "known":
+		err = known()
 	case "show":
+		if len(os.Args) < 3 {
+			usage()
+			os.Exit(2)
+		}
 		err = show(os.Args[2])
 	case "ramp":
 		n := 24
@@ -53,7 +62,7 @@ func main() {
 }
 
 func usage() {
-	fmt.Fprintln(os.Stderr, "libtheme show COLOUR | ramp COLOUR COLOUR [steps]\n  COLOUR is #rrggbb or oklch(L% C H)")
+	fmt.Fprintln(os.Stderr, "libtheme known | show COLOUR | ramp COLOUR COLOUR [steps]\n  COLOUR is #rrggbb or oklch(L% C H)")
 }
 
 // parse reads the two spellings a person types: a hex code, or css's
@@ -83,6 +92,19 @@ func parse(s string) (swatch.Swatch, error) {
 		return swatch.Black, err
 	}
 	return c.Swatch(), nil
+}
+
+// hue prints a hue only when there is enough chroma for an eye to see
+// one; below ok.Eye the angle is arithmetic on noise, and the honest
+// print is a dash. This is where the derived white shows its seam: its
+// chroma in ok is about 9e-5, because the fit was normalised to a white
+// rounded to four places and the swatch's white is the 1 nm integration.
+// Far below anything an eye could see; not zero.
+func hue(c ok.OKLCH) string {
+	if c.C < ok.Eye {
+		return "-"
+	}
+	return fmt.Sprintf("%.1f", c.H)
 }
 
 // percentOrNumber reads "74%" as 0.74 and "0.74" as itself.
@@ -120,7 +142,7 @@ func show(arg string) error {
 	fmt.Printf("%s  %s\n", paint(s, 12), arg)
 	fmt.Printf("  xyz     %.5f %.5f %.5f\n", x, y, z)
 	fmt.Printf("  oklab   %.4f %.4f %.4f\n", lab.L, lab.A, lab.B)
-	fmt.Printf("  oklch   %.0f%% %.3f %.1f\n", lch.L*100, lch.C, lch.H)
+	fmt.Printf("  oklch   %.0f%% %.3f %s\n", lch.L*100, lch.C, hue(lch))
 	fmt.Printf("  srgb    %.4f %.4f %.4f  %s\n", c.R, c.G, c.B, gamut)
 	fmt.Printf("  hex     %s\n", c.Hex())
 	h, v := c.HSL(), c.HSV()
@@ -160,5 +182,40 @@ func ramp(a, b string, n int) error {
 	}
 	fmt.Printf("oklab  %s\n", inOK.String())
 	fmt.Printf("lamps  %s\n", inLamps.String())
+	return nil
+}
+
+// known is everything the library can put on screen without being told a
+// colour: the points it defines and the lines between them. It is the
+// visual test. Each entry names where the colour is defined, because
+// that is the list this library is really keeping: black and white are
+// the swatch's, from the observer and the daylight; red, green and blue
+// are srgb's, from the standard's chromaticities; the grey line is
+// oklab's, the only line the space defines on its own. A grey by itself
+// is not on the list, because "grey" is not a colour until you say how
+// light, and the line says that better than any one point.
+func known() error {
+	type entry struct {
+		name, from string
+		s          swatch.Swatch
+	}
+	list := []entry{
+		{"black", "swatch: no light", swatch.Black},
+		{"white", "swatch: d65 through the 1931 observer", swatch.White},
+		{"red", "srgb: the red lamp at full", srgb.Red.Swatch()},
+		{"green", "srgb: the green lamp at full", srgb.Green.Swatch()},
+		{"blue", "srgb: the blue lamp at full", srgb.Blue.Swatch()},
+	}
+	for _, e := range list {
+		lch := ok.FromSwatch(e.s).Polar()
+		c, _ := srgb.FromSwatch(e.s)
+		fmt.Printf("%s  %-6s %s   oklch %.0f%% %.3f %-5s  %s\n", paint(e.s, 8), e.name, c.Hex(), lch.L*100, lch.C, hue(lch), e.from)
+	}
+	var line strings.Builder
+	const steps = 24
+	for i := 0; i < steps; i++ {
+		line.WriteString(paint(ok.Grey(float64(i)/(steps-1)).Swatch(), 2))
+	}
+	fmt.Printf("\n%s  the grey line, ok: black to white in even steps to the eye\n", line.String())
 	return nil
 }
