@@ -30,4 +30,7 @@ branches, and read as it goes. what exists:
     make                  gofmt, go vet, go test
     make build            bin/libtheme
 
+every number here stands on a number somebody picked. FUDGE.md is the
+ledger, 1931 to your shell.
+
 jane michelle arc, 2026.
