@@ -201,18 +201,21 @@ func hex(s swatch.Swatch) string {
 	return c.Hex()
 }
 
-// The terminal's own dim and bold, and nothing else: the output has to
-// read on any palette, including the one the person chose, so no colour
-// of ours is spent on chrome. Only the swatches are painted.
+// No attributes on text at all. Dim was tried and is unreadable on a
+// dark palette to the person this is for, and bold reads differently on
+// every terminal; the output has to read on any palette, light or dark,
+// so the words are plain and only the swatches are painted. Telling a
+// light terminal from a dark one is a vendor question, held for the
+// terminal vendor package.
 const (
-	dim   = "\x1b[2m"
-	bold  = "\x1b[1m"
-	plain = "\x1b[0m"
+	dim   = ""
+	bold  = ""
+	plain = ""
 )
 
 // heading is one dim line saying what the block under it is, so the
 // output separates itself from whatever make printed above it.
-func heading(text string) { fmt.Printf("%s-- %s%s\n", dim, text, plain) }
+func heading(text string) { fmt.Printf("-- %s\n", text) }
 
 // paintSheet writes the sheet with each rule's colour painted before it,
 // the name in bold, the value plain, the comment dim. no parsing: the
@@ -247,8 +250,10 @@ func roundtrip() error {
 		{"black", swatch.Black}, {"white", swatch.White},
 		{"red", srgb.Red.Swatch()}, {"green", srgb.Green.Swatch()}, {"blue", srgb.Blue.Swatch()},
 	}
-	heading("each colour written two ways, read back through the same parser; 'apart' is the distance in oklab between the two readings")
-	fmt.Printf("%s   %-6s %-8s %-24s %-8s %s%s\n", dim, "", "hex", "oklch", "apart", "verdict", plain)
+	heading("each colour written two ways and read back through the same parser.")
+	heading(fmt.Sprintf("apart: the distance in oklab between the two readings. under %.0e is arithmetic", ok.Exact))
+	heading(fmt.Sprintf("noise; under %.2g a person cannot tell them apart; over it, they could.", ok.Eye))
+	fmt.Printf("   %-6s %-8s %-24s %-8s %s\n", "", "hex", "oklch", "apart", "verdict")
 	failed := false
 	for _, e := range list {
 		h := hex(e.s)
@@ -262,12 +267,12 @@ func roundtrip() error {
 			return err
 		}
 		d := ok.Distance(ok.FromSwatch(fromHex), ok.FromSwatch(fromLCH))
-		verdict := fmt.Sprintf("same to a person: under %.2g, the smallest difference an eye notices", ok.Eye)
+		verdict := "same to a person"
 		switch {
 		case d <= ok.Exact:
-			verdict = fmt.Sprintf("identical: under %.0e, arithmetic noise", ok.Exact)
+			verdict = "identical"
 		case d > ok.Eye:
-			verdict = fmt.Sprintf("DIFFERENT: over %.2g, a person could see it", ok.Eye)
+			verdict = "DIFFERENT"
 			failed = true
 		}
 		fmt.Printf("%s %-6s %-8s %-24s %-8.5f %s\n", paint(e.s, 2), e.name, h, l, d, verdict)
@@ -308,11 +313,12 @@ func known(mode string) error {
 			fmt.Print(sheet.String())
 			return nil
 		}
-		heading("the same five as a css sheet; the cell before each rule is the value, painted")
+		heading("the same five as a css sheet. the cell before each rule is its value, painted.")
 		paintSheet(sheet)
 		return nil
 	}
-	heading("everything the library can derive without being told a colour, and where each is defined")
+	heading("everything the library can derive without being told a colour,")
+	heading("and where each one is defined.")
 	for _, e := range list {
 		lch := ok.FromSwatch(e.s).Polar()
 		c, _ := srgb.FromSwatch(e.s)
