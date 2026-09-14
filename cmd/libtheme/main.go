@@ -57,6 +57,12 @@ func main() {
 			os.Exit(2)
 		}
 		err = show(os.Args[2])
+	case "read":
+		if len(os.Args) < 3 {
+			usage()
+			os.Exit(2)
+		}
+		err = read(os.Args[2])
 	case "ramp":
 		n := 24
 		if len(os.Args) > 4 {
@@ -81,7 +87,7 @@ func main() {
 }
 
 func usage() {
-	fmt.Fprintln(os.Stderr, "libtheme known [--css|--paint] | roundtrip | show COLOUR | ramp COLOUR COLOUR [steps]\n  COLOUR is #rrggbb or oklch(L% C H)")
+	fmt.Fprintln(os.Stderr, "libtheme known [--css|--paint] | roundtrip | show COLOUR | ramp COLOUR COLOUR [steps] | read FILE.css\n  COLOUR is #rrggbb or oklch(L% C H)")
 }
 
 // parse reads the two spellings a person types: a hex code, or css's
@@ -340,6 +346,32 @@ func known(mode string) error {
 			line.WriteString(paint(s, 2))
 		}
 		fmt.Printf("%s  black to white\n   %s\n", line.String(), r.String(hex))
+	}
+	return nil
+}
+
+// read is a colourway file as the library sees it: its roles painted,
+// then every ramp it holds, stops with their positions, and the ramp
+// sampled across a bar. what the reader found, and nothing it inferred.
+func read(path string) error {
+	src, err := os.ReadFile(path)
+	if err != nil {
+		return err
+	}
+	cw := css.Read(string(src))
+	heading(fmt.Sprintf("%s: %d roles", path, len(cw.Roles.Names())))
+	paintSheet(cw.Roles)
+	for _, name := range cw.Order {
+		r := cw.Ramps[name]
+		heading(fmt.Sprintf("ramp %s, %d stops", name, len(r.Stops)))
+		for _, st := range r.Stops {
+			fmt.Printf("  %5.1f%%  %s  %s\n", st.At*100, paint(st.Swatch, 4), hex(st.Swatch))
+		}
+		var bar strings.Builder
+		for _, sw := range r.Samples(48) {
+			bar.WriteString(paint(sw, 1))
+		}
+		fmt.Printf("  %s\n", bar.String())
 	}
 	return nil
 }
