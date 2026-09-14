@@ -9,16 +9,17 @@ vet:
 test:
 	go test ./...
 build:
-	mkdir -p bin
-	go build -o bin/ ./cmd/...
+	@mkdir -p bin
+	@go build -o bin/ ./cmd/...
 clean:
 	rm -rf bin
 # everything the library can derive without being told a colour, painted,
 # so a change lower down is a change you can see.
 visualtest: build
-	./bin/libtheme known
+	@./bin/libtheme known
 # the same set as css, then every colour written two ways and read back,
 # so the translation is shown to be equivalent, not asserted.
 visualtest-css: build
-	./bin/libtheme known --css
-	./bin/libtheme roundtrip
+	@./bin/libtheme known --paint
+	@echo
+	@./bin/libtheme roundtrip

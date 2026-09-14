@@ -10,7 +10,11 @@
 //	libtheme known                          everything the library can derive
 //	                                        without being told a colour: the
 //	                                        visual test, run by make visualtest
-//	libtheme known --css                    the same set, as a css sheet
+//	libtheme known --css                    the same set, as a css sheet, plain,
+//	                                        for piping into a file
+//	libtheme known --paint                  the same sheet with each rule's
+//	                                        colour painted beside it and the
+//	                                        parts told apart, for reading
 //	libtheme roundtrip                      each known colour written two ways,
 //	                                        hex and oklch(), read back through
 //	                                        the tool's own parser, and compared:
@@ -39,7 +43,11 @@ func main() {
 	var err error
 	switch os.Args[1] {
 	case "known":
-		err = known(len(os.Args) > 2 && os.Args[2] == "--css")
+		mode := ""
+		if len(os.Args) > 2 {
+			mode = os.Args[2]
+		}
+		err = known(mode)
 	case "roundtrip":
 		err = roundtrip()
 	case "show":
@@ -193,6 +201,37 @@ func hex(s swatch.Swatch) string {
 	return c.Hex()
 }
 
+// The terminal's own dim and bold, and nothing else: the output has to
+// read on any palette, including the one the person chose, so no colour
+// of ours is spent on chrome. Only the swatches are painted.
+const (
+	dim   = "\x1b[2m"
+	bold  = "\x1b[1m"
+	plain = "\x1b[0m"
+)
+
+// heading is one dim line saying what the block under it is, so the
+// output separates itself from whatever make printed above it.
+func heading(text string) { fmt.Printf("%s-- %s%s\n", dim, text, plain) }
+
+// paintSheet writes the sheet with each rule's colour painted before it,
+// the name in bold, the value plain, the comment dim. no parsing: the
+// sheet hands over its rules as structure.
+func paintSheet(sheet *css.Sheet) {
+	rules := sheet.Rules()
+	width := 0
+	for _, r := range rules {
+		if len(r.Name) > width {
+			width = len(r.Name)
+		}
+	}
+	fmt.Printf("     :root {\n")
+	for _, r := range rules {
+		fmt.Printf("  %s   %s--%s:%s%*s %s;  %s/* %s */%s\n", paint(r.Swatch, 2), bold, r.Name, plain, width-len(r.Name), "", r.Value, dim, r.Comment, plain)
+	}
+	fmt.Printf("     }\n")
+}
+
 // roundtrip is the translation test: every known colour is written the
 // two ways the tool can read, hex and oklch(), both spellings are read
 // back through parse, and the two swatches are compared. within Exact
@@ -208,7 +247,8 @@ func roundtrip() error {
 		{"black", swatch.Black}, {"white", swatch.White},
 		{"red", srgb.Red.Swatch()}, {"green", srgb.Green.Swatch()}, {"blue", srgb.Blue.Swatch()},
 	}
-	fmt.Printf("%-6s %-8s %-24s %-10s %s\n", "", "hex", "oklch", "apart", "verdict")
+	heading("each colour written two ways, read back through the same parser, and compared against the eye's tolerance")
+	fmt.Printf("%s   %-6s %-8s %-24s %-8s %s%s\n", dim, "", "hex", "oklch", "apart", "verdict", plain)
 	failed := false
 	for _, e := range list {
 		h := hex(e.s)
@@ -230,7 +270,7 @@ func roundtrip() error {
 			verdict = "DIFFERENT: a person could see it"
 			failed = true
 		}
-		fmt.Printf("%s %-6s %-8s %-24s %-10.5f %s\n", paint(e.s, 2), e.name, h, l, d, verdict)
+		fmt.Printf("%s %-6s %-8s %-24s %-8.5f %s\n", paint(e.s, 2), e.name, h, l, d, verdict)
 	}
 	if failed {
 		return fmt.Errorf("a round trip lost more than an eye can miss")
@@ -247,7 +287,7 @@ func roundtrip() error {
 // oklab's, the only line the space defines on its own. A grey by itself
 // is not on the list, because "grey" is not a colour until you say how
 // light, and the line says that better than any one point.
-func known(asCSS bool) error {
+func known(mode string) error {
 	type entry struct {
 		name, from string
 		s          swatch.Swatch
@@ -259,14 +299,20 @@ func known(asCSS bool) error {
 		{"green", "srgb: the green lamp at full", srgb.Green.Swatch()},
 		{"blue", "srgb: the blue lamp at full", srgb.Blue.Swatch()},
 	}
-	if asCSS {
+	if mode == "--css" || mode == "--paint" {
 		sheet := css.New()
 		for _, e := range list {
 			sheet.Set(e.name, e.s)
 		}
-		fmt.Print(sheet.String())
+		if mode == "--css" {
+			fmt.Print(sheet.String())
+			return nil
+		}
+		heading("the same five as a css sheet; the cell before each rule is the value, painted")
+		paintSheet(sheet)
 		return nil
 	}
+	heading("everything the library can derive without being told a colour, and where each is defined")
 	for _, e := range list {
 		lch := ok.FromSwatch(e.s).Polar()
 		c, _ := srgb.FromSwatch(e.s)

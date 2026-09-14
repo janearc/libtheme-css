@@ -41,6 +41,29 @@ func (s *Sheet) Get(name string) (swatch.Swatch, bool) {
 // Names are the names, in order.
 func (s *Sheet) Names() []string { return append([]string(nil), s.names...) }
 
+// Rule is one custom property as the sheet would write it: the name, the
+// value a screen can make, and the comment beside it. Exposed so that a
+// printer can paint the parts without parsing the text back.
+type Rule struct {
+	Name, Value, Comment string
+	Swatch               swatch.Swatch
+}
+
+// Rules are the sheet's rules, in order.
+func (s *Sheet) Rules() []Rule {
+	out := make([]Rule, 0, len(s.names))
+	for _, name := range s.names {
+		c := s.swatches[name]
+		rgb, in := srgb.FromSwatch(c)
+		note := ok.FromSwatch(c).Polar().String()
+		if !in {
+			note += ", clipped"
+		}
+		out = append(out, Rule{name, rgb.Hex(), note, c})
+	}
+	return out
+}
+
 // String is the sheet as CSS: one custom property per name on :root,
 // the value as the hex a screen can make, and beside it in a comment
 // the same colour as oklch, which is the form that says what it is.
@@ -49,15 +72,8 @@ func (s *Sheet) Names() []string { return append([]string(nil), s.names...) }
 func (s *Sheet) String() string {
 	var b strings.Builder
 	b.WriteString(":root {\n")
-	for _, name := range s.names {
-		c := s.swatches[name]
-		rgb, in := srgb.FromSwatch(c)
-		lch := ok.FromSwatch(c).Polar()
-		note := ""
-		if !in {
-			note = ", clipped"
-		}
-		fmt.Fprintf(&b, "  --%s: %s; /* %s%s */\n", name, rgb.Hex(), lch, note)
+	for _, r := range s.Rules() {
+		fmt.Fprintf(&b, "  --%s: %s; /* %s */\n", r.Name, r.Value, r.Comment)
 	}
 	b.WriteString("}\n")
 	return b.String()
