@@ -251,8 +251,9 @@ func roundtrip() error {
 		{"red", srgb.Red.Swatch()}, {"green", srgb.Green.Swatch()}, {"blue", srgb.Blue.Swatch()},
 	}
 	heading("each colour written two ways and read back through the same parser.")
-	heading(fmt.Sprintf("apart: the distance in oklab between the two readings. under %.0e is arithmetic", ok.Exact))
-	heading(fmt.Sprintf("noise; under %.2g a person cannot tell them apart; over it, they could.", ok.Eye))
+	heading("apart: the distance in oklab between the two readings.")
+	heading(fmt.Sprintf("under %.0e is arithmetic noise; under %.2g a person cannot tell", ok.Exact, ok.Eye))
+	heading("them apart; over that, they could.")
 	fmt.Printf("   %-6s %-8s %-24s %-8s %s\n", "", "hex", "oklch", "apart", "verdict")
 	failed := false
 	for _, e := range list {
@@ -313,7 +314,7 @@ func known(mode string) error {
 			fmt.Print(sheet.String())
 			return nil
 		}
-		heading("the same five as a css sheet. the cell before each rule is its value, painted.")
+		heading("the same five as a css sheet. the cell before each rule is its value.")
 		paintSheet(sheet)
 		return nil
 	}
