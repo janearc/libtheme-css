@@ -66,3 +66,16 @@ func TestGamutFit(t *testing.T) {
 		t.Error("fit moved a point that was inside")
 	}
 }
+
+// whatever is outside, Fit's answer is inside: a ring of points around
+// the triangle, including srgb's blue primary, which sits a hair to the
+// left of gamut c's green-blue edge and once failed by rounding.
+func TestFitAlwaysContains(t *testing.T) {
+	outside := []Point{{0.15, 0.06}, {0.7347, 0.2653}, {0.0, 0.0}, {0.1, 0.8}, {0.9, 0.1}, {0.3, 0.9}, {0.5, 0.05}}
+	for _, p := range outside {
+		f := gamutC.Fit(p)
+		if !gamutC.Contains(f) {
+			t.Errorf("fit of %v gave %v, which Contains refuses", p, f)
+		}
+	}
+}

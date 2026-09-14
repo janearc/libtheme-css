@@ -75,12 +75,16 @@ type Gamut struct {
 }
 
 // Contains is whether the point is inside the triangle, edges included.
+// A point Fit has just put on an edge is inside by construction, and
+// floating point can put it a hair past; the hair is allowed for, so
+// Fit's answer always Contains.
 func (g Gamut) Contains(p Point) bool {
+	const hair = 1e-9
 	d1 := side(p, g.Red, g.Green)
 	d2 := side(p, g.Green, g.Blue)
 	d3 := side(p, g.Blue, g.Red)
-	neg := d1 < 0 || d2 < 0 || d3 < 0
-	pos := d1 > 0 || d2 > 0 || d3 > 0
+	neg := d1 < -hair || d2 < -hair || d3 < -hair
+	pos := d1 > hair || d2 > hair || d3 > hair
 	return !(neg && pos)
 }
 
