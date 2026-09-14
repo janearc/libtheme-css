@@ -34,6 +34,7 @@ branches, and read as it goes. what exists:
     make build            bin/libtheme
 
 every number here stands on a number somebody picked. FUDGE.md is the
-ledger, 1931 to your shell.
+ledger, 1931 to your shell. DESIGN.md is the shape and the decisions,
+a screen and a half; `go doc` prints the rest.
 
 jane michelle arc, 2026.
