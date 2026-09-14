@@ -116,11 +116,26 @@ func names() string {
 
 // paint is a run of cells in the colour, as the terminal's lamps show
 // it: the nearest they can do when the colour is outside their reach.
+//
+// What the docs assume about the terminal, and it is all they assume:
+// it paints a 24-bit background, and its default text colour reads on
+// its default background. nothing sets a foreground, nothing dims or
+// bolds, so the words read on a light terminal as well as a dark one and
+// only the swatches carry colour. with NO_COLOR set, the convention every
+// terminal tool honours, no escape is written at all: a swatch is a run
+// of hashes, its shape without its colour, and the hex beside it in the
+// text is what it was.
 func paint(s swatch.Swatch, width int) string {
+	if noColour() {
+		return strings.Repeat("#", width)
+	}
 	c, _ := srgb.FromSwatch(s)
 	r, g, b := c.Bytes()
 	return fmt.Sprintf("\x1b[48;2;%d;%d;%dm%s\x1b[0m", r, g, b, strings.Repeat(" ", width))
 }
+
+// noColour is the NO_COLOR convention: set to anything, colour is off.
+func noColour() bool { return os.Getenv("NO_COLOR") != "" }
 
 // bar is a ramp sampled across a width, painted.
 func bar(r functions.Ramp, width int) string {

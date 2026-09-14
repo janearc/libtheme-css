@@ -135,6 +135,9 @@ func percentOrNumber(s string) (float64, error) {
 // it: 24-bit background, the nearest the screen can do if it is out of
 // gamut.
 func paint(s swatch.Swatch, width int) string {
+	if os.Getenv("NO_COLOR") != "" {
+		return strings.Repeat("#", width)
+	}
 	c, _ := srgb.FromSwatch(s)
 	r, g, b := c.Bytes()
 	return fmt.Sprintf("\x1b[48;2;%d;%d;%dm%s\x1b[0m", r, g, b, strings.Repeat(" ", width))
