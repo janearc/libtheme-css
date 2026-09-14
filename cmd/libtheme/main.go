@@ -300,7 +300,7 @@ func known(mode string) error {
 	}
 	list := []entry{
 		{"black", "swatch: no light", swatch.Black},
-		{"white", "swatch: d65 through the 1931 observer", swatch.White},
+		{"white", "swatch: d65 seen by the 1931 observer", swatch.White},
 		{"red", "srgb: the red lamp at full", srgb.Red.Swatch()},
 		{"green", "srgb: the green lamp at full", srgb.Green.Swatch()},
 		{"blue", "srgb: the blue lamp at full", srgb.Blue.Swatch()},
@@ -335,7 +335,7 @@ func known(mode string) error {
 		for _, s := range r.Samples(24) {
 			line.WriteString(paint(s, 2))
 		}
-		fmt.Printf("%s  black to white, %s\n", line.String(), r.String(hex))
+		fmt.Printf("%s  black to white\n   %s\n", line.String(), r.String(hex))
 	}
 	return nil
 }
