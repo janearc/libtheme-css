@@ -17,6 +17,7 @@ var (
 		srgb.MustHex("#fff4c0").Swatch())
 )
 
+// rampPage paints the page: a function from a number to a colour.
 func rampPage() {
 	title("ramp: a function from a number to a colour")
 	fmt.Printf("   %s  in oklab\n", bar(functions.Even(ok.Mix, rampA, rampB), 48))
@@ -33,6 +34,7 @@ func rampPage() {
 		"what a strip with n lamps or a palette with n entries gets.")
 }
 
+// rampCSS is the page as a css sheet: the same stops in both mixers.
 func rampCSS() string {
 	return ":root {\n" +
 		"  --in-oklab: " +

@@ -13,6 +13,7 @@ var (
 	eyeApart    = ok.OKLab{L: 0.7, A: 0.1, B: -0.05}
 )
 
+// eyePage paints the page: precision, set once.
 func eyePage() {
 	title("eye: precision, set once")
 	pair := func(other ok.OKLab, note string) {
@@ -33,6 +34,7 @@ func eyePage() {
 		"of the two, so precision is a decision made once, not per call.")
 }
 
+// eyeCSS is the page as a css sheet: the two tolerances as swatches.
 func eyeCSS() string {
 	line := func(name string, c ok.OKLab) string {
 		return fmt.Sprintf("  --%s: oklab(%.3f %.3f %.3f);\n",

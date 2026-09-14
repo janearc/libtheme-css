@@ -80,11 +80,13 @@ type swatchAt struct {
 	c  swatch.Swatch
 }
 
+// add records a ramp under its name, keeping the order it was found in.
 func (cw *Colourway) add(name string, stops []swatchAt) {
 	cw.Ramps[name] = ramp(stops)
 	cw.Order = append(cw.Order, name)
 }
 
+// ramp is stops at positions as a ramp mixed in oklab.
 func ramp(stops []swatchAt) functions.Ramp {
 	out := make([]functions.Stop, 0, len(stops))
 	for _, s := range stops {

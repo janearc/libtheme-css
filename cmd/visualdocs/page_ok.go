@@ -9,6 +9,7 @@ import (
 	"github.com/janearc/libtheme-css/spaces/ok"
 )
 
+// okPage paints the page: the axes an eye agrees with.
 func okPage() {
 	title("ok: the axes an eye agrees with")
 	grey := functions.Even(ok.Mix, swatch.Black, swatch.White)
@@ -34,6 +35,7 @@ func okPage() {
 		"wheel. anything with a hue is defined elsewhere and measured here.")
 }
 
+// okCSS is the page as a css sheet: the grey line and the wheel.
 func okCSS() string {
 	grey := functions.Even(ok.Mix, swatch.Black, swatch.White)
 	var wheel []string

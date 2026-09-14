@@ -7,6 +7,7 @@ import (
 	"github.com/janearc/libtheme-css/primitives/swatch"
 )
 
+// near is whether two values agree within a tolerance.
 func near(a, b swatch.XY, tol float64) bool {
 	return math.Abs(a.X-b.X) <= tol && math.Abs(a.Y-b.Y) <= tol
 }

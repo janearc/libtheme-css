@@ -8,13 +8,15 @@ import (
 	"github.com/janearc/libtheme-css/spaces/ok"
 )
 
+// near is whether two values agree within a tolerance.
 func near(a, b, tol float64) bool { return math.Abs(a-b) <= tol }
 
 // The matrix derived from four chromaticities lands on the nine numbers
 // Bruce Lindbloom derives from the same four with the same white, to five
 // places; his white is rounded to five digits and ours is not, which
-// moves the last entry by a millionth. It does not land on the standard's own printed matrix past the
-// third place, and that is a finding, not a bug: the standard rounded
+// moves the last entry by a millionth. It does not land on the standard's
+// own printed matrix past the third place, and that is a finding, not a
+// bug: the standard rounded
 // its white to four digits (0.9505, 1, 1.0890) before deriving, and
 // that rounding shifts the third decimal of three entries. The swatch's
 // white is the 1 nm integration, so the derivation here is the more

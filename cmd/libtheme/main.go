@@ -2,24 +2,22 @@
 // in every form the library has, painted, so that a change lower down
 // shows up as a change on screen. It is a check, not a product.
 //
-//	libtheme show '#ff6ec7'                 one colour, every form, painted
-//	libtheme show 'oklch(74% 0.20 345)'     the same, from the polar form
-//	libtheme ramp '#160d2b' '#ffa2ff' 24    the line between two colours,
-//	                                        drawn in oklab and, for contrast,
-//	                                        in the lamps, so the mud is visible
-//	libtheme known                          everything the library can derive
-//	                                        without being told a colour: the
-//	                                        visual test, run by make visualtest
-//	libtheme known --css                    the same set, as a css sheet, plain,
-//	                                        for piping into a file
-//	libtheme known --paint                  the same sheet with each rule's
-//	                                        colour painted beside it and the
-//	                                        parts told apart, for reading
-//	libtheme roundtrip                      each known colour written two ways,
-//	                                        hex and oklch(), read back through
-//	                                        the tool's own parser, and compared:
-//	                                        the translation is equivalent or the
-//	                                        test says where it is not
+//	libtheme show '#ff6ec7'                one colour, every form, painted
+//	libtheme show 'oklch(74% 0.20 345)'    the same, from the polar form
+//	libtheme ramp '#160d2b' '#ffa2ff' 24   the line between two colours in
+//	                                       oklab and, for contrast, in the
+//	                                       lamps, so the mud is visible
+//	libtheme known                         everything the library derives
+//	                                       unprompted: the visual test
+//	libtheme known --css                   the same set as a css sheet,
+//	                                       plain, for piping to a file
+//	libtheme known --paint                 the sheet with each colour
+//	                                       painted beside its rule
+//	libtheme roundtrip                     each known colour written as
+//	                                       hex and oklch(), read back by
+//	                                       the tool's own parser, compared
+//	libtheme read FILE                     a colourway as the library sees
+//	                                       it: roles painted, ramps drawn
 package main
 
 import (
@@ -35,6 +33,7 @@ import (
 	"github.com/janearc/libtheme-css/spaces/srgb"
 )
 
+// main is the verb table.
 func main() {
 	if len(os.Args) < 2 {
 		usage()
@@ -86,6 +85,7 @@ func main() {
 	}
 }
 
+// usage is the one line to type when the verb was wrong.
 func usage() {
 	fmt.Fprintln(os.Stderr, "libtheme known [--css|--paint] | roundtrip | show COLOUR | ramp COLOUR COLOUR [steps] | read FILE.css\n  COLOUR is #rrggbb or oklch(L% C H)")
 }

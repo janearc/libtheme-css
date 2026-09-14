@@ -84,6 +84,7 @@ func toLinear(c float64) float64 {
 	return math.Pow((c+0.055)/1.055, 2.4)
 }
 
+// fromLinear is the srgb curve from linear light to a lamp's value.
 func fromLinear(c float64) float64 {
 	if c <= 0.0031308 {
 		return 12.92 * c

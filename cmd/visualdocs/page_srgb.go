@@ -11,6 +11,7 @@ import (
 // louder is a green more colourful than the green lamp can make.
 var louder = ok.OKLCH{L: 0.7, C: 0.4, H: 145}.Rect().Swatch()
 
+// srgbPage paints the page: the screen's three lamps.
 func srgbPage() {
 	title("srgb: the screen's three lamps")
 	fmt.Printf("   %s red   %s green   %s blue   %s all three: the white\n\n",
@@ -30,6 +31,7 @@ func srgbPage() {
 		"reach; every exit here says whether it did.")
 }
 
+// srgbCSS is the page as a css sheet: the primaries and the white.
 func srgbCSS() string {
 	sheet := css.New()
 	sheet.Set("red", srgb.Red.Swatch())

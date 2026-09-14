@@ -9,6 +9,8 @@ import (
 	"testing"
 )
 
+// capture runs f with stdout caught, so a test can read what a verb
+// printed.
 func capture(t *testing.T, f func() error) string {
 	t.Helper()
 	old := os.Stdout

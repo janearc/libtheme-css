@@ -7,6 +7,7 @@ import (
 	"github.com/janearc/libtheme-css/primitives/swatch"
 )
 
+// swatchPage paints the page: one colour, complete.
 func swatchPage() {
 	title("swatch: one colour, complete")
 	fmt.Printf("   %s black    %s white\n\n",
@@ -21,6 +22,7 @@ func swatchPage() {
 		"does not look straight.")
 }
 
+// swatchCSS is the page as a css sheet: white, black and the monochromes.
 func swatchCSS() string {
 	sheet := css.New()
 	sheet.Set("black", swatch.Black)

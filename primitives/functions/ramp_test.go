@@ -14,6 +14,7 @@ var flat = Mixer{"test", func(a, b swatch.Swatch, t float64) swatch.Swatch {
 	return swatch.FromXYZ(ax+(bx-ax)*t, ay+(by-ay)*t, az+(bz-az)*t)
 }}
 
+// y is a swatch's luminance.
 func y(s swatch.Swatch) float64 { _, v, _ := s.XYZ(); return v }
 
 // Even spacing puts n stops at 0, 1/(n-1), ... 1; one stop sits at 0.

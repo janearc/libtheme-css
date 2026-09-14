@@ -45,6 +45,7 @@ var pages = []page{
 	{"css", cssPage, cssCSS},
 }
 
+// main is the pager: a page name and a mode, or every page in turn.
 func main() {
 	// arguments in any order: an optional page name and an optional mode.
 	// no page means every page; no mode means paint.
@@ -106,6 +107,7 @@ func main() {
 	}
 }
 
+// names is every page, for the usage line.
 func names() string {
 	n := make([]string, len(pages))
 	for i, p := range pages {
@@ -152,7 +154,10 @@ func hexOf(s swatch.Swatch) string {
 	return c.Hex()
 }
 
+// title prints a page's heading.
 func title(t string) { fmt.Printf("== %s\n\n", t) }
+
+// say prints lines of text under a heading.
 func say(lines ...string) {
 	for _, l := range lines {
 		fmt.Println("   " + l)

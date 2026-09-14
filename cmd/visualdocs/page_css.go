@@ -16,6 +16,7 @@ func vaporwave() *css.Sheet {
 	return sheet
 }
 
+// cssPage paints the page: the container everything normalises to.
 func cssPage() {
 	title("css: the container everything normalises to")
 	for _, r := range vaporwave().Rules() {
@@ -32,4 +33,5 @@ func cssPage() {
 		"disagree, something between here and the screen is lying.")
 }
 
+// cssCSS is the page as a css sheet: the vaporwave sheet itself.
 func cssCSS() string { return vaporwave().String() }

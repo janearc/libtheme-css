@@ -7,6 +7,7 @@ import (
 	"github.com/janearc/libtheme-css/primitives/swatch"
 )
 
+// near is whether two values agree within a tolerance.
 func near(a, b, tol float64) bool { return math.Abs(a-b) <= tol }
 
 // The reference values from Ottosson's description of the space, XYZ in

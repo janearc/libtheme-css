@@ -25,6 +25,7 @@ func lifted(s swatch.Swatch) swatch.Swatch {
 	return c.Swatch()
 }
 
+// observerPage paints the page: what visible means here.
 func observerPage() {
 	title("observer: what 'visible' means here")
 	var b strings.Builder
@@ -44,6 +45,7 @@ func observerPage() {
 		"through the same table, derived at start-up, not typed.")
 }
 
+// observerCSS is the page as a css sheet: the spectrum as twenty stops.
 func observerCSS() string {
 	// the spectrum as a gradient of hex stops, one per twenty nanometres:
 	// what a browser can be handed, clipped to srgb exactly as the bar is.
