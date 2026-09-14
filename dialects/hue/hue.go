@@ -1,36 +1,28 @@
 // Package hue is the philips hue dialect: how a hue lamp names a colour,
 // and how that becomes a swatch and comes back. A hue lamp never says a
-// colour. It says a place on the horseshoe, xy, or a colour temperature
-// in mirek, and separately how bright, as a percent that is the lamp's
-// own scale and not a luminance. A gradient lamp says five places in
-// order along itself. The dialect turns each of those into swatches at
-// unit luminance and a list of them into a ramp; the reverse samples a
-// ramp back to as many places as a lamp has and fits each to the
-// triangle the lamp can reach. Brightness is not translated here: it is
-// a law between a leader and a follower, and it lives with them.
+// colour. It says a place on the horseshoe, a chromaticity, or a colour
+// temperature in mirek, and separately how bright, as a percent that is
+// the lamp's own scale and not a luminance. A gradient lamp says five
+// places in order along itself. The dialect turns each of those into
+// swatches at unit luminance and a list of them into a ramp; the reverse
+// samples a ramp back to as many places as a lamp has. Brightness is not
+// translated here: it is a law between a leader and a follower, and it
+// lives with them. Chromaticities and gamuts are swatch's, not hue's;
+// what is hue's is mirek, the places along a lamp, and the three
+// gamuts its lamps report by letter.
 package hue
 
 import (
-	"math"
-
 	"github.com/janearc/libtheme-css/primitives/functions"
 	"github.com/janearc/libtheme-css/primitives/swatch"
 	"github.com/janearc/libtheme-css/spaces/ok"
 )
 
-// Point is a chromaticity as hue sends it.
-type Point struct {
-	X, Y float64
-}
-
-// Swatch is the point at unit luminance.
-func Swatch(p Point) swatch.Swatch { return swatch.FromXY(p.X, p.Y, 1) }
+// Swatch is a place on the horseshoe at unit luminance.
+func Swatch(p swatch.XY) swatch.Swatch { return swatch.FromXY(p, 1) }
 
 // Of is the swatch's place on the horseshoe, as hue would want it.
-func Of(s swatch.Swatch) Point {
-	x, y := s.XY()
-	return Point{x, y}
-}
+func Of(s swatch.Swatch) swatch.XY { return s.XY() }
 
 // Mirek is a colour temperature as hue sends it, reciprocal megakelvin,
 // as a swatch on the planckian locus at unit luminance. Hue's lamps
@@ -42,13 +34,13 @@ func Mirek(m int) swatch.Swatch {
 	return swatch.Planckian(1e6 / float64(m))
 }
 
-// Ramp is a lamp's points in order as a ramp: even stops, mixed in
+// Ramp is a lamp's places in order as a ramp: even stops, mixed in
 // oklab, so the colour between two of a gradient's points is the one
-// the eye would put there. One point is a ramp that is that colour
+// the eye would put there. One place is a ramp that is that colour
 // everywhere.
-func Ramp(points ...Point) functions.Ramp {
-	swatches := make([]swatch.Swatch, len(points))
-	for i, p := range points {
+func Ramp(places ...swatch.XY) functions.Ramp {
+	swatches := make([]swatch.Swatch, len(places))
+	for i, p := range places {
 		swatches[i] = Swatch(p)
 	}
 	return functions.Even(ok.Mix, swatches...)
@@ -56,67 +48,23 @@ func Ramp(points ...Point) functions.Ramp {
 
 // Points is a ramp sampled back to n places, for a lamp with n of them:
 // five for a gradient signe, one for a bulb. The samples are taken
-// evenly from 0 to 1, so a ramp made from a lamp's own points comes back
-// as those points.
-func Points(r functions.Ramp, n int) []Point {
-	out := make([]Point, 0, n)
+// evenly from 0 to 1, so a ramp made from a lamp's own places comes back
+// as those places.
+func Points(r functions.Ramp, n int) []swatch.XY {
+	out := make([]swatch.XY, 0, n)
 	for _, s := range r.Samples(n) {
 		out = append(out, Of(s))
 	}
 	return out
 }
 
-// Gamut is the triangle a lamp can reach, as the lamp reports it; two
-// lamps in one room need not share one. A point outside is shown by the
-// lamp as the nearest point inside, and Fit says which, so a caller can
-// know what the lamp will do before asking.
-type Gamut struct {
-	Red, Green, Blue Point
-}
-
-// Contains is whether the point is inside the triangle, edges included.
-// A point Fit has just put on an edge is inside by construction, and
-// floating point can put it a hair past; the hair is allowed for, so
-// Fit's answer always Contains.
-func (g Gamut) Contains(p Point) bool {
-	const hair = 1e-9
-	d1 := side(p, g.Red, g.Green)
-	d2 := side(p, g.Green, g.Blue)
-	d3 := side(p, g.Blue, g.Red)
-	neg := d1 < -hair || d2 < -hair || d3 < -hair
-	pos := d1 > hair || d2 > hair || d3 > hair
-	return !(neg && pos)
-}
-
-// Fit is the point itself when the lamp can reach it, and otherwise the
-// nearest point on the triangle's edge.
-func (g Gamut) Fit(p Point) Point {
-	if g.Contains(p) {
-		return p
-	}
-	best, dist := p, math.Inf(1)
-	for _, e := range [][2]Point{{g.Red, g.Green}, {g.Green, g.Blue}, {g.Blue, g.Red}} {
-		q := nearest(p, e[0], e[1])
-		if d := math.Hypot(p.X-q.X, p.Y-q.Y); d < dist {
-			best, dist = q, d
-		}
-	}
-	return best
-}
-
-// side is which side of the line a→b the point is on, by sign.
-func side(p, a, b Point) float64 {
-	return (p.X-b.X)*(a.Y-b.Y) - (a.X-b.X)*(p.Y-b.Y)
-}
-
-// nearest is the closest point to p on the segment a→b.
-func nearest(p, a, b Point) Point {
-	dx, dy := b.X-a.X, b.Y-a.Y
-	l2 := dx*dx + dy*dy
-	if l2 == 0 {
-		return a
-	}
-	t := ((p.X-a.X)*dx + (p.Y-a.Y)*dy) / l2
-	t = math.Max(0, math.Min(1, t))
-	return Point{a.X + t*dx, a.Y + t*dy}
-}
+// The gamuts hue's lamps report, by the letter hue gives them, as
+// philips publishes the corners. Vendor data, typed: these are facts
+// about lamps, not derivable. A lamp reports its own triangle on the
+// wire and that is the one to fit to; these are for a lamp that does
+// not, and for tests.
+var (
+	GamutA = swatch.Gamut{Red: swatch.XY{X: 0.704, Y: 0.296}, Green: swatch.XY{X: 0.2151, Y: 0.7106}, Blue: swatch.XY{X: 0.138, Y: 0.08}}
+	GamutB = swatch.Gamut{Red: swatch.XY{X: 0.675, Y: 0.322}, Green: swatch.XY{X: 0.409, Y: 0.518}, Blue: swatch.XY{X: 0.167, Y: 0.04}}
+	GamutC = swatch.Gamut{Red: swatch.XY{X: 0.6915, Y: 0.3083}, Green: swatch.XY{X: 0.17, Y: 0.7}, Blue: swatch.XY{X: 0.1532, Y: 0.0475}}
+)

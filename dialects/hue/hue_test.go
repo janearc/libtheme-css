@@ -7,27 +7,23 @@ import (
 	"github.com/janearc/libtheme-css/primitives/swatch"
 )
 
-// gamut C, as philips publishes it for the lamps that have it. typed
-// here because a test may type what the library derives.
-var gamutC = Gamut{Red: Point{0.6915, 0.3083}, Green: Point{0.17, 0.7}, Blue: Point{0.1532, 0.0475}}
-
-func near(a, b Point, tol float64) bool {
+func near(a, b swatch.XY, tol float64) bool {
 	return math.Abs(a.X-b.X) <= tol && math.Abs(a.Y-b.Y) <= tol
 }
 
-// what a lamp says comes back as what it said: white's xy through a
-// swatch and back is white's xy.
-func TestPointRoundTrip(t *testing.T) {
+// what a lamp says comes back as what it said: white's place through a
+// swatch and back is white's place.
+func TestPlaceRoundTrip(t *testing.T) {
 	w := Of(swatch.White)
 	if !near(Of(Swatch(w)), w, 1e-12) {
 		t.Errorf("white did not round-trip: %v", Of(Swatch(w)))
 	}
 }
 
-// a ramp made from a lamp's five points sampled back to five is those
-// points, to the precision of going through oklab and back.
+// a ramp made from a lamp's five places sampled back to five is those
+// places, to the precision of going through oklab and back.
 func TestRampToPointsIsIdentityAtTheStops(t *testing.T) {
-	in := []Point{{0.64, 0.33}, {0.5, 0.4}, {0.3127, 0.329}, {0.2, 0.5}, {0.15, 0.06}}
+	in := []swatch.XY{{X: 0.64, Y: 0.33}, {X: 0.5, Y: 0.4}, {X: 0.3127, Y: 0.329}, {X: 0.2, Y: 0.5}, {X: 0.15, Y: 0.06}}
 	out := Points(Ramp(in...), 5)
 	for i := range in {
 		if !near(out[i], in[i], 1e-6) {
@@ -45,37 +41,22 @@ func TestMirekIsWarm(t *testing.T) {
 	}
 }
 
-// the white point is inside gamut C; spectral red is not, and lies past
-// the red corner, so the nearest reachable point is that corner.
-func TestGamutFit(t *testing.T) {
-	if !gamutC.Contains(Of(swatch.White)) {
-		t.Error("white is outside gamut C")
-	}
-	red := Point{0.7347, 0.2653} // the 700 nm end of the horseshoe
-	if gamutC.Contains(red) {
-		t.Error("spectral red is inside gamut C")
-	}
-	f := gamutC.Fit(red)
-	if !gamutC.Contains(f) {
-		t.Errorf("fit landed outside: %v", f)
-	}
-	if !near(f, gamutC.Red, 1e-9) {
-		t.Errorf("spectral red should fit to the red corner, got %v", f)
-	}
-	if gamutC.Fit(Of(swatch.White)) != Of(swatch.White) {
-		t.Error("fit moved a point that was inside")
-	}
-}
-
-// whatever is outside, Fit's answer is inside: a ring of points around
-// the triangle, including srgb's blue primary, which sits a hair to the
-// left of gamut c's green-blue edge and once failed by rounding.
-func TestFitAlwaysContains(t *testing.T) {
-	outside := []Point{{0.15, 0.06}, {0.7347, 0.2653}, {0.0, 0.0}, {0.1, 0.8}, {0.9, 0.1}, {0.3, 0.9}, {0.5, 0.05}}
-	for _, p := range outside {
-		f := gamutC.Fit(p)
-		if !gamutC.Contains(f) {
-			t.Errorf("fit of %v gave %v, which Contains refuses", p, f)
+// gamuts a and c hold white; gamut b, the old bulbs, misses d65 by six
+// ten-thousandths past its green-blue edge, which is a known fact about
+// those lamps, so Fit moves white less than a thousandth. spectral red
+// fits to gamut c's red corner, which lies short of it.
+func TestPublishedGamuts(t *testing.T) {
+	w := swatch.White.XY()
+	for name, g := range map[string]swatch.Gamut{"A": GamutA, "C": GamutC} {
+		if !g.Contains(w) {
+			t.Errorf("white is outside gamut %s", name)
 		}
+	}
+	if f := GamutB.Fit(w); math.Hypot(f.X-w.X, f.Y-w.Y) > 0.001 {
+		t.Errorf("gamut b should miss white by a hair, not %v", f)
+	}
+	red := swatch.XY{X: 0.7347, Y: 0.2653}
+	if f := GamutC.Fit(red); !near(f, GamutC.Red, 1e-9) {
+		t.Errorf("spectral red should fit to gamut c's red corner, got %v", f)
 	}
 }

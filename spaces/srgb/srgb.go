@@ -47,6 +47,15 @@ var (
 	blueXY  = [2]float64{0.1500, 0.0600}
 )
 
+// Gamut is the triangle the primaries make: what srgb can show. Derived
+// from the same three chromaticities as the matrix, so the two cannot
+// disagree.
+var Gamut = swatch.Gamut{
+	Red:   swatch.XY{X: redXY[0], Y: redXY[1]},
+	Green: swatch.XY{X: greenXY[0], Y: greenXY[1]},
+	Blue:  swatch.XY{X: blueXY[0], Y: blueXY[1]},
+}
+
 // rgbToXYZ is derived: each primary's column is its chromaticity turned
 // back into XYZ at unit brightness, and the three columns are then
 // scaled so that all three lamps at full add up to exactly the white.

@@ -3,6 +3,8 @@
 // it. Everything else in libtheme is built on it.
 package swatch
 
+import "math"
+
 // Swatch is one colour, stored as CIE XYZ (1931), the three numbers a
 // standard human eye reduces any light to. White is D65, daylight. The
 // fields are unexported because XYZ is where the truth is kept, not
@@ -42,25 +44,86 @@ func (s Swatch) XYZ() (x, y, z float64) { return s.x, s.y, s.z }
 
 // White and Black are in observer.go, where White is derived.
 
-// FromXY makes a swatch from a CIE 1931 chromaticity, the place on the
-// horseshoe with the brightness taken out, and a luminance to put it
-// back: X = x/y·Y, Z = (1−x−y)/y·Y. This is what a lamp that reports xy
-// is saying, and it is not a colour until the luminance is chosen. A
-// chromaticity with y at zero has no light in it and is black.
-func FromXY(x, y, luminance float64) Swatch {
-	if y <= 0 {
+// XY is a CIE 1931 chromaticity: a place on the horseshoe, with the
+// brightness taken out. It is what a lamp means when it reports a
+// colour without saying how bright, and what a gamut's corners are.
+type XY struct {
+	X, Y float64
+}
+
+// FromXY makes a swatch from a chromaticity and a luminance to put the
+// brightness back: X = x/y·Y, Z = (1−x−y)/y·Y. A chromaticity with y at
+// zero has no light in it and is black.
+func FromXY(c XY, luminance float64) Swatch {
+	if c.Y <= 0 {
 		return Black
 	}
-	return Swatch{x / y * luminance, luminance, (1 - x - y) / y * luminance}
+	return Swatch{c.X / c.Y * luminance, luminance, (1 - c.X - c.Y) / c.Y * luminance}
 }
 
 // XY is the swatch's chromaticity: where it sits on the horseshoe, with
 // how bright it is divided out. Black has no chromaticity and reports
 // the white's, which is the least wrong thing to say about no light.
-func (s Swatch) XY() (x, y float64) {
+func (s Swatch) XY() XY {
 	sum := s.x + s.y + s.z
 	if sum <= 0 {
 		return White.XY()
 	}
-	return s.x / sum, s.y / sum
+	return XY{s.x / sum, s.y / sum}
+}
+
+// Gamut is the triangle of chromaticities a device can reach: three
+// primaries at their corners. srgb is one; every lamp that reports one
+// is another. A point outside is shown by the device as some point
+// inside, and Fit says which, so a caller can know what the device
+// will do before asking.
+type Gamut struct {
+	Red, Green, Blue XY
+}
+
+// Contains is whether the point is inside the triangle, edges included.
+// A point Fit has just put on an edge is inside by construction, and
+// floating point can put it a hair past; the hair is allowed for, so
+// Fit's answer always Contains.
+func (g Gamut) Contains(p XY) bool {
+	const hair = 1e-9
+	d1 := side(p, g.Red, g.Green)
+	d2 := side(p, g.Green, g.Blue)
+	d3 := side(p, g.Blue, g.Red)
+	neg := d1 < -hair || d2 < -hair || d3 < -hair
+	pos := d1 > hair || d2 > hair || d3 > hair
+	return !(neg && pos)
+}
+
+// Fit is the point itself when the device can reach it, and otherwise
+// the nearest point on the triangle's edge.
+func (g Gamut) Fit(p XY) XY {
+	if g.Contains(p) {
+		return p
+	}
+	best, dist := p, math.Inf(1)
+	for _, e := range [][2]XY{{g.Red, g.Green}, {g.Green, g.Blue}, {g.Blue, g.Red}} {
+		q := nearest(p, e[0], e[1])
+		if d := math.Hypot(p.X-q.X, p.Y-q.Y); d < dist {
+			best, dist = q, d
+		}
+	}
+	return best
+}
+
+// side is which side of the line a→b the point is on, by sign.
+func side(p, a, b XY) float64 {
+	return (p.X-b.X)*(a.Y-b.Y) - (a.X-b.X)*(p.Y-b.Y)
+}
+
+// nearest is the closest point to p on the segment a→b.
+func nearest(p, a, b XY) XY {
+	dx, dy := b.X-a.X, b.Y-a.Y
+	l2 := dx*dx + dy*dy
+	if l2 == 0 {
+		return a
+	}
+	t := ((p.X-a.X)*dx + (p.Y-a.Y)*dy) / l2
+	t = math.Max(0, math.Min(1, t))
+	return XY{a.X + t*dx, a.Y + t*dy}
 }
