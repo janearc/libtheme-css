@@ -7,9 +7,13 @@
 //	libtheme ramp '#160d2b' '#ffa2ff' 24    the line between two colours,
 //	                                        drawn in oklab and, for contrast,
 //	                                        in the lamps, so the mud is visible
-//	libtheme paint linear|radial|conic A B  a small surface painted through a
+//	libtheme paint SHAPE A B [frames]       a small surface painted through a
 //	                                        field into the ramp from A to B, in
-//	                                        oklab: the sun, in twelve rows
+//	                                        oklab. SHAPE is linear, radial,
+//	                                        conic, egg or ripple. with a frame
+//	                                        count it animates in place: the
+//	                                        field changes with time, the ramp
+//	                                        never does
 //	libtheme known                          everything the library can derive
 //	                                        without being told a colour: the
 //	                                        visual test, run by make visualtest
@@ -27,9 +31,11 @@ package main
 
 import (
 	"fmt"
+	"math"
 	"os"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/janearc/libtheme-css/css"
 	"github.com/janearc/libtheme-css/primitives/functions"
@@ -58,7 +64,14 @@ func main() {
 			usage()
 			os.Exit(2)
 		}
-		err = paintField(os.Args[2], os.Args[3], os.Args[4])
+		frames := 1
+		if len(os.Args) > 5 {
+			frames, err = strconv.Atoi(os.Args[5])
+			if err != nil {
+				break
+			}
+		}
+		err = paintField(os.Args[2], os.Args[3], os.Args[4], frames)
 	case "show":
 		if len(os.Args) < 3 {
 			usage()
@@ -353,8 +366,10 @@ func known(mode string) error {
 // into the ramp between two colours, in oklab. each cell is one position
 // on the surface. a cell is about twice as tall as it is wide, and 48 by
 // 12 is 4:1 in cells, so the surface is square on screen and a radial
-// reads round without any correction.
-func paintField(kind, a, b string) error {
+// reads round without any correction. with more than one frame it draws
+// the field at successive times in place, which is what an animation is
+// here: the ramp stays, the field moves.
+func paintField(kind, a, b string, frames int) error {
 	sa, err := parse(a)
 	if err != nil {
 		return err
@@ -363,28 +378,87 @@ func paintField(kind, a, b string) error {
 	if err != nil {
 		return err
 	}
-	var field functions.Field
-	switch kind {
-	case "linear":
-		field = functions.Linear{A: functions.Point{U: 0, V: 0}, B: functions.Point{U: 0, V: 1}}
-	case "radial":
-		field = functions.Radial{Centre: functions.Point{U: 0.5, V: 0.5}, Radius: 0.5}
-	case "conic":
-		field = functions.Conic{Centre: functions.Point{U: 0.5, V: 0.5}}
-	default:
-		return fmt.Errorf("no field called %q; there is linear, radial, conic", kind)
+	shape, known := shapes[kind]
+	if !known {
+		return fmt.Errorf("no field called %q; there is linear, radial, conic, egg, ripple", kind)
 	}
 	r := functions.Even(ok.Mix, sa, sb)
 	const cols, rows = 48, 12
+	if frames < 1 {
+		frames = 1
+	}
 	heading(fmt.Sprintf("%s field into %s", kind, r.String(hex)))
-	for y := 0; y < rows; y++ {
-		var line strings.Builder
-		for x := 0; x < cols; x++ {
-			u := (float64(x) + 0.5) / cols
-			v := (float64(y) + 0.5) / rows
-			line.WriteString(paint(r.At(field.T(u, v)), 1))
+	for f := 0; f < frames; f++ {
+		time := float64(f) / float64(frames)
+		field := shape(time)
+		var out strings.Builder
+		for y := 0; y < rows; y++ {
+			out.WriteString("   ")
+			for x := 0; x < cols; x++ {
+				u := (float64(x) + 0.5) / cols
+				v := (float64(y) + 0.5) / rows
+				out.WriteString(paint(r.At(field.T(u, v)), 1))
+			}
+			out.WriteString("\n")
 		}
-		fmt.Println("   " + line.String())
+		fmt.Print(out.String())
+		if f < frames-1 {
+			sleep(60 * millisecond)
+			fmt.Printf("\x1b[%dA", rows) // back up over the frame just drawn
+		}
 	}
 	return nil
 }
+
+// shapes are the fields the paint verb knows, each built for a time in
+// 0..1 so that the animation is the field changing and nothing else.
+var shapes = map[string]func(time float64) functions.Field{
+	"linear": func(time float64) functions.Field {
+		// the axis turns a full circle over the frames
+		a := time * 2 * math.Pi
+		return functions.Linear{A: functions.Point{U: 0.5 - 0.5*math.Cos(a), V: 0.5 - 0.5*math.Sin(a)}, B: functions.Point{U: 0.5 + 0.5*math.Cos(a), V: 0.5 + 0.5*math.Sin(a)}}
+	},
+	"radial": func(time float64) functions.Field {
+		// the sun rises: the centre climbs from below the sheet to the middle
+		return functions.Radial{Centre: functions.Point{U: 0.5, V: 1.2 - 0.7*time}, Radius: 0.5}
+	},
+	"conic": func(time float64) functions.Field {
+		// the wheel turns, by seeing the conic through a rotation
+		a := time * 2 * math.Pi
+		return functions.Through{M: [2][2]float64{{math.Cos(a), -math.Sin(a)}, {math.Sin(a), math.Cos(a)}}, Field: functions.Conic{Centre: functions.Point{U: 0.5, V: 0.5}}}
+	},
+	"egg": func(time float64) functions.Field {
+		// a radial whose radius is bigger below the centre than above; over
+		// the frames it rocks
+		lean := 0.1 * math.Sin(time*2*math.Pi)
+		return functions.Func(func(u, v float64) float64 {
+			dx, dy := u-0.5+lean*(v-0.5), v-0.5
+			radius := 0.28
+			if dy > 0 {
+				radius = 0.42
+			}
+			return math.Hypot(dx, dy) / radius
+		})
+	},
+	"ripple": func(time float64) functions.Field {
+		// the egg, with a small wave added to t on its lower half that
+		// advances outward over the frames
+		phase := time * 2 * math.Pi
+		return functions.Func(func(u, v float64) float64 {
+			dx, dy := u-0.5, v-0.5
+			radius := 0.28
+			if dy > 0 {
+				radius = 0.42
+			}
+			t := math.Hypot(dx, dy) / radius
+			if dy > 0 {
+				t += 0.08 * math.Sin(t*6*math.Pi-phase) * (1 - t)
+			}
+			return t
+		})
+	},
+}
+
+func sleep(d time.Duration) { time.Sleep(d) }
+
+const millisecond = time.Millisecond
