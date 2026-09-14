@@ -87,3 +87,12 @@ number means: relative to seventeen people in 1931, a daylight nobody
 saw, three phosphors from a television, one swede's fit, and your own
 eyes. it is a very good number. it is not the truth. nothing here is,
 and the difference between this library and most is that it says so.
+
+## the reader's line
+
+`css.Read` turns a colourway's gradients into ramps, and a ramp here
+mixes in oklab. a browser mixes the same `linear-gradient` in srgb
+unless told otherwise, so the ramp this library hands a lamp is not the
+ramp the page shows between the same stops; it is the one the eye would
+prefer. the stops are exact; the line between them is ours. stops with
+an alpha are dropped, because a lamp has no ground to blend against.
