@@ -300,7 +300,7 @@ func known(mode string) error {
 	}
 	list := []entry{
 		{"black", "swatch: no light", swatch.Black},
-		{"white", "swatch: d65 seen by the 1931 observer", swatch.White},
+		{"white", "swatch: d65 via the observer", swatch.White},
 		{"red", "srgb: the red lamp at full", srgb.Red.Swatch()},
 		{"green", "srgb: the green lamp at full", srgb.Green.Swatch()},
 		{"blue", "srgb: the blue lamp at full", srgb.Blue.Swatch()},
