@@ -194,7 +194,7 @@ func ramp(a, b string, n int) error {
 		for _, s := range r.Samples(n) {
 			line.WriteString(paint(s, 2))
 		}
-		fmt.Printf("%-6s %s  %s\n", in.Name, line.String(), r.String(hex))
+		fmt.Printf("%-6s %s\n       %s\n", in.Name, line.String(), r.String(hex))
 	}
 	return nil
 }
