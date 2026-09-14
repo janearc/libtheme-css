@@ -116,11 +116,15 @@ func (c RGB) Hex() string {
 }
 
 // FromHex reads "#rrggbb" or "rrggbb", which is what every hex code you
-// have ever typed silently was: three lamp levels in this space.
+// have ever typed silently was: three lamp levels in this space. The
+// short form "#rgb" is each digit doubled, as css has always read it.
 func FromHex(h string) (RGB, error) {
 	h = strings.TrimPrefix(strings.TrimSpace(h), "#")
+	if len(h) == 3 {
+		h = string([]byte{h[0], h[0], h[1], h[1], h[2], h[2]})
+	}
 	if len(h) != 6 {
-		return RGB{}, fmt.Errorf("hex colour wants six digits, not %q", h)
+		return RGB{}, fmt.Errorf("hex colour wants three or six digits, not %q", h)
 	}
 	var r, g, b uint8
 	if _, err := fmt.Sscanf(h, "%02x%02x%02x", &r, &g, &b); err != nil {
