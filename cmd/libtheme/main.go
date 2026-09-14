@@ -7,6 +7,9 @@
 //	libtheme ramp '#160d2b' '#ffa2ff' 24    the line between two colours,
 //	                                        drawn in oklab and, for contrast,
 //	                                        in the lamps, so the mud is visible
+//	libtheme paint linear|radial|conic A B  a small surface painted through a
+//	                                        field into the ramp from A to B, in
+//	                                        oklab: the sun, in twelve rows
 //	libtheme known                          everything the library can derive
 //	                                        without being told a colour: the
 //	                                        visual test, run by make visualtest
@@ -50,6 +53,12 @@ func main() {
 		err = known(mode)
 	case "roundtrip":
 		err = roundtrip()
+	case "paint":
+		if len(os.Args) < 5 {
+			usage()
+			os.Exit(2)
+		}
+		err = paintField(os.Args[2], os.Args[3], os.Args[4])
 	case "show":
 		if len(os.Args) < 3 {
 			usage()
@@ -80,7 +89,7 @@ func main() {
 }
 
 func usage() {
-	fmt.Fprintln(os.Stderr, "libtheme known [--css] | roundtrip | show COLOUR | ramp COLOUR COLOUR [steps]\n  COLOUR is #rrggbb or oklch(L% C H)")
+	fmt.Fprintln(os.Stderr, "libtheme known [--css|--paint] | roundtrip | show COLOUR | ramp COLOUR COLOUR [steps] | paint linear|radial|conic COLOUR COLOUR\n  COLOUR is #rrggbb or oklch(L% C H)")
 }
 
 // parse reads the two spellings a person types: a hex code, or css's
@@ -336,6 +345,46 @@ func known(mode string) error {
 			line.WriteString(paint(s, 2))
 		}
 		fmt.Printf("%s  black to white\n   %s\n", line.String(), r.String(hex))
+	}
+	return nil
+}
+
+// paintField draws a small surface, 48 cells by 12 rows, through a field
+// into the ramp between two colours, in oklab. each cell is one position
+// on the surface. a cell is about twice as tall as it is wide, and 48 by
+// 12 is 4:1 in cells, so the surface is square on screen and a radial
+// reads round without any correction.
+func paintField(kind, a, b string) error {
+	sa, err := parse(a)
+	if err != nil {
+		return err
+	}
+	sb, err := parse(b)
+	if err != nil {
+		return err
+	}
+	var field functions.Field
+	switch kind {
+	case "linear":
+		field = functions.Linear{A: functions.Point{U: 0, V: 0}, B: functions.Point{U: 0, V: 1}}
+	case "radial":
+		field = functions.Radial{Centre: functions.Point{U: 0.5, V: 0.5}, Radius: 0.5}
+	case "conic":
+		field = functions.Conic{Centre: functions.Point{U: 0.5, V: 0.5}}
+	default:
+		return fmt.Errorf("no field called %q; there is linear, radial, conic", kind)
+	}
+	r := functions.Even(ok.Mix, sa, sb)
+	const cols, rows = 48, 12
+	heading(fmt.Sprintf("%s field into %s", kind, r.String(hex)))
+	for y := 0; y < rows; y++ {
+		var line strings.Builder
+		for x := 0; x < cols; x++ {
+			u := (float64(x) + 0.5) / cols
+			v := (float64(y) + 0.5) / rows
+			line.WriteString(paint(r.At(field.T(u, v)), 1))
+		}
+		fmt.Println("   " + line.String())
 	}
 	return nil
 }
