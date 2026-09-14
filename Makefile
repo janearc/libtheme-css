@@ -1,6 +1,6 @@
 # libtheme-css. `make` runs the checks; `make build` puts every command
 # in bin/, which is gitignored; `make clean` takes bin/ away again.
-.PHONY: all fmt vet test build clean visualtest visualtest-css visualdocs docs
+.PHONY: all fmt vet test build clean visualtest visualtest-css visualdocs visualdocs-css docs
 all: fmt vet test
 fmt:
 	gofmt -l -w .
@@ -26,6 +26,9 @@ visualtest-css: build
 # the documentation, shown: one page per idea, enter for the next.
 visualdocs: build
 	@./bin/visualdocs
+# every page, said in css instead of paint.
+visualdocs-css: build
+	@for p in swatch observer ok eye srgb ramp css; do echo "/* $$p */"; ./bin/visualdocs $$p --css; done
 # the documentation, written: what go doc extracts from the comments.
 docs:
 	@go doc -all ./primitives/swatch
