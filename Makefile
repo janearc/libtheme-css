@@ -28,7 +28,7 @@ visualdocs: build
 	@./bin/visualdocs
 # every page, said in css instead of paint.
 visualdocs-css: build
-	@for p in swatch observer ok eye srgb ramp css; do echo "/* $$p */"; ./bin/visualdocs $$p --css; done
+	@./bin/visualdocs --css
 # the documentation, written: what go doc extracts from the comments.
 docs:
 	@go doc -all ./primitives/swatch

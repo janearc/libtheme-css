@@ -5,10 +5,10 @@
 // and show the go that painted it, which is its own source file, embedded,
 // so the three can never drift apart.
 //
-//	visualdocs                  every page, enter for the next, q to stop
+//	visualdocs                  every page, painted, enter for the next
 //	visualdocs PAGE             one page, painted
-//	visualdocs PAGE --css       the same page as a stylesheet
-//	visualdocs PAGE --go        the go that produced it: the page's file
+//	visualdocs [PAGE] --css     the same, as a stylesheet
+//	visualdocs [PAGE] --go      the go that produced it: the page's own file
 //
 // pages: swatch, observer, ok, eye, srgb, ramp, css
 package main
@@ -46,44 +46,58 @@ var pages = []page{
 }
 
 func main() {
-	if len(os.Args) > 1 {
-		name := os.Args[1]
-		mode := ""
-		if len(os.Args) > 2 {
-			mode = os.Args[2]
+	// arguments in any order: an optional page name and an optional mode.
+	// no page means every page; no mode means paint.
+	var name, mode string
+	for _, a := range os.Args[1:] {
+		if strings.HasPrefix(a, "--") {
+			mode = a
+		} else {
+			name = a
 		}
-		for _, p := range pages {
-			if p.name != name {
-				continue
-			}
-			switch mode {
-			case "":
-				p.show()
-			case "--css":
-				fmt.Print(p.css())
-			case "--go":
-				src, err := sources.ReadFile("page_" + name + ".go")
-				if err != nil {
-					fmt.Fprintln(os.Stderr, "visualdocs:", err)
-					os.Exit(1)
-				}
-				os.Stdout.Write(src)
-			default:
-				fmt.Fprintf(os.Stderr, "visualdocs: modes are --css and --go, not %q\n", mode)
-				os.Exit(2)
-			}
-			return
-		}
-		fmt.Fprintf(os.Stderr, "no page called %q; there is %s\n", name, names())
+	}
+	if mode != "" && mode != "--css" && mode != "--go" {
+		fmt.Fprintf(os.Stderr, "visualdocs: modes are --css and --go, not %q\n", mode)
 		os.Exit(2)
 	}
+	chosen := pages
+	if name != "" {
+		chosen = nil
+		for _, p := range pages {
+			if p.name == name {
+				chosen = []page{p}
+			}
+		}
+		if chosen == nil {
+			fmt.Fprintf(os.Stderr, "no page called %q; there is %s\n", name, names())
+			os.Exit(2)
+		}
+	}
 	in := bufio.NewReader(os.Stdin)
-	for i, p := range pages {
-		p.show()
-		if i == len(pages)-1 {
+	for i, p := range chosen {
+		switch mode {
+		case "--css":
+			fmt.Printf("/* %s */\n", p.name)
+			fmt.Print(p.css())
+		case "--go":
+			src, err := sources.ReadFile("page_" + p.name + ".go")
+			if err != nil {
+				fmt.Fprintln(os.Stderr, "visualdocs:", err)
+				os.Exit(1)
+			}
+			fmt.Printf("// page_%s.go\n", p.name)
+			os.Stdout.Write(src)
+		default:
+			p.show()
+		}
+		if i == len(chosen)-1 {
 			return
 		}
-		fmt.Printf("\n   [%d/%d] enter for %s, q to stop: ", i+1, len(pages), pages[i+1].name)
+		if mode != "" {
+			fmt.Println()
+			continue
+		}
+		fmt.Printf("\n   [%d/%d] enter for %s, q to stop: ", i+1, len(chosen), chosen[i+1].name)
 		line, _ := in.ReadString('\n')
 		if strings.TrimSpace(line) == "q" {
 			return
