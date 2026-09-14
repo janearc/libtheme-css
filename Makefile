@@ -1,6 +1,6 @@
 # libtheme-css. `make` runs the checks; `make build` puts every command
 # in bin/, which is gitignored; `make clean` takes bin/ away again.
-.PHONY: all fmt vet test build clean visualtest visualtest-css
+.PHONY: all fmt vet test build clean visualtest visualtest-css visualdocs docs
 all: fmt vet test
 fmt:
 	gofmt -l -w .
@@ -23,3 +23,13 @@ visualtest-css: build
 	@./bin/libtheme known --paint
 	@echo
 	@./bin/libtheme roundtrip
+# the documentation, shown: one page per idea, enter for the next.
+visualdocs: build
+	@./bin/visualdocs
+# the documentation, written: what go doc extracts from the comments.
+docs:
+	@go doc -all ./primitives/swatch
+	@go doc -all ./primitives/functions
+	@go doc -all ./spaces/ok
+	@go doc -all ./spaces/srgb
+	@go doc -all ./css

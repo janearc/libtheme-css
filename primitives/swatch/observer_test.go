@@ -84,3 +84,17 @@ func withinFloatNoise(a, b Swatch) bool {
 	const eps = 1e-9
 	return math.Abs(ax-bx) < eps && math.Abs(ay-by) < eps && math.Abs(az-bz) < eps
 }
+
+// Monochrome is the observer's row: the eye is most sensitive at 555 nm,
+// so that is where Y peaks; outside the table there is no light.
+func TestMonochrome(t *testing.T) {
+	_, peak, _ := Monochrome(555).XYZ()
+	for _, nm := range []int{450, 500, 600, 650} {
+		if _, y, _ := Monochrome(nm).XYZ(); y >= peak {
+			t.Errorf("Y at %d nm (%v) is not below the peak at 555 (%v)", nm, y, peak)
+		}
+	}
+	if Monochrome(1000) != Black || Monochrome(200) != Black {
+		t.Errorf("light outside the table should be no light")
+	}
+}

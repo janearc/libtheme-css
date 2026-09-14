@@ -84,6 +84,19 @@ func Illuminant(spectrum map[int]float64) Swatch {
 	return Swatch{x / y, 1, z / y}
 }
 
+// Monochrome is light of one wavelength at unit power, as the observer
+// sees it: the observer's own row, as a swatch. Outside the table it is
+// no light. The spectrum drawn from 380 to 780 through this is the
+// visible range as the seventeen saw it, and most of it is outside what
+// any screen can make, which every screen shows by clipping.
+func Monochrome(nm int) Swatch {
+	w, ok := observer[nm]
+	if !ok || len(w) != 3 {
+		return Black
+	}
+	return Swatch{w[0], w[1], w[2]}
+}
+
 // d65 is CIE standard illuminant D65: not a real sky but the average of
 // noon daylight measured in the 1960s, written down as a spectrum, with
 // a nominal colour temperature of 6500 kelvin. It is actually 6504: the

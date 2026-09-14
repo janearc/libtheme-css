@@ -116,6 +116,15 @@ func (c RGB) Hex() string {
 	return fmt.Sprintf("#%02x%02x%02x", r, g, b)
 }
 
+// MustHex is FromHex for a literal you know is well formed.
+func MustHex(h string) RGB {
+	c, err := FromHex(h)
+	if err != nil {
+		panic(err)
+	}
+	return c
+}
+
 // FromHex reads "#rrggbb" or "rrggbb", which is what every hex code you
 // have ever typed silently was: three lamp levels in this space. The
 // short form "#rgb" is each digit doubled, as css has always read it.
