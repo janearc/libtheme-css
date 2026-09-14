@@ -17,6 +17,7 @@ import (
 	"strings"
 
 	"github.com/janearc/libtheme-css/internal/mat"
+	"github.com/janearc/libtheme-css/primitives/functions"
 	"github.com/janearc/libtheme-css/primitives/swatch"
 )
 
@@ -142,6 +143,16 @@ var (
 	White = RGB{1, 1, 1}
 	Black = RGB{0, 0, 0}
 )
+
+// Mix is the swatch t of the way from a to b along a straight line
+// through the lamps: what every tool that blends hex codes does, and the
+// line that goes through mud. Here so a ramp can choose it on purpose,
+// and so the difference can be drawn next to oklab's.
+var Mix = functions.Mixer{Name: "srgb", Mix: func(a, b swatch.Swatch, t float64) swatch.Swatch {
+	p, _ := FromSwatch(a)
+	q, _ := FromSwatch(b)
+	return RGB{p.R + (q.R-p.R)*t, p.G + (q.G-p.G)*t, p.B + (q.B-p.B)*t}.Swatch()
+}}
 
 // hueAndRange is the arithmetic the two cylinders share: which lamp is
 // brightest decides the sixth of the wheel, and the spread between the

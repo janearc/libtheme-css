@@ -20,6 +20,7 @@ import (
 	"strings"
 
 	"github.com/janearc/libtheme-css/css"
+	"github.com/janearc/libtheme-css/primitives/functions"
 	"github.com/janearc/libtheme-css/primitives/swatch"
 	"github.com/janearc/libtheme-css/spaces/ok"
 	"github.com/janearc/libtheme-css/spaces/srgb"
@@ -148,9 +149,10 @@ func show(arg string) error {
 }
 
 // ramp draws the line between two colours twice: once in oklab, which
-// is the line the library uses, and once as a straight line in the
+// is the line the library uses, and once as a straight line through the
 // lamps, which is what every other tool does, so the difference is on
-// screen and not in an argument.
+// screen and not in an argument. Both are the same Ramp with a different
+// mixer, which is the whole point of the mixer being a parameter.
 func ramp(a, b string, n int) error {
 	sa, err := parse(a)
 	if err != nil {
@@ -163,20 +165,21 @@ func ramp(a, b string, n int) error {
 	if n < 2 {
 		n = 2
 	}
-	la, lb := ok.FromSwatch(sa), ok.FromSwatch(sb)
-	ca, _ := srgb.FromSwatch(sa)
-	cb, _ := srgb.FromSwatch(sb)
-	var inOK, inLamps strings.Builder
-	for i := 0; i < n; i++ {
-		t := float64(i) / float64(n-1)
-		mid := ok.OKLab{L: la.L + (lb.L-la.L)*t, A: la.A + (lb.A-la.A)*t, B: la.B + (lb.B-la.B)*t}
-		inOK.WriteString(paint(mid.Swatch(), 2))
-		lamps := srgb.RGB{R: ca.R + (cb.R-ca.R)*t, G: ca.G + (cb.G-ca.G)*t, B: ca.B + (cb.B-ca.B)*t}
-		inLamps.WriteString(paint(lamps.Swatch(), 2))
+	for _, in := range []functions.Mixer{ok.Mix, srgb.Mix} {
+		r := functions.Even(in, sa, sb)
+		var line strings.Builder
+		for _, s := range r.Samples(n) {
+			line.WriteString(paint(s, 2))
+		}
+		fmt.Printf("%-6s %s  %s\n", in.Name, line.String(), r.String(hex))
 	}
-	fmt.Printf("oklab  %s\n", inOK.String())
-	fmt.Printf("lamps  %s\n", inLamps.String())
 	return nil
+}
+
+// hex is a swatch written the way a stop in css is.
+func hex(s swatch.Swatch) string {
+	c, _ := srgb.FromSwatch(s)
+	return c.Hex()
 }
 
 // known is everything the library can put on screen without being told a

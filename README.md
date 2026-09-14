@@ -12,6 +12,9 @@ branches, and read as it goes. what exists:
                           which makes this the world's only pre-war
                           css-normalising theme library.
 
+    primitives/functions  a ramp: stops and a mixer, a function from t to a
+                          swatch. the spaces each supply a mixer.
+
     spaces/ok             the same colour on the axes an eye agrees with:
                           oklab, and its polar form oklch.
     spaces/srgb           the same colour as a screen's three lamps, and

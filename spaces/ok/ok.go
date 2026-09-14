@@ -14,6 +14,7 @@ import (
 	"math"
 
 	"github.com/janearc/libtheme-css/internal/mat"
+	"github.com/janearc/libtheme-css/primitives/functions"
 	"github.com/janearc/libtheme-css/primitives/swatch"
 )
 
@@ -115,6 +116,14 @@ const (
 
 // Same is whether two colours are within a tolerance of each other.
 func Same(a, b OKLab, tolerance float64) bool { return Distance(a, b) <= tolerance }
+
+// Mix is the swatch t of the way from a to b along a straight line in
+// this space, which is the line that looks straight. It is the mixer a
+// ramp should use unless it has a reason not to.
+var Mix = functions.Mixer{Name: "oklab", Mix: func(a, b swatch.Swatch, t float64) swatch.Swatch {
+	p, q := FromSwatch(a), FromSwatch(b)
+	return OKLab{p.L + (q.L-p.L)*t, p.A + (q.A-p.A)*t, p.B + (q.B-p.B)*t}.Swatch()
+}}
 
 // The numbers.
 //
