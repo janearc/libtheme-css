@@ -53,3 +53,25 @@ func TestThrough(t *testing.T) {
 		t.Errorf("identity changed the field")
 	}
 }
+
+// Func is a field written inline: an egg, a radial whose radius is
+// larger below the centre than above, is a few lines and needs no type.
+// At the same distance, a point below the centre gets a smaller t than a
+// point above, because the egg is bigger there.
+func TestFunc(t *testing.T) {
+	egg := Func(func(u, v float64) float64 {
+		dx, dy := u-0.5, v-0.5
+		radius := 0.3
+		if dy > 0 {
+			radius = 0.45
+		}
+		return math.Hypot(dx, dy) / radius
+	})
+	above, below := egg.T(0.5, 0.3), egg.T(0.5, 0.7)
+	if !(below < above) {
+		t.Errorf("below the centre the egg is bigger, so t should be smaller: above %v below %v", above, below)
+	}
+	if egg.T(0.5, 0.5) != 0 || egg.T(0, 0) != 1 {
+		t.Errorf("centre and far corner: %v %v", egg.T(0.5, 0.5), egg.T(0, 0))
+	}
+}
