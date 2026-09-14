@@ -43,6 +43,7 @@ func eyeCSS() string {
 		line("same-to-a-person", eyeSame) +
 		line("just-tellable", eyeTellable) +
 		line("different", eyeApart) +
-		fmt.Sprintf("  /* %.2g apart in oklab is where a person starts to see it */\n", ok.Eye) +
+		fmt.Sprintf("  /* %.2g apart in oklab: where a person starts to see it */\n",
+			ok.Eye) +
 		"}\n"
 }
