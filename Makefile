@@ -1,6 +1,6 @@
 # libtheme-css. `make` runs the checks; `make build` puts every command
 # in bin/, which is gitignored; `make clean` takes bin/ away again.
-.PHONY: all fmt vet test build clean visualtest
+.PHONY: all fmt vet test build clean visualtest visualtest-css
 all: fmt vet test
 fmt:
 	gofmt -l -w .
@@ -17,3 +17,8 @@ clean:
 # so a change lower down is a change you can see.
 visualtest: build
 	./bin/libtheme known
+# the same set as css, then every colour written two ways and read back,
+# so the translation is shown to be equivalent, not asserted.
+visualtest-css: build
+	./bin/libtheme known --css
+	./bin/libtheme roundtrip

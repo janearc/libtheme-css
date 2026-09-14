@@ -11,6 +11,11 @@
 //	                                        without being told a colour: the
 //	                                        visual test, run by make visualtest
 //	libtheme known --css                    the same set, as a css sheet
+//	libtheme roundtrip                      each known colour written two ways,
+//	                                        hex and oklch(), read back through
+//	                                        the tool's own parser, and compared:
+//	                                        the translation is equivalent or the
+//	                                        test says where it is not
 package main
 
 import (
@@ -35,6 +40,8 @@ func main() {
 	switch os.Args[1] {
 	case "known":
 		err = known(len(os.Args) > 2 && os.Args[2] == "--css")
+	case "roundtrip":
+		err = roundtrip()
 	case "show":
 		if len(os.Args) < 3 {
 			usage()
@@ -65,7 +72,7 @@ func main() {
 }
 
 func usage() {
-	fmt.Fprintln(os.Stderr, "libtheme known [--css] | show COLOUR | ramp COLOUR COLOUR [steps]\n  COLOUR is #rrggbb or oklch(L% C H)")
+	fmt.Fprintln(os.Stderr, "libtheme known [--css] | roundtrip | show COLOUR | ramp COLOUR COLOUR [steps]\n  COLOUR is #rrggbb or oklch(L% C H)")
 }
 
 // parse reads the two spellings a person types: a hex code, or css's
@@ -85,7 +92,11 @@ func parse(s string) (swatch.Swatch, error) {
 		if c.C, err = strconv.ParseFloat(fields[1], 64); err != nil {
 			return swatch.Black, err
 		}
-		if c.H, err = strconv.ParseFloat(fields[2], 64); err != nil {
+		// css's "none" for a hue means there isn't one to speak of: the
+		// colour is grey to an eye, and any angle would do. zero does.
+		if fields[2] == "none" {
+			c.H = 0
+		} else if c.H, err = strconv.ParseFloat(fields[2], 64); err != nil {
 			return swatch.Black, err
 		}
 		return c.Rect().Swatch(), nil
@@ -180,6 +191,51 @@ func ramp(a, b string, n int) error {
 func hex(s swatch.Swatch) string {
 	c, _ := srgb.FromSwatch(s)
 	return c.Hex()
+}
+
+// roundtrip is the translation test: every known colour is written the
+// two ways the tool can read, hex and oklch(), both spellings are read
+// back through parse, and the two swatches are compared. within Exact
+// they are the same colour to arithmetic; within Eye they are the same
+// colour to a person, which is what the oklch spelling, printed to three
+// places, can promise. a colourway file is only as good as this trip.
+func roundtrip() error {
+	type entry struct {
+		name string
+		s    swatch.Swatch
+	}
+	list := []entry{
+		{"black", swatch.Black}, {"white", swatch.White},
+		{"red", srgb.Red.Swatch()}, {"green", srgb.Green.Swatch()}, {"blue", srgb.Blue.Swatch()},
+	}
+	fmt.Printf("%-6s %-8s %-24s %-10s %s\n", "", "hex", "oklch", "apart", "verdict")
+	failed := false
+	for _, e := range list {
+		h := hex(e.s)
+		l := ok.FromSwatch(e.s).Polar().String()
+		fromHex, err := parse(h)
+		if err != nil {
+			return err
+		}
+		fromLCH, err := parse(l)
+		if err != nil {
+			return err
+		}
+		d := ok.Distance(ok.FromSwatch(fromHex), ok.FromSwatch(fromLCH))
+		verdict := "same to a person (within Eye)"
+		switch {
+		case d <= ok.Exact:
+			verdict = "same to arithmetic (within Exact)"
+		case d > ok.Eye:
+			verdict = "DIFFERENT: a person could see it"
+			failed = true
+		}
+		fmt.Printf("%s %-6s %-8s %-24s %-10.5f %s\n", paint(e.s, 2), e.name, h, l, d, verdict)
+	}
+	if failed {
+		return fmt.Errorf("a round trip lost more than an eye can miss")
+	}
+	return nil
 }
 
 // known is everything the library can put on screen without being told a
