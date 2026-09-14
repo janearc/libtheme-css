@@ -41,3 +41,26 @@ func FromXYZ(x, y, z float64) Swatch { return Swatch{x, y, z} }
 func (s Swatch) XYZ() (x, y, z float64) { return s.x, s.y, s.z }
 
 // White and Black are in observer.go, where White is derived.
+
+// FromXY makes a swatch from a CIE 1931 chromaticity, the place on the
+// horseshoe with the brightness taken out, and a luminance to put it
+// back: X = x/y·Y, Z = (1−x−y)/y·Y. This is what a lamp that reports xy
+// is saying, and it is not a colour until the luminance is chosen. A
+// chromaticity with y at zero has no light in it and is black.
+func FromXY(x, y, luminance float64) Swatch {
+	if y <= 0 {
+		return Black
+	}
+	return Swatch{x / y * luminance, luminance, (1 - x - y) / y * luminance}
+}
+
+// XY is the swatch's chromaticity: where it sits on the horseshoe, with
+// how bright it is divided out. Black has no chromaticity and reports
+// the white's, which is the least wrong thing to say about no light.
+func (s Swatch) XY() (x, y float64) {
+	sum := s.x + s.y + s.z
+	if sum <= 0 {
+		return White.XY()
+	}
+	return s.x / sum, s.y / sum
+}
