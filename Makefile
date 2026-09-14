@@ -1,5 +1,13 @@
-# libtheme-css. `make` runs the checks; `make build` puts every command
-# in bin/, which is gitignored; `make clean` takes bin/ away again.
+# libtheme-css. the same verbs as libreadme, so the two read the same:
+#   make                gofmt, go vet, go test
+#   make build          every command under cmd/ into bin/, which is gitignored
+#   make clean          bin/ away again
+#   make visualtest     everything the library can derive, painted
+#   make visualtest-css the same set as css, then every colour written two
+#                       ways and read back, so the translation is shown
+#   make visualdocs     the documentation, shown; enter for the next page
+#   make visualdocs-css every page of it, said in css
+#   make docs           what go doc extracts from the comments
 .PHONY: all fmt vet test build clean visualtest visualtest-css visualdocs visualdocs-css docs
 all: fmt vet test
 fmt:
