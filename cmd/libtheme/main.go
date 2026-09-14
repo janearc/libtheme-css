@@ -247,7 +247,7 @@ func roundtrip() error {
 		{"black", swatch.Black}, {"white", swatch.White},
 		{"red", srgb.Red.Swatch()}, {"green", srgb.Green.Swatch()}, {"blue", srgb.Blue.Swatch()},
 	}
-	heading("each colour written two ways, read back through the same parser, and compared against the eye's tolerance")
+	heading("each colour written two ways, read back through the same parser; 'apart' is the distance in oklab between the two readings")
 	fmt.Printf("%s   %-6s %-8s %-24s %-8s %s%s\n", dim, "", "hex", "oklch", "apart", "verdict", plain)
 	failed := false
 	for _, e := range list {
@@ -262,12 +262,12 @@ func roundtrip() error {
 			return err
 		}
 		d := ok.Distance(ok.FromSwatch(fromHex), ok.FromSwatch(fromLCH))
-		verdict := "same to a person (within Eye)"
+		verdict := fmt.Sprintf("same to a person: under %.2g, the smallest difference an eye notices", ok.Eye)
 		switch {
 		case d <= ok.Exact:
-			verdict = "same to arithmetic (within Exact)"
+			verdict = fmt.Sprintf("identical: under %.0e, arithmetic noise", ok.Exact)
 		case d > ok.Eye:
-			verdict = "DIFFERENT: a person could see it"
+			verdict = fmt.Sprintf("DIFFERENT: over %.2g, a person could see it", ok.Eye)
 			failed = true
 		}
 		fmt.Printf("%s %-6s %-8s %-24s %-8.5f %s\n", paint(e.s, 2), e.name, h, l, d, verdict)
