@@ -4,7 +4,6 @@ import (
 	"regexp"
 	"sort"
 	"strconv"
-	"strings"
 
 	"github.com/janearc/libtheme-css/primitives/functions"
 	"github.com/janearc/libtheme-css/primitives/swatch"
@@ -13,18 +12,15 @@ import (
 )
 
 // Colourway is what a colourway file holds once read: its roles, every
-// custom property that is a hex colour, in file order, and its ramps.
-// A ramp comes from two shapes a file uses. A numbered family of roles,
-// --sunset-1 to --sunset-6, is an even ramp called sunset. A rule whose
-// background is a gradient with hex stops at percentages,
-// `.sunset { background: linear-gradient(180deg, #2a0f4d 0%, ...) }`,
-// is a positioned ramp called after the selector; where both name the
-// same ramp the gradient wins, since it carries the positions. Stops
-// that are not plain hex, `transparent` and `rgba(...)` with an alpha,
-// are left out: a lamp has no alpha and a sheet has no ground to blend
-// with. Ramps mix in oklab, the library's line between two colours,
-// which is not what a browser does with the same gradient and is said
-// here so nobody is surprised.
+// custom property that is a hex colour, in file order, and its ramps,
+// which are numbered families of roles: --sunset-1 to --sunset-6 is an
+// even ramp called sunset. That is the whole grammar, and it is ours:
+// a sheet this library wrote, or a colourway written by hand in the
+// same shape. Anything else in the file, selectors, gradients, the
+// rest of css, is not read. This is a container, not a parser; a file
+// that wants a ramp read promotes its stops to roles, as the
+// vaporwave file does. Ramps mix in oklab, the library's line between
+// two colours, which is said here so nobody is surprised.
 type Colourway struct {
 	Roles *Sheet
 	Ramps map[string]functions.Ramp
@@ -33,16 +29,12 @@ type Colourway struct {
 }
 
 var (
-	roleRe     = regexp.MustCompile(`--([a-zA-Z0-9_-]+)\s*:\s*(#[0-9a-fA-F]{3,8})\b`)
-	ruleRe     = regexp.MustCompile(`([.#]?[a-zA-Z0-9_-]+)\s*\{([^}]*)\}`)
-	gradientRe = regexp.MustCompile(`(?:repeating-)?(?:linear|radial)-gradient\(([^;]*)\)`)
-	stopRe     = regexp.MustCompile(`(#[0-9a-fA-F]{3,8})\s+(\d+(?:\.\d+)?)%`)
-	familyRe   = regexp.MustCompile(`^(.*)-(\d+)$`)
+	roleRe   = regexp.MustCompile(`--([a-zA-Z0-9_-]+)\s*:\s*(#[0-9a-fA-F]{3,8})\b`)
+	familyRe = regexp.MustCompile(`^(.*)-(\d+)$`)
 )
 
-// Read parses a colourway's css. It is not a css parser; it reads the
-// two shapes a colourway file uses and ignores the rest, which is what
-// a reader that will be pointed at hand-written files should do.
+// Read reads a colourway: hex custom properties as roles, numbered
+// families as ramps. It is not a css parser and reads nothing else.
 func Read(src string) Colourway {
 	cw := Colourway{Roles: New(), Ramps: map[string]functions.Ramp{}}
 	for _, m := range roleRe.FindAllStringSubmatch(src, -1) {
@@ -50,27 +42,24 @@ func Read(src string) Colourway {
 			cw.Roles.Set(m[1], c.Swatch())
 		}
 	}
-	// numbered families first, so a gradient with the same name replaces
-	// them below rather than the other way round.
 	families := map[string][]struct {
 		n    int
 		name string
 	}{}
+	var order []string
 	for _, name := range cw.Roles.Names() {
 		if m := familyRe.FindStringSubmatch(name); m != nil {
 			n, _ := strconv.Atoi(m[2])
+			if _, seen := families[m[1]]; !seen {
+				order = append(order, m[1])
+			}
 			families[m[1]] = append(families[m[1]], struct {
 				n    int
 				name string
 			}{n, name})
 		}
 	}
-	var familyNames []string
-	for f := range families {
-		familyNames = append(familyNames, f)
-	}
-	sort.Strings(familyNames)
-	for _, f := range familyNames {
+	for _, f := range order {
 		members := families[f]
 		if len(members) < 2 {
 			continue
@@ -82,30 +71,6 @@ func Read(src string) Colourway {
 			stops = append(stops, swatchAt{float64(i) / float64(len(members)-1), c})
 		}
 		cw.add(f, stops)
-	}
-	for _, m := range ruleRe.FindAllStringSubmatch(src, -1) {
-		g := gradientRe.FindStringSubmatch(m[2])
-		if g == nil {
-			continue
-		}
-		var stops []swatchAt
-		for _, st := range stopRe.FindAllStringSubmatch(g[1], -1) {
-			c, err := srgb.FromHex(st[1])
-			if err != nil {
-				continue
-			}
-			at, _ := strconv.ParseFloat(st[2], 64)
-			stops = append(stops, swatchAt{at / 100, c.Swatch()})
-		}
-		if len(stops) == 0 {
-			continue
-		}
-		name := strings.TrimLeft(m[1], ".#")
-		if _, seen := cw.Ramps[name]; seen {
-			cw.Ramps[name] = ramp(stops)
-			continue
-		}
-		cw.add(name, stops)
 	}
 	return cw
 }

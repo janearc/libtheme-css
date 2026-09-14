@@ -90,9 +90,11 @@ and the difference between this library and most is that it says so.
 
 ## the reader's line
 
-`css.Read` turns a colourway's gradients into ramps, and a ramp here
-mixes in oklab. a browser mixes the same `linear-gradient` in srgb
-unless told otherwise, so the ramp this library hands a lamp is not the
-ramp the page shows between the same stops; it is the one the eye would
-prefer. the stops are exact; the line between them is ours. stops with
-an alpha are dropped, because a lamp has no ground to blend against.
+`css.Read` turns a colourway's numbered families into ramps, and a ramp
+here mixes in oklab. a browser drawing a `linear-gradient` over the
+same stops mixes in srgb unless told otherwise, so the ramp this
+library hands a lamp is not the ramp the page shows between the same
+stops; it is the one the eye would prefer. the stops are exact; the
+line between them is ours. the gradient rule itself is not read: this
+is a container, not a css parser, and a file that wants its gradient on
+a lamp promotes the stops to roles.

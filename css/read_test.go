@@ -41,19 +41,19 @@ func TestReadRoles(t *testing.T) {
 	}
 }
 
-// sunset is a ramp with the gradient's positions, not the family's even
-// ones; sun has two stops at 0 and 0.3 and the rgba stop is dropped;
-// scanlines has no hex stops and is no ramp.
+// ramps come only from numbered families, in file order and with even
+// stops; the gradient rules in the file are not read, so scanlines is
+// nothing and sunset is the six promoted roles, not the rule.
 func TestReadRamps(t *testing.T) {
 	cw := Read(vaporwaveish)
 	if _, ok := cw.Ramps["scanlines"]; ok {
-		t.Error("scanlines became a ramp with no colours")
+		t.Error("a gradient rule was read")
 	}
 	sunset := cw.Ramps["sunset"]
 	if len(sunset.Stops) != 6 {
 		t.Fatalf("sunset has %d stops", len(sunset.Stops))
 	}
-	for i, want := range []float64{0, .34, .56, .66, .80, 1} {
+	for i, want := range []float64{0, .2, .4, .6, .8, 1} {
 		if math.Abs(sunset.Stops[i].At-want) > 1e-9 {
 			t.Errorf("sunset stop %d at %v, want %v", i, sunset.Stops[i].At, want)
 		}
@@ -61,11 +61,10 @@ func TestReadRamps(t *testing.T) {
 	if sunset.Stops[3].Swatch != srgb.MustHex("#d94a8c").Swatch() {
 		t.Error("sunset stop 4 is not #d94a8c")
 	}
-	sun := cw.Ramps["sun"]
-	if len(sun.Stops) != 2 || math.Abs(sun.Stops[1].At-0.3) > 1e-9 {
+	if sun := cw.Ramps["sun"]; len(sun.Stops) != 2 {
 		t.Errorf("sun: %v", sun.Stops)
 	}
-	if len(cw.Order) != 2 {
+	if len(cw.Order) != 2 || cw.Order[0] != "sunset" {
 		t.Errorf("order: %v", cw.Order)
 	}
 }
