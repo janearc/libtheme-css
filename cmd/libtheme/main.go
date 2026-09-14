@@ -216,11 +216,17 @@ func known(asCSS bool) error {
 		c, _ := srgb.FromSwatch(e.s)
 		fmt.Printf("%s  %-6s %s   %-24s %s\n", paint(e.s, 8), e.name, c.Hex(), lch, e.from)
 	}
-	var line strings.Builder
-	const steps = 24
-	for i := 0; i < steps; i++ {
-		line.WriteString(paint(ok.Grey(float64(i)/(steps-1)).Swatch(), 2))
+	// The one line the library defines on its own, drawn with each mixer
+	// the spaces supply: the same two stops, and the disagreement between
+	// the spaces about what a straight line is, on screen.
+	fmt.Println()
+	for _, in := range []functions.Mixer{ok.Mix, srgb.Mix} {
+		r := functions.Even(in, swatch.Black, swatch.White)
+		var line strings.Builder
+		for _, s := range r.Samples(24) {
+			line.WriteString(paint(s, 2))
+		}
+		fmt.Printf("%s  black to white, %s\n", line.String(), r.String(hex))
 	}
-	fmt.Printf("\n%s  the grey line, ok: black to white in even steps to the eye\n", line.String())
 	return nil
 }
