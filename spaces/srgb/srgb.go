@@ -260,3 +260,32 @@ func (c HSV) RGB() RGB {
 	chroma := c.V * c.S
 	return fromHue(c.H, chroma, c.V-chroma)
 }
+
+// RGB8 is a colour from the 0-255 bytes a person or a file usually has.
+func RGB8(r, g, b uint8) RGB {
+	return RGB{float64(r) / 255, float64(g) / 255, float64(b) / 255}
+}
+
+// RGBA makes an RGB an image/color.Color, so it can be handed to
+// anything that draws without a conversion at every call.
+func (c RGB) RGBA() (r, g, b, a uint32) {
+	q := func(v float64) uint32 {
+		return uint32(math.Round(math.Max(0, math.Min(1, v)) * 0xffff))
+	}
+	return q(c.R), q(c.G), q(c.B), 0xffff
+}
+
+// Equal is whether two colours are the same to within a byte per
+// channel, which is the resolution anything downstream can show.
+func (c RGB) Equal(o RGB) bool {
+	r1, g1, b1 := c.Bytes()
+	r2, g2, b2 := o.Bytes()
+	return r1 == r2 && g1 == g2 && b1 == b2
+}
+
+// In is the display's gamut as a rule a fit or a picker can ask: whether
+// a swatch is one this space can show.
+func In(s swatch.Swatch) bool {
+	_, in := FromSwatch(s)
+	return in
+}

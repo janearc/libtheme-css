@@ -1,6 +1,7 @@
 package srgb
 
 import (
+	"image/color"
 	"math"
 	"testing"
 
@@ -135,4 +136,26 @@ func TestGamutHasSlack(t *testing.T) {
 // xyzOf is the tristimulus of a linear-light srgb triple, for a probe.
 func xyzOf(r, g, b float64) (x, y, z float64) {
 	return rgbToXYZ.Apply(r, g, b)
+}
+
+// bytes in and out, a colour is an image/color.Color, and equal means
+// within a byte per channel.
+func TestBytesColorAndEqual(t *testing.T) {
+	c := RGB8(0x14, 0x14, 0x18)
+	if r, g, b := c.Bytes(); r != 0x14 || g != 0x14 || b != 0x18 {
+		t.Fatalf("bytes: %d %d %d", r, g, b)
+	}
+	var _ color.Color = c
+	if r, _, _, a := RGB8(255, 0, 0).RGBA(); r != 0xffff || a != 0xffff {
+		t.Errorf("rgba: %d %d", r, a)
+	}
+	if !c.Equal(RGB{c.R + 0.001, c.G, c.B}) {
+		t.Error("a difference below a byte was unequal")
+	}
+	if c.Equal(RGB8(0x15, 0x14, 0x18)) {
+		t.Error("a byte of difference was equal")
+	}
+	if !In(Red.Swatch()) || In(ok.OKLCH{L: 0.7, C: 0.4, H: 145}.Rect().Swatch()) {
+		t.Error("In does not agree with FromSwatch")
+	}
 }
