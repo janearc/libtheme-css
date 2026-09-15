@@ -118,3 +118,21 @@ func TestCylinders(t *testing.T) {
 		}
 	}
 }
+
+// a channel a hair outside is in gamut, since no display could show
+// the difference; a whole step outside is not.
+func TestGamutHasSlack(t *testing.T) {
+	hair := swatch.FromXYZ(xyzOf(-5e-5, 0, 0.5))
+	if _, in := FromSwatch(hair); !in {
+		t.Error("a hair under zero was called out of gamut")
+	}
+	step := swatch.FromXYZ(xyzOf(-1e-3, 0, 0.5))
+	if _, in := FromSwatch(step); in {
+		t.Error("a whole step under zero passed as in gamut")
+	}
+}
+
+// xyzOf is the tristimulus of a linear-light srgb triple, for a probe.
+func xyzOf(r, g, b float64) (x, y, z float64) {
+	return rgbToXYZ.Apply(r, g, b)
+}

@@ -92,6 +92,13 @@ func fromLinear(c float64) float64 {
 	return 1.055*math.Pow(c, 1/2.4) - 0.055
 }
 
+// gamutSlack is how far outside 0..1, in linear light, a channel may
+// fall and still count as in gamut: a display's darkest step is about
+// 3e-4 linear, so a hair less than that is clipped without comment.
+// At 1e-6 a dark blue whose red channel hovers just under zero across
+// a band of chroma is called out, and a fit walks it back by a sixth.
+const gamutSlack = 1e-4
+
 // FromSwatch is the swatch as lamp levels, and whether the lamps can
 // make it. Out of gamut, the levels are clipped to 0..1 and inGamut is
 // false: the nearest thing the lamps can do, and an honest word that it
@@ -101,7 +108,7 @@ func FromSwatch(s swatch.Swatch) (c RGB, inGamut bool) {
 	r, g, b := xyzToRGB.Apply(s.XYZ())
 	inGamut = true
 	clip := func(v float64) float64 {
-		if v < -1e-6 || v > 1+1e-6 {
+		if v < -gamutSlack || v > 1+gamutSlack {
 			inGamut = false
 		}
 		return math.Max(0, math.Min(1, v))

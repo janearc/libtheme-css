@@ -98,3 +98,14 @@ stops; it is the one the eye would prefer. the stops are exact; the
 line between them is ours. the gradient rule itself is not read: this
 is a container, not a css parser, and a file that wants its gradient on
 a lamp promotes the stops to roles.
+
+## the gamut's slack
+
+`srgb.FromSwatch` calls a colour in gamut when every channel is within
+a ten-thousandth of 0..1 in linear light, not within a millionth. a
+display's darkest step is about three ten-thousandths linear, so a
+hair past the edge is a colour it shows exactly as it shows the edge.
+the reason it matters: a dark blue's red channel can sit a hair under
+zero across a wide band of chroma, and at a millionth the fit walks it
+back by a sixth to reach a point the eye cannot tell from where it
+was. the number is a display's, not the truth.
