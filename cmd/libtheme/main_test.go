@@ -39,14 +39,19 @@ func TestVerbsAssumeNothingAboutTheTerminal(t *testing.T) {
 		"known-paint": func() error { return known("--paint") },
 		"roundtrip":   roundtrip,
 		"show":        func() error { return show("#ff6ec7") },
-		"ramp":        func() error { return ramp("#160d2b", "#ffa2ff", 24) },
+		"ramp": func() error {
+			return ramp("#160d2b", "#ffa2ff",
+				24)
+		},
 	}
 	allowed := regexp.MustCompile(`^\x1b\[(48;2;\d+;\d+;\d+|0)m$`)
 	for name, f := range verbs {
 		out := capture(t, f)
-		for n, line := range strings.Split(escape.ReplaceAllString(out, ""), "\n") {
+		for n, line := range strings.Split(escape.ReplaceAllString(out,
+			""), "\n") {
 			if len(line) > 80 {
-				t.Errorf("%s: line %d is %d columns", name, n+1, len(line))
+				t.Errorf("%s: line %d is %d columns", name, n+1,
+					len(line))
 			}
 		}
 		for _, e := range escape.FindAllString(out, -1) {
@@ -66,10 +71,12 @@ func TestVerbsAssumeNothingAboutTheTerminal(t *testing.T) {
 // The plain css from known is a :root block a browser would read.
 func TestKnownCSSIsCSS(t *testing.T) {
 	out := capture(t, func() error { return known("--css") })
-	if !strings.HasPrefix(out, ":root {\n") || !strings.HasSuffix(out, "}\n") {
+	if !strings.HasPrefix(out, ":root {\n") || !strings.HasSuffix(out,
+		"}\n") {
 		t.Errorf("known --css is not one :root block:\n%s", out)
 	}
 	if escape.MatchString(out) {
-		t.Errorf("known --css carries escapes; it is for piping into a file")
+		t.Errorf("known --css carries escapes; it is for piping into " +
+			"a file")
 	}
 }

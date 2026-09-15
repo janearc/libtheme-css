@@ -58,7 +58,8 @@ func main() {
 		}
 	}
 	if mode != "" && mode != "--css" && mode != "--go" {
-		fmt.Fprintf(os.Stderr, "visualdocs: modes are --css and --go, not %q\n", mode)
+		fmt.Fprintf(os.Stderr,
+			"visualdocs: modes are --css and --go, not %q\n", mode)
 		os.Exit(2)
 	}
 	chosen := pages
@@ -70,7 +71,9 @@ func main() {
 			}
 		}
 		if chosen == nil {
-			fmt.Fprintf(os.Stderr, "no page called %q; there is %s\n", name, names())
+			fmt.Fprintf(os.Stderr,
+				"no page called %q; there is "+
+					"%s\n", name, names())
 			os.Exit(2)
 		}
 	}
@@ -98,7 +101,8 @@ func main() {
 			fmt.Println()
 			continue
 		}
-		fmt.Printf("\n   [%d/%d] enter for %s, q to stop: ", i+1, len(chosen), chosen[i+1].name)
+		fmt.Printf("\n   [%d/%d] enter for %s, q to stop: ", i+1,
+			len(chosen), chosen[i+1].name)
 		line, _ := in.ReadString('\n')
 		if strings.TrimSpace(line) == "q" {
 			return
@@ -133,7 +137,8 @@ func paint(s swatch.Swatch, width int) string {
 	}
 	c, _ := srgb.FromSwatch(s)
 	r, g, b := c.Bytes()
-	return fmt.Sprintf("\x1b[48;2;%d;%d;%dm%s\x1b[0m", r, g, b, strings.Repeat(" ", width))
+	return fmt.Sprintf("\x1b[48;2;%d;%d;%dm%s\x1b[0m", r, g, b,
+		strings.Repeat(" ", width))
 }
 
 // noColour is the NO_COLOR convention: set to anything, colour is off.
@@ -162,4 +167,10 @@ func say(lines ...string) {
 	for _, l := range lines {
 		fmt.Println("   " + l)
 	}
+}
+
+// lines is a page's prose as the lines it was written in, the newline
+// after the opening backtick dropped.
+func lines(prose string) []string {
+	return strings.Split(strings.TrimPrefix(prose, "\n"), "\n")
 }

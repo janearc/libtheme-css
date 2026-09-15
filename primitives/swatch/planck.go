@@ -20,7 +20,8 @@ func Planckian(kelvin float64) Swatch {
 	spectrum := make(map[int]float64, len(observer))
 	for nm := range observer {
 		wl := float64(nm) * 1e-9
-		spectrum[nm] = 1 / (math.Pow(wl, 5) * (math.Exp(h*c/(wl*k*kelvin)) - 1))
+		spectrum[nm] = 1 / (math.Pow(wl,
+			5) * (math.Exp(h*c/(wl*k*kelvin)) - 1))
 	}
 	return Illuminant(spectrum)
 }

@@ -64,7 +64,13 @@ func Points(r functions.Ramp, n int) []swatch.XY {
 // wire and that is the one to fit to; these are for a lamp that does
 // not, and for tests.
 var (
-	GamutA = swatch.Gamut{Red: swatch.XY{X: 0.704, Y: 0.296}, Green: swatch.XY{X: 0.2151, Y: 0.7106}, Blue: swatch.XY{X: 0.138, Y: 0.08}}
-	GamutB = swatch.Gamut{Red: swatch.XY{X: 0.675, Y: 0.322}, Green: swatch.XY{X: 0.409, Y: 0.518}, Blue: swatch.XY{X: 0.167, Y: 0.04}}
-	GamutC = swatch.Gamut{Red: swatch.XY{X: 0.6915, Y: 0.3083}, Green: swatch.XY{X: 0.17, Y: 0.7}, Blue: swatch.XY{X: 0.1532, Y: 0.0475}}
+	GamutA = swatch.Gamut{Red: swatch.XY{X: 0.704, Y: 0.296},
+		Green: swatch.XY{X: 0.2151,
+			Y: 0.7106}, Blue: swatch.XY{X: 0.138, Y: 0.08}}
+	GamutB = swatch.Gamut{Red: swatch.XY{X: 0.675, Y: 0.322},
+		Green: swatch.XY{X: 0.409, Y: 0.518}, Blue: swatch.XY{X: 0.167,
+			Y: 0.04}}
+	GamutC = swatch.Gamut{Red: swatch.XY{X: 0.6915, Y: 0.3083},
+		Green: swatch.XY{X: 0.17, Y: 0.7}, Blue: swatch.XY{X: 0.1532,
+			Y: 0.0475}}
 )

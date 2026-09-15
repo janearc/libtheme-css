@@ -8,6 +8,18 @@ import (
 	"github.com/janearc/libtheme-css/spaces/srgb"
 )
 
+// observerPageProse is what the page says.
+const observerPageProse = `
+the visible spectrum, one cell per five nanometres, as the 1931
+observer sees it: seventeen adults in two english labs, matching
+lamp light in a dark room, averaged into a table. that table is the
+library's whole definition of visible; ultraviolet and infrared
+contribute nothing because the table has no row for them. almost
+every colour in this bar is outside what a screen can make, so what
+you see is the nearest the lamps can do, which is what every screen
+has always shown you of a rainbow. the white, d65, is daylight run
+through the same table, derived at start-up, not typed.`
+
 // lifted is a wavelength's colour at full brightness: the hue shows, and
 // the clipping to the screen's reach is the honest part.
 func lifted(s swatch.Swatch) swatch.Swatch {
@@ -34,15 +46,7 @@ func observerPage() {
 	}
 	fmt.Printf("   %s\n   380 nm%sup to 700 nm\n\n",
 		b.String(), strings.Repeat(" ", 53))
-	say("the visible spectrum, one cell per five nanometres, as the 1931",
-		"observer sees it: seventeen adults in two english labs, matching",
-		"lamp light in a dark room, averaged into a table. that table is the",
-		"library's whole definition of visible; ultraviolet and infrared",
-		"contribute nothing because the table has no row for them. almost",
-		"every colour in this bar is outside what a screen can make, so what",
-		"you see is the nearest the lamps can do, which is what every screen",
-		"has always shown you of a rainbow. the white, d65, is daylight run",
-		"through the same table, derived at start-up, not typed.")
+	say(lines(observerPageProse)...)
 }
 
 // observerCSS is the page as a css sheet: the spectrum as twenty stops.

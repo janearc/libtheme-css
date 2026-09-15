@@ -87,7 +87,9 @@ func main() {
 
 // usage is the one line to type when the verb was wrong.
 func usage() {
-	fmt.Fprintln(os.Stderr, "libtheme known [--css|--paint] | roundtrip | show COLOUR | ramp COLOUR COLOUR [steps] | read FILE.css\n  COLOUR is #rrggbb or oklch(L% C H)")
+	fmt.Fprintln(os.Stderr, "libtheme known [--css|--paint] | roundtrip |"+
+		" show COLOUR | ramp COLOUR COLOUR [steps] | read FILE.css\n"+
+		"  COLOUR is #rrggbb or oklch(L% C H)")
 }
 
 // parse reads the two spellings a person types: a hex code, or css's
@@ -95,9 +97,13 @@ func usage() {
 func parse(s string) (swatch.Swatch, error) {
 	s = strings.TrimSpace(s)
 	if strings.HasPrefix(s, "oklch(") && strings.HasSuffix(s, ")") {
-		fields := strings.Fields(strings.TrimSuffix(strings.TrimPrefix(s, "oklch("), ")"))
+		inner := strings.TrimSuffix(strings.TrimPrefix(s, "oklch("),
+			")")
+		fields := strings.Fields(inner)
 		if len(fields) != 3 {
-			return swatch.Black, fmt.Errorf("oklch wants three numbers, not %q", s)
+			return swatch.Black,
+				fmt.Errorf("oklch wants three numbers, not %q",
+					s)
 		}
 		var c ok.OKLCH
 		var err error
@@ -111,7 +117,8 @@ func parse(s string) (swatch.Swatch, error) {
 		// colour is grey to an eye, and any angle would do. zero does.
 		if fields[2] == "none" {
 			c.H = 0
-		} else if c.H, err = strconv.ParseFloat(fields[2], 64); err != nil {
+		} else if c.H, err = strconv.ParseFloat(
+			fields[2], 64); err != nil {
 			return swatch.Black, err
 		}
 		return c.Rect().Swatch(), nil
@@ -146,7 +153,8 @@ func paint(s swatch.Swatch, width int) string {
 	}
 	c, _ := srgb.FromSwatch(s)
 	r, g, b := c.Bytes()
-	return fmt.Sprintf("\x1b[48;2;%d;%d;%dm%s\x1b[0m", r, g, b, strings.Repeat(" ", width))
+	return fmt.Sprintf("\x1b[48;2;%d;%d;%dm%s\x1b[0m",
+		r, g, b, strings.Repeat(" ", width))
 }
 
 // show prints one swatch in every form the library has, and paints it.
@@ -200,7 +208,8 @@ func ramp(a, b string, n int) error {
 		for _, s := range r.Samples(n) {
 			line.WriteString(paint(s, 2))
 		}
-		fmt.Printf("%-6s %s\n       %s\n", in.Name, line.String(), r.String(hex))
+		fmt.Printf("%-6s %s\n       %s\n",
+			in.Name, line.String(), r.String(hex))
 	}
 	return nil
 }
@@ -240,7 +249,10 @@ func paintSheet(sheet *css.Sheet) {
 	}
 	fmt.Printf("     :root {\n")
 	for _, r := range rules {
-		fmt.Printf("  %s   %s--%s:%s%*s %s;  %s/* %s */%s\n", paint(r.Swatch, 2), bold, r.Name, plain, width-len(r.Name), "", r.Value, dim, r.Comment, plain)
+		fmt.Printf("  %s   %s--%s:%s%*s %s;  %s/* %s */%s\n",
+			paint(r.Swatch,
+				2), bold, r.Name, plain, width-len(r.Name), "",
+			r.Value, dim, r.Comment, plain)
 	}
 	fmt.Printf("     }\n")
 }
@@ -258,13 +270,19 @@ func roundtrip() error {
 	}
 	list := []entry{
 		{"black", swatch.Black}, {"white", swatch.White},
-		{"red", srgb.Red.Swatch()}, {"green", srgb.Green.Swatch()}, {"blue", srgb.Blue.Swatch()},
+		{"red", srgb.Red.Swatch()},
+		{"green", srgb.Green.Swatch()},
+		{"blue", srgb.Blue.Swatch()},
 	}
-	heading("each colour written two ways and read back through the same parser.")
+	heading("each colour written two ways and read back through the same" +
+		" parser.")
 	heading("apart: the distance in oklab between the two readings.")
-	heading(fmt.Sprintf("under %.0e is arithmetic noise; under %.2g a person cannot tell", ok.Exact, ok.Eye))
+	heading(fmt.Sprintf("under %.0e is arithmetic noise; under %.2g a "+
+		"person"+
+		" cannot tell", ok.Exact, ok.Eye))
 	heading("them apart; over that, they could.")
-	fmt.Printf("   %-6s %-8s %-24s %-8s %s\n", "", "hex", "oklch", "apart", "verdict")
+	fmt.Printf("   %-6s %-8s %-24s %-8s %s\n",
+		"", "hex", "oklch", "apart", "verdict")
 	failed := false
 	for _, e := range list {
 		h := hex(e.s)
@@ -286,7 +304,8 @@ func roundtrip() error {
 			verdict = "DIFFERENT"
 			failed = true
 		}
-		fmt.Printf("%s %-6s %-8s %-24s %-8.5f %s\n", paint(e.s, 2), e.name, h, l, d, verdict)
+		fmt.Printf("%s %-6s %-8s %-24s %-8.5f %s\n",
+			paint(e.s, 2), e.name, h, l, d, verdict)
 	}
 	if failed {
 		return fmt.Errorf("a round trip lost more than an eye can miss")
@@ -324,16 +343,20 @@ func known(mode string) error {
 			fmt.Print(sheet.String())
 			return nil
 		}
-		heading("the same five as a css sheet. the cell before each rule is its value.")
+		heading("the same five as a css sheet. the cell before each " +
+			"rule is" +
+			" its value.")
 		paintSheet(sheet)
 		return nil
 	}
-	heading("everything the library can derive without being told a colour,")
+	heading("everything the library can derive without being told a" +
+		" colour,")
 	heading("and where each one is defined.")
 	for _, e := range list {
 		lch := ok.FromSwatch(e.s).Polar()
 		c, _ := srgb.FromSwatch(e.s)
-		fmt.Printf("%s  %-6s %s   %-24s %s\n", paint(e.s, 8), e.name, c.Hex(), lch, e.from)
+		fmt.Printf("%s  %-6s %s   %-24s %s\n",
+			paint(e.s, 8), e.name, c.Hex(), lch, e.from)
 	}
 	// The one line the library defines on its own, drawn with each mixer
 	// the spaces supply: the same two stops, and the disagreement between
@@ -345,7 +368,8 @@ func known(mode string) error {
 		for _, s := range r.Samples(24) {
 			line.WriteString(paint(s, 2))
 		}
-		fmt.Printf("%s  black to white\n   %s\n", line.String(), r.String(hex))
+		fmt.Printf("%s  black to white\n   %s\n",
+			line.String(), r.String(hex))
 	}
 	return nil
 }
@@ -365,7 +389,8 @@ func read(path string) error {
 		r := cw.Ramps[name]
 		heading(fmt.Sprintf("ramp %s, %d stops", name, len(r.Stops)))
 		for _, st := range r.Stops {
-			fmt.Printf("  %5.1f%%  %s  %s\n", st.At*100, paint(st.Swatch, 4), hex(st.Swatch))
+			fmt.Printf("  %5.1f%%  %s  %s\n",
+				st.At*100, paint(st.Swatch, 4), hex(st.Swatch))
 		}
 		var bar strings.Builder
 		for _, sw := range r.Samples(48) {

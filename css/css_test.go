@@ -14,7 +14,8 @@ func TestOrderAndReplace(t *testing.T) {
 	s.Set("ground", swatch.Black)
 	s.Set("ink", swatch.White)
 	s.Set("ground", srgb.Red.Swatch())
-	if got := s.Names(); len(got) != 2 || got[0] != "ground" || got[1] != "ink" {
+	if got := s.Names(); len(got) != 2 || got[0] != "ground" ||
+		got[1] != "ink" {
 		t.Errorf("names = %v", got)
 	}
 	if c, ok := s.Get("ground"); !ok || c != srgb.Red.Swatch() {

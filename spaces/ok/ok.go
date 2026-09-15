@@ -97,7 +97,8 @@ func Grey(l float64) OKLab { return OKLab{l, 0, 0} }
 // against a number you made up; every "are these the same" in the
 // library goes through here, so that precision is set once.
 func Distance(a, b OKLab) float64 {
-	return math.Sqrt((a.L-b.L)*(a.L-b.L) + (a.A-b.A)*(a.A-b.A) + (a.B-b.B)*(a.B-b.B))
+	return math.Sqrt((a.L-b.L)*(a.L-b.L) + (a.A-b.A)*(a.A-b.A) +
+		(a.B-b.B)*(a.B-b.B))
 }
 
 // The tolerances. A distance below Exact is arithmetic noise: two float
@@ -115,14 +116,19 @@ const (
 )
 
 // Same is whether two colours are within a tolerance of each other.
-func Same(a, b OKLab, tolerance float64) bool { return Distance(a, b) <= tolerance }
+func Same(a, b OKLab, tolerance float64) bool {
+	return Distance(a,
+		b) <= tolerance
+}
 
 // Mix is the swatch t of the way from a to b along a straight line in
 // this space, which is the line that looks straight. It is the mixer a
 // ramp should use unless it has a reason not to.
-var Mix = functions.Mixer{Name: "oklab", Mix: func(a, b swatch.Swatch, t float64) swatch.Swatch {
+var Mix = functions.Mixer{Name: "oklab", Mix: func(a, b swatch.Swatch,
+	t float64) swatch.Swatch {
 	p, q := FromSwatch(a), FromSwatch(b)
-	return OKLab{p.L + (q.L-p.L)*t, p.A + (q.A-p.A)*t, p.B + (q.B-p.B)*t}.Swatch()
+	return OKLab{p.L + (q.L-p.L)*t, p.A + (q.A-p.A)*t, p.B +
+		(q.B-p.B)*t}.Swatch()
 }}
 
 // The numbers.

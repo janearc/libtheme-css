@@ -73,7 +73,8 @@ func (s *Sheet) String() string {
 	var b strings.Builder
 	b.WriteString(":root {\n")
 	for _, r := range s.Rules() {
-		fmt.Fprintf(&b, "  --%s: %s; /* %s */\n", r.Name, r.Value, r.Comment)
+		fmt.Fprintf(&b, "  --%s: %s; /* %s */\n", r.Name, r.Value,
+			r.Comment)
 	}
 	b.WriteString("}\n")
 	return b.String()

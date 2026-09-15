@@ -24,7 +24,8 @@ func TestPlaceRoundTrip(t *testing.T) {
 // a ramp made from a lamp's five places sampled back to five is those
 // places, to the precision of going through oklab and back.
 func TestRampToPointsIsIdentityAtTheStops(t *testing.T) {
-	in := []swatch.XY{{X: 0.64, Y: 0.33}, {X: 0.5, Y: 0.4}, {X: 0.3127, Y: 0.329}, {X: 0.2, Y: 0.5}, {X: 0.15, Y: 0.06}}
+	in := []swatch.XY{{X: 0.64, Y: 0.33}, {X: 0.5, Y: 0.4}, {X: 0.3127,
+		Y: 0.329}, {X: 0.2, Y: 0.5}, {X: 0.15, Y: 0.06}}
 	out := Points(Ramp(in...), 5)
 	for i := range in {
 		if !near(out[i], in[i], 1e-6) {
@@ -58,6 +59,7 @@ func TestPublishedGamuts(t *testing.T) {
 	}
 	red := swatch.XY{X: 0.7347, Y: 0.2653}
 	if f := GamutC.Fit(red); !near(f, GamutC.Red, 1e-9) {
-		t.Errorf("spectral red should fit to gamut c's red corner, got %v", f)
+		t.Errorf("spectral red should fit to gamut c's red corner, "+
+			"got %v", f)
 	}
 }

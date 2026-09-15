@@ -113,17 +113,22 @@ func FromSwatch(s swatch.Swatch) (c RGB, inGamut bool) {
 		}
 		return math.Max(0, math.Min(1, v))
 	}
-	return RGB{fromLinear(clip(r)), fromLinear(clip(g)), fromLinear(clip(b))}, inGamut
+	return RGB{fromLinear(clip(r)), fromLinear(clip(g)),
+		fromLinear(clip(b))}, inGamut
 }
 
 // Swatch stores the lamp levels back as a swatch.
 func (c RGB) Swatch() swatch.Swatch {
-	return swatch.FromXYZ(rgbToXYZ.Apply(toLinear(c.R), toLinear(c.G), toLinear(c.B)))
+	return swatch.FromXYZ(rgbToXYZ.Apply(toLinear(c.R), toLinear(c.G),
+		toLinear(c.B)))
 }
 
 // Bytes is the lamps as the three bytes a terminal wants.
 func (c RGB) Bytes() (r, g, b uint8) {
-	round := func(v float64) uint8 { return uint8(math.Round(math.Max(0, math.Min(1, v)) * 255)) }
+	round := func(v float64) uint8 {
+		return uint8(math.Round(math.Max(0,
+			math.Min(1, v)) * 255))
+	}
 	return round(c.R), round(c.G), round(c.B)
 }
 
@@ -151,7 +156,8 @@ func FromHex(h string) (RGB, error) {
 		h = string([]byte{h[0], h[0], h[1], h[1], h[2], h[2]})
 	}
 	if len(h) != 6 {
-		return RGB{}, fmt.Errorf("hex colour wants three or six digits, not %q", h)
+		return RGB{}, fmt.Errorf("hex colour wants three or six "+
+			"digits, not %q", h)
 	}
 	var r, g, b uint8
 	if _, err := fmt.Sscanf(h, "%02x%02x%02x", &r, &g, &b); err != nil {
@@ -174,10 +180,12 @@ var (
 // through the lamps: what every tool that blends hex codes does, and the
 // line that goes through mud. Here so a ramp can choose it on purpose,
 // and so the difference can be drawn next to oklab's.
-var Mix = functions.Mixer{Name: "srgb", Mix: func(a, b swatch.Swatch, t float64) swatch.Swatch {
+var Mix = functions.Mixer{Name: "srgb", Mix: func(a, b swatch.Swatch,
+	t float64) swatch.Swatch {
 	p, _ := FromSwatch(a)
 	q, _ := FromSwatch(b)
-	return RGB{p.R + (q.R-p.R)*t, p.G + (q.G-p.G)*t, p.B + (q.B-p.B)*t}.Swatch()
+	return RGB{p.R + (q.R-p.R)*t, p.G + (q.G-p.G)*t, p.B +
+		(q.B-p.B)*t}.Swatch()
 }}
 
 // hueAndRange is the arithmetic the two cylinders share: which lamp is

@@ -24,8 +24,10 @@ func TestReferenceValues(t *testing.T) {
 	}
 	for _, c := range cases {
 		got := FromSwatch(swatch.FromXYZ(c.x, c.y, c.z))
-		if !near(got.L, c.l, 1e-3) || !near(got.A, c.a, 1e-3) || !near(got.B, c.b, 1e-3) {
-			t.Errorf("xyz %v %v %v gave %+v, want L %v a %v b %v", c.x, c.y, c.z, got, c.l, c.a, c.b)
+		if !near(got.L, c.l, 1e-3) || !near(got.A, c.a, 1e-3) ||
+			!near(got.B, c.b, 1e-3) {
+			t.Errorf("xyz %v %v %v gave %+v, want L %v a %v b %v",
+				c.x, c.y, c.z, got, c.l, c.a, c.b)
 		}
 	}
 }
@@ -34,7 +36,8 @@ func TestReferenceValues(t *testing.T) {
 // places, and black is black exactly.
 func TestWhiteAndBlack(t *testing.T) {
 	w := FromSwatch(swatch.White)
-	if !near(w.L, White.L, 1e-3) || !near(w.A, 0, 1e-3) || !near(w.B, 0, 1e-3) {
+	if !near(w.L, White.L, 1e-3) || !near(w.A, 0, 1e-3) || !near(w.B, 0,
+		1e-3) {
 		t.Errorf("white = %+v", w)
 	}
 	if FromSwatch(swatch.Black) != Black {
@@ -46,11 +49,13 @@ func TestWhiteAndBlack(t *testing.T) {
 // trillionth (measured on darwin/arm64): the inverses are computed, not
 // typed, and the cube and cube root undo each other.
 func TestRoundTrip(t *testing.T) {
-	for _, in := range []swatch.Swatch{swatch.White, swatch.FromXYZ(0.2, 0.1, 0.05), swatch.FromXYZ(0.4, 0.6, 0.9)} {
+	for _, in := range []swatch.Swatch{swatch.White, swatch.FromXYZ(0.2,
+		0.1, 0.05), swatch.FromXYZ(0.4, 0.6, 0.9)} {
 		out := FromSwatch(in).Swatch()
 		ix, iy, iz := in.XYZ()
 		ox, oy, oz := out.XYZ()
-		if !near(ix, ox, 1e-12) || !near(iy, oy, 1e-12) || !near(iz, oz, 1e-12) {
+		if !near(ix, ox, 1e-12) || !near(iy, oy, 1e-12) || !near(iz, oz,
+			1e-12) {
 			t.Errorf("%v came back as %v", in, out)
 		}
 	}
@@ -63,7 +68,8 @@ func TestPolar(t *testing.T) {
 	if p := Grey(0.5).Polar(); p.C != 0 || p.H != 0 || p.L != 0.5 {
 		t.Errorf("grey polar = %+v", p)
 	}
-	if p := (OKLab{0.5, 0.1, 0}).Polar(); !near(p.H, 0, 1e-9) || !near(p.C, 0.1, 1e-12) {
+	if p := (OKLab{0.5, 0.1, 0}).Polar(); !near(p.H, 0, 1e-9) || !near(p.C,
+		0.1, 1e-12) {
 		t.Errorf("+a polar = %+v", p)
 	}
 	if p := (OKLab{0.5, 0, 0.1}).Polar(); !near(p.H, 90, 1e-9) {
@@ -89,7 +95,8 @@ func TestDistance(t *testing.T) {
 		t.Errorf("distance is not symmetric")
 	}
 	if !Same(a, FromSwatch(a.Swatch()), Exact) {
-		t.Errorf("round trip is not exact: %v", Distance(a, FromSwatch(a.Swatch())))
+		t.Errorf("round trip is not exact: %v", Distance(a,
+			FromSwatch(a.Swatch())))
 	}
 	if !Same(a, OKLab{0.61, 0.1, -0.05}, Eye) {
 		t.Errorf("a hundredth of lightness should be invisible")
@@ -101,7 +108,8 @@ func TestDistance(t *testing.T) {
 
 // String is what CSS accepts, with none for a hue no eye could see.
 func TestString(t *testing.T) {
-	if got := (OKLCH{0.74, 0.2, 345.3}).String(); got != "oklch(74% 0.200 345.3)" {
+	if got := (OKLCH{0.74, 0.2,
+		345.3}).String(); got != "oklch(74% 0.200 345.3)" {
 		t.Errorf("String = %q", got)
 	}
 	if got := Grey(1).Polar().String(); got != "oklch(100% 0.000 none)" {

@@ -11,7 +11,8 @@ import (
 func TestWhiteIsDerived(t *testing.T) {
 	x, y, z := White.XYZ()
 	if math.Abs(x-0.95047) > 5e-5 || y != 1 || math.Abs(z-1.08883) > 5e-5 {
-		t.Errorf("white = %.5f %.5f %.5f, want 0.95047 1 1.08883", x, y, z)
+		t.Errorf("white = %.5f %.5f %.5f, want 0.95047 1 1.08883", x, y,
+			z)
 	}
 }
 
@@ -52,10 +53,12 @@ func TestInvisibleLightIsNoLight(t *testing.T) {
 		ultraviolet[nm] = 100
 	}
 	if Illuminant(infrared) != Black {
-		t.Errorf("infrared came out as %v, not black", Illuminant(infrared))
+		t.Errorf("infrared came out as %v, not black",
+			Illuminant(infrared))
 	}
 	if Illuminant(ultraviolet) != Black {
-		t.Errorf("ultraviolet came out as %v, not black", Illuminant(ultraviolet))
+		t.Errorf("ultraviolet came out as %v, not black",
+			Illuminant(ultraviolet))
 	}
 	lit := d65()
 	for nm, p := range infrared {
@@ -69,7 +72,8 @@ func TestInvisibleLightIsNoLight(t *testing.T) {
 	// runs over the same numbers. The test is about the range, not the
 	// rounding, so it asks whether the white moved by more than nothing.
 	if !withinFloatNoise(Illuminant(lit), White) {
-		t.Errorf("daylight plus invisible light moved the white to %v", Illuminant(lit))
+		t.Errorf("daylight plus invisible light moved the white to %v",
+			Illuminant(lit))
 	}
 }
 
@@ -82,7 +86,8 @@ func withinFloatNoise(a, b Swatch) bool {
 	ax, ay, az := a.XYZ()
 	bx, by, bz := b.XYZ()
 	const eps = 1e-9
-	return math.Abs(ax-bx) < eps && math.Abs(ay-by) < eps && math.Abs(az-bz) < eps
+	return math.Abs(ax-bx) < eps && math.Abs(ay-by) < eps &&
+		math.Abs(az-bz) < eps
 }
 
 // Monochrome is the observer's row: the eye is most sensitive at 555 nm,
@@ -91,7 +96,8 @@ func TestMonochrome(t *testing.T) {
 	_, peak, _ := Monochrome(555).XYZ()
 	for _, nm := range []int{450, 500, 600, 650} {
 		if _, y, _ := Monochrome(nm).XYZ(); y >= peak {
-			t.Errorf("Y at %d nm (%v) is not below the peak at 555 (%v)", nm, y, peak)
+			t.Errorf("Y at %d nm (%v) is not below the peak at "+
+				"555 (%v)", nm, y, peak)
 		}
 	}
 	if Monochrome(1000) != Black || Monochrome(200) != Black {

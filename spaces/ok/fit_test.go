@@ -30,7 +30,8 @@ func TestFitHoldsLightnessAndHue(t *testing.T) {
 
 // a gamut nothing at that lightness can enter leaves the colour grey.
 func TestFitToNothingIsGrey(t *testing.T) {
-	got, _ := Fit(OKLCH{0.5, 0.2, 200}, func(swatch.Swatch) bool { return false })
+	got, _ := Fit(OKLCH{0.5, 0.2, 200},
+		func(swatch.Swatch) bool { return false })
 	if got.C > 1e-6 {
 		t.Fatalf("chroma left: %v", got.C)
 	}

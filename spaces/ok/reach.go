@@ -45,7 +45,8 @@ func (r Reach) At(col, row int) OKLCH {
 	}
 	l := r.LightFrom
 	if r.Rows > 1 {
-		l += (r.LightTo - r.LightFrom) * float64(row) / float64(r.Rows-1)
+		l += (r.LightTo - r.LightFrom) *
+			float64(row) / float64(r.Rows-1)
 	}
 	edge, _ := Fit(OKLCH{L: l, C: 0.4, H: h}, r.In)
 	chroma := r.Chroma

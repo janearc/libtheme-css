@@ -58,7 +58,8 @@ func FromXY(c XY, luminance float64) Swatch {
 	if c.Y <= 0 {
 		return Black
 	}
-	return Swatch{c.X / c.Y * luminance, luminance, (1 - c.X - c.Y) / c.Y * luminance}
+	return Swatch{c.X / c.Y * luminance, luminance,
+		(1 - c.X - c.Y) / c.Y * luminance}
 }
 
 // XY is the swatch's chromaticity: where it sits on the horseshoe, with
@@ -102,7 +103,8 @@ func (g Gamut) Fit(p XY) XY {
 		return p
 	}
 	best, dist := p, math.Inf(1)
-	for _, e := range [][2]XY{{g.Red, g.Green}, {g.Green, g.Blue}, {g.Blue, g.Red}} {
+	for _, e := range [][2]XY{{g.Red, g.Green}, {g.Green, g.Blue}, {g.Blue,
+		g.Red}} {
 		q := nearest(p, e[0], e[1])
 		if d := math.Hypot(p.X-q.X, p.Y-q.Y); d < dist {
 			best, dist = q, d

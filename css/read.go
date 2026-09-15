@@ -29,7 +29,8 @@ type Colourway struct {
 }
 
 var (
-	roleRe   = regexp.MustCompile(`--([a-zA-Z0-9_-]+)\s*:\s*(#[0-9a-fA-F]{3,8})\b`)
+	roleRe = regexp.MustCompile(
+		`--([a-zA-Z0-9_-]+)\s*:\s*(#[0-9a-fA-F]{3,8})\b`)
 	familyRe = regexp.MustCompile(`^(.*)-(\d+)$`)
 )
 
@@ -64,11 +65,16 @@ func Read(src string) Colourway {
 		if len(members) < 2 {
 			continue
 		}
-		sort.Slice(members, func(i, j int) bool { return members[i].n < members[j].n })
+		sort.Slice(members, func(i,
+			j int) bool {
+			return members[i].n < members[j].n
+		})
 		var stops []swatchAt
 		for i, mb := range members {
 			c, _ := cw.Roles.Get(mb.name)
-			stops = append(stops, swatchAt{float64(i) / float64(len(members)-1), c})
+			stops = append(stops,
+				swatchAt{float64(i) / float64(len(members)-1),
+					c})
 		}
 		cw.add(f, stops)
 	}

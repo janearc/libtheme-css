@@ -16,7 +16,8 @@ func TestReach(t *testing.T) {
 	for y := 0; y < g.Rows; y++ {
 		for x := 0; x < g.Cols; x++ {
 			if !inBox(g.At(x, y).Rect().Swatch()) {
-				t.Fatalf("cell %d,%d is outside the gamut", x, y)
+				t.Fatalf("cell %d,%d is outside the gamut", x,
+					y)
 			}
 		}
 	}

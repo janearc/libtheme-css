@@ -23,7 +23,8 @@ func TestEven(t *testing.T) {
 	if len(r.Stops) != 3 || r.Stops[1].At != 0.5 || r.Stops[2].At != 1 {
 		t.Errorf("stops = %+v", r.Stops)
 	}
-	if one := Even(flat, swatch.White); one.Stops[0].At != 0 || one.At(0.7) != swatch.White {
+	if one := Even(flat, swatch.White); one.Stops[0].At != 0 ||
+		one.At(0.7) != swatch.White {
 		t.Errorf("a one-stop ramp is not that stop everywhere")
 	}
 }
@@ -46,7 +47,8 @@ func TestAt(t *testing.T) {
 // Explicit stops are sorted, and the line between neighbours is local:
 // a stop at 0.25 means the first quarter goes there, not the first half.
 func TestStops(t *testing.T) {
-	r := New(flat, Stop{1, swatch.White}, Stop{0.25, swatch.Black}, Stop{0, swatch.White})
+	r := New(flat, Stop{1, swatch.White}, Stop{0.25, swatch.Black}, Stop{0,
+		swatch.White})
 	if r.Stops[0].At != 0 || r.Stops[1].At != 0.25 || r.Stops[2].At != 1 {
 		t.Errorf("not sorted: %+v", r.Stops)
 	}
@@ -62,7 +64,8 @@ func TestStops(t *testing.T) {
 func TestSamples(t *testing.T) {
 	r := Even(flat, swatch.Black, swatch.White)
 	s := r.Samples(5)
-	if len(s) != 5 || s[0] != swatch.Black || s[4] != swatch.White || y(s[2]) != 0.5 {
+	if len(s) != 5 || s[0] != swatch.Black || s[4] != swatch.White ||
+		y(s[2]) != 0.5 {
 		t.Errorf("samples = %v", s)
 	}
 	if one := r.Samples(1); len(one) != 1 || one[0] != swatch.Black {

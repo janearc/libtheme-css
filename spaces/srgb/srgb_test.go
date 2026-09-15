@@ -31,7 +31,9 @@ func TestDerivedMatrix(t *testing.T) {
 	for i := range lindbloom {
 		for j := range lindbloom[i] {
 			if !near(rgbToXYZ[i][j], lindbloom[i][j], 5e-6) {
-				t.Errorf("matrix[%d][%d] = %.7f, lindbloom %.7f", i, j, rgbToXYZ[i][j], lindbloom[i][j])
+				t.Errorf("matrix[%d][%d] = %.7f, lindbloom "+
+					"%.7f", i, j, rgbToXYZ[i][j],
+					lindbloom[i][j])
 			}
 		}
 	}
@@ -53,14 +55,17 @@ func TestWhiteIsWhite(t *testing.T) {
 // between was typed from memory.
 func TestRedInOKLab(t *testing.T) {
 	got := ok.FromSwatch(Red.Swatch())
-	if !near(got.L, 0.628, 1e-3) || !near(got.A, 0.225, 1e-3) || !near(got.B, 0.126, 1e-3) {
+	if !near(got.L, 0.628, 1e-3) || !near(got.A, 0.225, 1e-3) ||
+		!near(got.B, 0.126, 1e-3) {
 		t.Errorf("red in oklab = %+v", got)
 	}
 }
 
 // Every hex code survives the trip through the swatch and back.
 func TestHexRoundTrip(t *testing.T) {
-	for _, h := range []string{"#000000", "#ffffff", "#ff0000", "#00ff00", "#0000ff", "#ff6ec7", "#ffa2ff", "#160d2b", "#7f7f7f", "#01fe80"} {
+	for _, h := range []string{"#000000", "#ffffff", "#ff0000", "#00ff00",
+		"#0000ff", "#ff6ec7", "#ffa2ff",
+		"#160d2b", "#7f7f7f", "#01fe80"} {
 		c, err := FromHex(h)
 		if err != nil {
 			t.Fatal(err)
@@ -95,10 +100,12 @@ func TestGamutIsHonest(t *testing.T) {
 // The cylinders agree with the textbook on the corners, and undo
 // themselves.
 func TestCylinders(t *testing.T) {
-	if h := Red.HSL(); !near(h.H, 0, 1e-9) || !near(h.S, 1, 1e-9) || !near(h.L, 0.5, 1e-9) {
+	if h := Red.HSL(); !near(h.H, 0, 1e-9) || !near(h.S, 1, 1e-9) ||
+		!near(h.L, 0.5, 1e-9) {
 		t.Errorf("red hsl = %+v", h)
 	}
-	if v := Red.HSV(); !near(v.H, 0, 1e-9) || !near(v.S, 1, 1e-9) || !near(v.V, 1, 1e-9) {
+	if v := Red.HSV(); !near(v.H, 0, 1e-9) || !near(v.S, 1, 1e-9) ||
+		!near(v.V, 1, 1e-9) {
 		t.Errorf("red hsv = %+v", v)
 	}
 	if h := White.HSL(); !near(h.S, 0, 1e-9) || !near(h.L, 1, 1e-9) {
@@ -110,11 +117,14 @@ func TestCylinders(t *testing.T) {
 	if v := Blue.HSV(); !near(v.H, 240, 1e-9) {
 		t.Errorf("blue hue = %v", v.H)
 	}
-	for _, c := range []RGB{Red, Green, Blue, White, Black, {0.2, 0.5, 0.9}, {0.9, 0.3, 0.1}} {
-		if r := c.HSL().RGB(); !near(r.R, c.R, 1e-9) || !near(r.G, c.G, 1e-9) || !near(r.B, c.B, 1e-9) {
+	for _, c := range []RGB{Red, Green, Blue, White, Black, {0.2, 0.5, 0.9},
+		{0.9, 0.3, 0.1}} {
+		if r := c.HSL().RGB(); !near(r.R, c.R, 1e-9) || !near(r.G, c.G,
+			1e-9) || !near(r.B, c.B, 1e-9) {
 			t.Errorf("%+v via hsl came back %+v", c, r)
 		}
-		if r := c.HSV().RGB(); !near(r.R, c.R, 1e-9) || !near(r.G, c.G, 1e-9) || !near(r.B, c.B, 1e-9) {
+		if r := c.HSV().RGB(); !near(r.R, c.R, 1e-9) || !near(r.G, c.G,
+			1e-9) || !near(r.B, c.B, 1e-9) {
 			t.Errorf("%+v via hsv came back %+v", c, r)
 		}
 	}
@@ -155,7 +165,8 @@ func TestBytesColorAndEqual(t *testing.T) {
 	if c.Equal(RGB8(0x15, 0x14, 0x18)) {
 		t.Error("a byte of difference was equal")
 	}
-	if !In(Red.Swatch()) || In(ok.OKLCH{L: 0.7, C: 0.4, H: 145}.Rect().Swatch()) {
+	if !In(Red.Swatch()) || In(ok.OKLCH{L: 0.7, C: 0.4,
+		H: 145}.Rect().Swatch()) {
 		t.Error("In does not agree with FromSwatch")
 	}
 }

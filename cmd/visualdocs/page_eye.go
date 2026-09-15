@@ -6,6 +6,16 @@ import (
 	"github.com/janearc/libtheme-css/spaces/ok"
 )
 
+// eyePageProse is what the page says.
+const eyePageProse = `
+there are two tolerances in the library and no others. Exact, a
+billionth, is arithmetic noise: a round trip, a sum walked in a
+different order. Eye, 0.02, is the smallest difference most people
+notice side by side, a measurement of people, averaged, and the
+reason oklab exists is that 0.02 means the same for a dark blue as
+for a pale yellow. every 'are these the same' compares against one
+of the two, so precision is a decision made once, not per call.`
+
 var (
 	eyeBase     = ok.OKLab{L: 0.6, A: 0.1, B: -0.05}
 	eyeSame     = ok.OKLab{L: 0.61, A: 0.1, B: -0.05}
@@ -25,13 +35,7 @@ func eyePage() {
 	pair(eyeTellable, "just about tellable")
 	pair(eyeApart, "different")
 	fmt.Println()
-	say("there are two tolerances in the library and no others. Exact, a",
-		"billionth, is arithmetic noise: a round trip, a sum walked in a",
-		"different order. Eye, 0.02, is the smallest difference most people",
-		"notice side by side, a measurement of people, averaged, and the",
-		"reason oklab exists is that 0.02 means the same for a dark blue as",
-		"for a pale yellow. every 'are these the same' compares against one",
-		"of the two, so precision is a decision made once, not per call.")
+	say(lines(eyePageProse)...)
 }
 
 // eyeCSS is the page as a css sheet: the two tolerances as swatches.
@@ -45,7 +49,8 @@ func eyeCSS() string {
 		line("same-to-a-person", eyeSame) +
 		line("just-tellable", eyeTellable) +
 		line("different", eyeApart) +
-		fmt.Sprintf("  /* %.2g apart in oklab: where a person starts to see it */\n",
+		fmt.Sprintf("  /* %.2g apart in oklab: where a person starts "+
+			"to see it */\n",
 			ok.Eye) +
 		"}\n"
 }

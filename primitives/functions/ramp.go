@@ -121,5 +121,6 @@ func (r Ramp) String(stop func(swatch.Swatch) string) string {
 	for i, s := range r.Stops {
 		parts[i] = fmt.Sprintf("%s %.0f%%", stop(s.Swatch), s.At*100)
 	}
-	return fmt.Sprintf("linear-gradient(in %s, %s)", r.In.Name, strings.Join(parts, ", "))
+	return fmt.Sprintf("linear-gradient(in %s, %s)", r.In.Name,
+		strings.Join(parts, ", "))
 }

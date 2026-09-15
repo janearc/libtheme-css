@@ -39,7 +39,8 @@ func TestPagesFitTheScreen(t *testing.T) {
 		}
 		for n, line := range strings.Split(out, "\n") {
 			if len(line) > 80 {
-				t.Errorf("%s: line %d is %d columns", p.name, n+1, len(line))
+				t.Errorf("%s: line %d is %d columns", p.name,
+					n+1, len(line))
 			}
 		}
 	}
@@ -53,7 +54,9 @@ func TestOnlyBackgroundsArePainted(t *testing.T) {
 	for _, p := range pages {
 		for _, e := range escape.FindAllString(capture(t, p.show), -1) {
 			if !allowed.MatchString(e) {
-				t.Errorf("%s writes %q, which assumes something about the terminal", p.name, e)
+				t.Errorf("%s writes %q, which assumes "+
+					"something about the terminal", p.name,
+					e)
 			}
 		}
 	}
@@ -69,7 +72,8 @@ func TestNoColour(t *testing.T) {
 			t.Errorf("%s writes escapes under NO_COLOR", p.name)
 		}
 		if !strings.Contains(out, "#") {
-			t.Errorf("%s shows no swatch shape under NO_COLOR", p.name)
+			t.Errorf("%s shows no swatch shape under NO_COLOR",
+				p.name)
 		}
 	}
 }
@@ -78,21 +82,26 @@ func TestNoColour(t *testing.T) {
 // promises to emit, and nothing else: a six-digit hex, oklch(), oklab(),
 // or a linear-gradient over those.
 func TestCSSSpeaksOnlyWhatIsPromised(t *testing.T) {
-	value := regexp.MustCompile(`^(#[0-9a-f]{6}|oklch\([^)]*\)|oklab\([^)]*\)|linear-gradient\((.|\n)*\))$`)
+	value := regexp.MustCompile(
+		`^(#[0-9a-f]{6}|oklch\([^)]*\)|oklab\([^)]*\)|` +
+			`linear-gradient\((.|\n)*\))$`)
 	decl := regexp.MustCompile(`(?s)--[a-z-]+:\s*(.*?);`)
 	for _, p := range pages {
 		sheet := p.css()
-		if !strings.HasPrefix(sheet, ":root {\n") || !strings.HasSuffix(sheet, "}\n") {
+		if !strings.HasPrefix(sheet, ":root {\n") ||
+			!strings.HasSuffix(sheet, "}\n") {
 			t.Errorf("%s: css is not one :root block", p.name)
 		}
 		for _, m := range decl.FindAllStringSubmatch(sheet, -1) {
 			if !value.MatchString(strings.TrimSpace(m[1])) {
-				t.Errorf("%s: value %q is not a promised production", p.name, m[1])
+				t.Errorf("%s: value %q is not a promised "+
+					"production", p.name, m[1])
 			}
 		}
 		for n, line := range strings.Split(sheet, "\n") {
 			if len(line) > 80 {
-				t.Errorf("%s: css line %d is %d columns", p.name, n+1, len(line))
+				t.Errorf("%s: css line %d is %d columns",
+					p.name, n+1, len(line))
 			}
 		}
 	}
@@ -111,7 +120,8 @@ func TestGoIsTheFile(t *testing.T) {
 			t.Fatal(err)
 		}
 		if !bytes.Equal(embedded, disk) {
-			t.Errorf("%s: the embedded source differs from the file", p.name)
+			t.Errorf("%s: the embedded source differs from the "+
+				"file", p.name)
 		}
 	}
 }
