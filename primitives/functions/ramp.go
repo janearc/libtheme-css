@@ -1,17 +1,17 @@
-// Package functions holds the things that turn a number into a swatch.
-// The name is general on purpose: a ramp is a function of one number, t
-// from 0 to 1, and there may be others. They are built from swatches and
-// a way of blending them, and nothing else, which is why they sit under
-// primitives and import no space.
+// Package functions holds the things that turn a number into a swatch. The name
+// is general on purpose: a ramp is a function of one number, t from 0 to 1, and
+// there may be others. They are built from swatches and a way of blending them,
+// and nothing else, which is why they sit under primitives and import no space.
 //
-// The seam. Where t comes from is not this library's business. A ramp
-// answers "what colour is t" and never asks "which cell is this, how far
-// from the centre, what time is it". Those are geometry, and geometry
-// belongs to whatever is drawing: a canvas, a strip of lamps, a bar of
-// hours. It hands the ramp a t; the ramp hands back a swatch. That is the
-// whole contract, and it is what lets a sun, a sky and a stripe share one
-// ramp without this library knowing what a sun is. This library is
-// containers, not form.
+// The seam. Where t comes from is not this library's business. A ramp answers
+// "what colour is t" and never asks "which cell is this, how far from the
+// centre, what time is it". Those are geometry, and geometry belongs to
+// whatever is drawing: a canvas, a strip of lamps, a bar of hours.
+//
+// It hands the ramp a t; the ramp hands back a swatch. That is the whole
+// contract, and it is what lets a sun, a sky and a stripe share one ramp
+// without this library knowing what a sun is. This library is containers, not
+// form.
 package functions
 
 import (
@@ -22,11 +22,10 @@ import (
 	"github.com/janearc/libtheme-css/primitives/swatch"
 )
 
-// Mixer is a way of blending two swatches: the colour t of the way from
-// a to b, 0 giving a and 1 giving b. Each space supplies its own, and
-// they differ: a straight line in oklab looks straight, a straight line
-// through the lamps goes through mud. The name is what CSS writes after
-// "in": oklab, srgb.
+// Mixer is a way of blending two swatches: the colour t of the way from a to b,
+// 0 giving a and 1 giving b. Each space supplies its own, and they differ: a
+// straight line in oklab looks straight, a straight line through the lamps goes
+// through mud. The name is what CSS writes after "in": oklab, srgb.
 type Mixer struct {
 	Name string
 	Mix  func(a, b swatch.Swatch, t float64) swatch.Swatch

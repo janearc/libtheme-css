@@ -1,9 +1,11 @@
-// visualdocs is the documentation, shown rather than written: one page
-// per idea, a few painted rows and a few lines of text, because this is
-// a library about colour and the honest way to explain a colour is to
-// put it on the screen. each page can also say the same thing in css,
-// and show the go that painted it, which is its own source file, embedded,
-// so the three can never drift apart.
+// visualdocs is the documentation, shown rather than written: one page per
+// idea, a few painted rows and a few lines of text, because this is a library
+// about colour and the honest way to explain a colour is to put it on the
+// screen.
+//
+// each page can also say the same thing in css, and show the go that painted
+// it, which is its own source file, embedded, so the three can never drift
+// apart.
 //
 //	visualdocs                  every page, painted, enter for the next
 //	visualdocs PAGE             one page, painted
@@ -123,14 +125,16 @@ func names() string {
 // paint is a run of cells in the colour, as the terminal's lamps show
 // it: the nearest they can do when the colour is outside their reach.
 //
-// What the docs assume about the terminal, and it is all they assume:
-// it paints a 24-bit background, and its default text colour reads on
-// its default background. nothing sets a foreground, nothing dims or
-// bolds, so the words read on a light terminal as well as a dark one and
-// only the swatches carry colour. with NO_COLOR set, the convention every
-// terminal tool honours, no escape is written at all: a swatch is a run
-// of hashes, its shape without its colour, and the hex beside it in the
-// text is what it was.
+// What the docs assume about the terminal, and it is all they assume: it paints
+// a 24-bit background, and its default text colour reads on its default
+// background.
+//
+// nothing sets a foreground, nothing dims or bolds, so the words read on a
+// light terminal as well as a dark one and only the swatches carry colour.
+//
+// with NO_COLOR set, the convention every terminal tool honours, no escape is
+// written at all: a swatch is a run of hashes, its shape without its colour,
+// and the hex beside it in the text is what it was.
 func paint(s swatch.Swatch, width int) string {
 	if noColour() {
 		return strings.Repeat("#", width)

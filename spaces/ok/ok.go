@@ -2,11 +2,10 @@
 // oklab space, in its two forms. Not a different colour: a second set of
 // axes on the same point, chosen so that distance means something.
 //
-// The space has no primaries and no named colours. It has a white, a
-// black, the grey line between them, and a wheel. Anything with a hue
-// comes in through the swatch from wherever that hue is actually
-// defined, a screen standard or a vocabulary, and gets its distances
-// measured here.
+// The space has no primaries and no named colours. It has a white, a black, the
+// grey line between them, and a wheel. Anything with a hue comes in through the
+// swatch from wherever that hue is actually defined, a screen standard or a
+// vocabulary, and gets its distances measured here.
 package ok
 
 import (
@@ -91,25 +90,27 @@ var (
 // Grey is the point on the line between them at lightness l.
 func Grey(l float64) OKLab { return OKLab{l, 0, 0} }
 
-// Distance is how different two colours look: the straight-line
-// distance in OKLab, which is the one distance in this library that
-// matches an eye. Compare it against the tolerances below rather than
-// against a number you made up; every "are these the same" in the
-// library goes through here, so that precision is set once.
+// Distance is how different two colours look: the straight-line distance in
+// OKLab, which is the one distance in this library that matches an eye.
+//
+// Compare it against the tolerances below rather than against a number you made
+// up; every "are these the same" in the library goes through here, so that
+// precision is set once.
 func Distance(a, b OKLab) float64 {
 	return math.Sqrt((a.L-b.L)*(a.L-b.L) + (a.A-b.A)*(a.A-b.A) +
 		(a.B-b.B)*(a.B-b.B))
 }
 
-// The tolerances. A distance below Exact is arithmetic noise: two float
-// sums walked in a different order, a round trip through a matrix and
-// its inverse. A distance below Eye is one most people cannot see side
-// by side, which is what "the same colour" means to a person; 0.02 is
-// the figure the space's author gives for a just-noticeable difference,
-// and it is why the space exists, since 0.02 means the same thing for a
-// dark blue as for a pale yellow. Anything a device can or cannot
-// resolve is that device's fact and lives with the device, to be
-// compared against these.
+// The tolerances. A distance below Exact is arithmetic noise: two float sums
+// walked in a different order, a round trip through a matrix and its inverse.
+//
+// A distance below Eye is one most people cannot see side by side, which is
+// what "the same colour" means to a person; 0.02 is the figure the space's
+// author gives for a just-noticeable difference, and it is why the space
+// exists, since 0.02 means the same thing for a dark blue as for a pale yellow.
+//
+// Anything a device can or cannot resolve is that device's fact and lives with
+// the device, to be compared against these.
 const (
 	Exact = 1e-9
 	Eye   = 0.02
@@ -133,26 +134,30 @@ var Mix = functions.Mixer{Name: "oklab", Mix: func(a, b swatch.Swatch,
 
 // The numbers.
 //
-// The conversion above is two steps, and the two steps are the whole
-// idea. First, XYZ is turned into how strongly each of the eye's three
-// cone types would respond, called LMS for long, medium and short
-// wavelength. XYZ was built in 1931 to be non-negative, not to be cones;
-// this matrix undoes that choice. Then each response has its cube root
-// taken: the eye reports ratios, not amounts, so doubling the light does
-// not look like twice as much, and a cube root is the compression that
-// matches what people report. Last, the three compressed responses are
-// combined into one lightness and two opponent axes, because an eye
-// cannot see a reddish green or a bluish yellow, and those pairs are
-// what it actually compares.
+// The conversion above is two steps, and the two steps are the whole idea.
+// First, XYZ is turned into how strongly each of the eye's three cone types
+// would respond, called LMS for long, medium and short wavelength.
+//
+// XYZ was built in 1931 to be non-negative, not to be cones; this matrix undoes
+// that choice. Then each response has its cube root taken: the eye reports
+// ratios, not amounts, so doubling the light does not look like twice as much,
+// and a cube root is the compression that matches what people report.
+//
+// Last, the three compressed responses are combined into one lightness and two
+// opponent axes, because an eye cannot see a reddish green or a bluish yellow,
+// and those pairs are what it actually compares.
 //
 // The nine numbers in each forward matrix are fitted, not derived: Björn
-// Ottosson chose them in 2020 by searching for the values under which
-// hue stays put when lightness changes and equal steps look equal,
-// against published measurements of what people see. They are the ones
-// from his description of the space, https://bottosson.github.io/posts/oklab/,
-// and CSS Color Level 4 adopted them unchanged. A fit has no derivation
-// to show, only reference values to check, and the tests check them. The
-// inverses are computed, so the only typed numbers are the fit.
+// Ottosson chose them in 2020 by searching for the values under which hue stays
+// put when lightness changes and equal steps look equal, against published
+// measurements of what people see.
+//
+// They are the ones from his description of the space,
+// https://bottosson.github.io/posts/oklab/, and CSS Color Level 4 adopted them
+// unchanged. A fit has no derivation to show, only reference values to check,
+// and the tests check them.
+//
+// The inverses are computed, so the only typed numbers are the fit.
 //
 // His name is not "ok", by the way. It's Björn. He just goes by ok
 // online.

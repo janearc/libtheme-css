@@ -185,11 +185,13 @@ func show(arg string) error {
 	return nil
 }
 
-// ramp draws the line between two colours twice: once in oklab, which
-// is the line the library uses, and once as a straight line through the
-// lamps, which is what every other tool does, so the difference is on
-// screen and not in an argument. Both are the same Ramp with a different
-// mixer, which is the whole point of the mixer being a parameter.
+// ramp draws the line between two colours twice: once in oklab, which is the
+// line the library uses, and once as a straight line through the lamps, which
+// is what every other tool does, so the difference is on screen and not in an
+// argument.
+//
+// Both are the same Ramp with a different mixer, which is the whole point of
+// the mixer being a parameter.
 func ramp(a, b string, n int) error {
 	sa, err := parse(a)
 	if err != nil {
@@ -220,11 +222,12 @@ func hex(s swatch.Swatch) string {
 	return c.Hex()
 }
 
-// No attributes on text at all. Dim was tried and is unreadable on a
-// dark palette to the person this is for, and bold reads differently on
-// every terminal; the output has to read on any palette, light or dark,
-// so the words are plain and only the swatches are painted. Telling a
-// light terminal from a dark one is a vendor question, held for the
+// No attributes on text at all. Dim was tried and is unreadable on a dark
+// palette to the person this is for, and bold reads differently on every
+// terminal; the output has to read on any palette, light or dark, so the words
+// are plain and only the swatches are painted.
+//
+// Telling a light terminal from a dark one is a vendor question, held for the
 // terminal vendor package.
 const (
 	dim   = ""
@@ -257,11 +260,12 @@ func paintSheet(sheet *css.Sheet) {
 	fmt.Printf("     }\n")
 }
 
-// roundtrip is the translation test: every known colour is written the
-// two ways the tool can read, hex and oklch(), both spellings are read
-// back through parse, and the two swatches are compared. within Exact
-// they are the same colour to arithmetic; within Eye they are the same
-// colour to a person, which is what the oklch spelling, printed to three
+// roundtrip is the translation test: every known colour is written the two ways
+// the tool can read, hex and oklch(), both spellings are read back through
+// parse, and the two swatches are compared.
+//
+// within Exact they are the same colour to arithmetic; within Eye they are the
+// same colour to a person, which is what the oklch spelling, printed to three
 // places, can promise. a colourway file is only as good as this trip.
 func roundtrip() error {
 	type entry struct {
@@ -314,14 +318,18 @@ func roundtrip() error {
 }
 
 // known is everything the library can put on screen without being told a
-// colour: the points it defines and the lines between them. It is the
-// visual test. Each entry names where the colour is defined, because
-// that is the list this library is really keeping: black and white are
-// the swatch's, from the observer and the daylight; red, green and blue
-// are srgb's, from the standard's chromaticities; the grey line is
-// oklab's, the only line the space defines on its own. A grey by itself
-// is not on the list, because "grey" is not a colour until you say how
-// light, and the line says that better than any one point.
+// colour: the points it defines and the lines between them. It is the visual
+// test.
+//
+// Each entry names where the colour is defined, because that is the list this
+// library is really keeping.
+//
+// Black and white are the swatch's, from the observer and the daylight; red,
+// green and blue are srgb's, from the standard's chromaticities; the grey line
+// is oklab's, the only line the space defines on its own.
+//
+// A grey by itself is not on the list, because "grey" is not a colour until you
+// say how light, and the line says that better than any one point.
 func known(mode string) error {
 	type entry struct {
 		name, from string

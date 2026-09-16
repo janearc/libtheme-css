@@ -46,29 +46,33 @@ func table(csv string) map[int][]float64 {
 // library's definition of "visible", and it is worth being exact about
 // what kind of definition that is.
 //
-// Visibility is not a property of light. Light has a wavelength; whether
-// anyone sees it is a property of the eye looking. This table is a model
-// of one eye: an average of the matches made by seventeen adults with
-// normal colour vision, in 1928-1931, looking at a small patch two
-// degrees wide (the width of a thumbnail at arm's length, which lands on
-// the fovea), at daylight brightness. Under those circumstances, and for
-// that average person, wavelengths outside roughly 380 to 780 nanometres
-// produce no response, and the table says so by tending to zero at its
-// ends and stopping at 360 and 830. A different observer, a wider field,
-// a dim room, or an eye that is not average would give a different
-// table, and this library would accept it in the same shape. Every
-// range the library applies downstream is this one, inherited, and it
-// is stated once, here.
+// Visibility is not a property of light. Light has a wavelength; whether anyone
+// sees it is a property of the eye looking.
+//
+// This table is a model of one eye: an average of the matches made by seventeen
+// adults with normal colour vision, in 1928-1931, looking at a small patch two
+// degrees wide (the width of a thumbnail at arm's length, which lands on the
+// fovea), at daylight brightness.
+//
+// Under those circumstances, and for that average person, wavelengths outside
+// roughly 380 to 780 nanometres produce no response, and the table says so by
+// tending to zero at its ends and stopping at 360 and 830.
+//
+// A different observer, a wider field, a dim room, or an eye that is not
+// average would give a different table, and this library would accept it in the
+// same shape. Every range the library applies downstream is this one,
+// inherited, and it is stated once, here.
 var observer = table(observerCSV)
 
-// Illuminant is the swatch of a light given as a spectrum: power by
-// wavelength in nanometres. Each wavelength's power is weighted by how
-// much the observer counts it toward X, Y and Z, and the three weighted
-// sums are taken over every wavelength the observer has a row for.
-// Power at wavelengths the observer does not list contributes nothing,
-// which is the visible range being applied, not a limit of the
-// spectrum. The three sums are then scaled so that Y is exactly 1: the
-// relative form, in which this light is, by definition, the white.
+// Illuminant is the swatch of a light given as a spectrum: power by wavelength
+// in nanometres. Each wavelength's power is weighted by how much the observer
+// counts it toward X, Y and Z, and the three weighted sums are taken over every
+// wavelength the observer has a row for.
+//
+// Power at wavelengths the observer does not list contributes nothing, which is
+// the visible range being applied, not a limit of the spectrum. The three sums
+// are then scaled so that Y is exactly 1: the relative form, in which this
+// light is, by definition, the white.
 func Illuminant(spectrum map[int]float64) Swatch {
 	var x, y, z float64
 	for nm, power := range spectrum {
@@ -84,11 +88,12 @@ func Illuminant(spectrum map[int]float64) Swatch {
 	return Swatch{x / y, 1, z / y}
 }
 
-// Monochrome is light of one wavelength at unit power, as the observer
-// sees it: the observer's own row, as a swatch. Outside the table it is
-// no light. The spectrum drawn from 380 to 780 through this is the
-// visible range as the seventeen saw it, and most of it is outside what
-// any screen can make, which every screen shows by clipping.
+// Monochrome is light of one wavelength at unit power, as the observer sees it:
+// the observer's own row, as a swatch. Outside the table it is no light.
+//
+// The spectrum drawn from 380 to 780 through this is the visible range as the
+// seventeen saw it, and most of it is outside what any screen can make, which
+// every screen shows by clipping.
 func Monochrome(nm int) Swatch {
 	w, ok := observer[nm]
 	if !ok || len(w) != 3 {
@@ -97,13 +102,14 @@ func Monochrome(nm int) Swatch {
 	return Swatch{w[0], w[1], w[2]}
 }
 
-// d65 is CIE standard illuminant D65: not a real sky but the average of
-// noon daylight measured in the 1960s, written down as a spectrum, with
-// a nominal colour temperature of 6500 kelvin. It is actually 6504: the
-// spectrum was fixed first, then physicists revised a constant in the
-// formula that turns temperature into a spectrum, and the number moved
-// under it. Nobody redefined the white; the label is slightly wrong
-// forever. sRGB and every screen you own assume this white.
+// d65 is CIE standard illuminant D65: not a real sky but the average of noon
+// daylight measured in the 1960s, written down as a spectrum, with a nominal
+// colour temperature of 6500 kelvin.
+//
+// It is actually 6504: the spectrum was fixed first, then physicists revised a
+// constant in the formula that turns temperature into a spectrum, and the
+// number moved under it. Nobody redefined the white; the label is slightly
+// wrong forever. sRGB and every screen you own assume this white.
 func d65() map[int]float64 {
 	out := map[int]float64{}
 	for nm, row := range table(d65CSV) {

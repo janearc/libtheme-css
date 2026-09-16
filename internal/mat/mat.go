@@ -13,10 +13,11 @@ func (m M) Apply(a, b, c float64) (float64, float64, float64) {
 }
 
 // Inverse is the matrix that undoes this one, by the adjugate over the
-// determinant, which for a 3x3 is short enough to write out. Published
-// inverses are rounded to ten places and do not quite undo their forward
-// matrices; computing the inverse makes a round trip exact to the float,
-// so the only numbers anyone types are the forward ones.
+// determinant, which for a 3x3 is short enough to write out.
+//
+// Published inverses are rounded to ten places and do not quite undo their
+// forward matrices; computing the inverse makes a round trip exact to the
+// float, so the only numbers anyone types are the forward ones.
 func (m M) Inverse() M {
 	det := m[0][0]*(m[1][1]*m[2][2]-m[1][2]*m[2][1]) -
 		m[0][1]*(m[1][0]*m[2][2]-m[1][2]*m[2][0]) +

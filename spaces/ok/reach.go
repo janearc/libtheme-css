@@ -2,12 +2,12 @@ package ok
 
 import "github.com/janearc/libtheme-css/primitives/swatch"
 
-// Reach is a grid of the colours a gamut can reach: hue across,
-// lightness down, and chroma as a separate pull rather than a third
-// axis, because at every point there is a range from grey to the edge
-// and only the edge can be drawn. A picker draws this; a person picks
-// from it; every cell is inside the gamut by construction, so a colour
-// the display cannot show is not on the grid.
+// Reach is a grid of the colours a gamut can reach: hue across, lightness down,
+// and chroma as a separate pull rather than a third axis, because at every
+// point there is a range from grey to the edge and only the edge can be drawn.
+//
+// A picker draws this; a person picks from it; every cell is inside the gamut
+// by construction, so a colour the display cannot show is not on the grid.
 type Reach struct {
 	// Cols and Rows are the grid size.
 	Cols, Rows int

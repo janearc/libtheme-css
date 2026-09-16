@@ -1,14 +1,15 @@
-// Package srgb is the swatch as a screen is driven: three lamp levels,
-// red, green and blue, on the curve every screen since 1996 assumes. It
-// is the door to hex, and to the two cylinders, hsl and hsv, which are
-// the same lamps described by angle. A swatch may fall outside what the
-// lamps can make; every exit here says whether it did.
+// Package srgb is the swatch as a screen is driven: three lamp levels, red,
+// green and blue, on the curve every screen since 1996 assumes. It is the door
+// to hex, and to the two cylinders, hsl and hsv, which are the same lamps
+// described by angle.
 //
-// The standard, IEC 61966-2-1, states four things and this package types
-// in only those: where each lamp sits on the 1931 chromaticity diagram
-// (x and y for red, green and blue), and the curve. The white is the
-// swatch's own D65. The 3x3 matrix everyone else copies is derived from
-// the four, below.
+// A swatch may fall outside what the lamps can make; every exit here says
+// whether it did.
+//
+// The standard, IEC 61966-2-1, states four things and this package types in
+// only those: where each lamp sits on the 1931 chromaticity diagram (x and y
+// for red, green and blue), and the curve. The white is the swatch's own D65.
+// The 3x3 matrix everyone else copies is derived from the four, below.
 package srgb
 
 import (
@@ -92,18 +93,21 @@ func fromLinear(c float64) float64 {
 	return 1.055*math.Pow(c, 1/2.4) - 0.055
 }
 
-// gamutSlack is how far outside 0..1, in linear light, a channel may
-// fall and still count as in gamut: a display's darkest step is about
-// 3e-4 linear, so a hair less than that is clipped without comment.
-// At 1e-6 a dark blue whose red channel hovers just under zero across
-// a band of chroma is called out, and a fit walks it back by a sixth.
+// gamutSlack is how far outside 0..1, in linear light, a channel may fall and
+// still count as in gamut: a display's darkest step is about 3e-4 linear, so a
+// hair less than that is clipped without comment.
+//
+// At 1e-6 a dark blue whose red channel hovers just under zero across a band of
+// chroma is called out, and a fit walks it back by a sixth.
 const gamutSlack = 1e-4
 
-// FromSwatch is the swatch as lamp levels, and whether the lamps can
-// make it. Out of gamut, the levels are clipped to 0..1 and inGamut is
-// false: the nearest thing the lamps can do, and an honest word that it
-// is not the same colour. The tolerance is a millionth, so a colour on
-// the edge of the triangle, like a primary at full, counts as in.
+// FromSwatch is the swatch as lamp levels, and whether the lamps can make it.
+// Out of gamut, the levels are clipped to 0..1 and inGamut is false: the
+// nearest thing the lamps can do, and an honest word that it is not the same
+// colour.
+//
+// The tolerance is a millionth, so a colour on the edge of the triangle, like a
+// primary at full, counts as in.
 func FromSwatch(s swatch.Swatch) (c RGB, inGamut bool) {
 	r, g, b := xyzToRGB.Apply(s.XYZ())
 	inGamut = true

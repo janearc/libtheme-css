@@ -2,12 +2,13 @@ package swatch
 
 import "math"
 
-// Planckian is the swatch of a black body at a temperature in kelvin:
-// the colour a lamp means when it gives a colour temperature. The
-// spectrum is Planck's law taken at every wavelength the observer has a
-// row for, and Illuminant does the rest, so the locus is derived from
-// the same tables as White and is never typed in. Below a few hundred
-// kelvin there is no visible light to speak of and the result is black.
+// Planckian is the swatch of a black body at a temperature in kelvin: the
+// colour a lamp means when it gives a colour temperature.
+//
+// The spectrum is Planck's law taken at every wavelength the observer has a row
+// for, and Illuminant does the rest, so the locus is derived from the same
+// tables as White and is never typed in. Below a few hundred kelvin there is no
+// visible light to speak of and the result is black.
 func Planckian(kelvin float64) Swatch {
 	if kelvin <= 0 {
 		return Black

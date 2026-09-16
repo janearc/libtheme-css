@@ -1,15 +1,17 @@
-// Package hue is the philips hue dialect: how a hue lamp names a colour,
-// and how that becomes a swatch and comes back. A hue lamp never says a
-// colour. It says a place on the horseshoe, a chromaticity, or a colour
-// temperature in mirek, and separately how bright, as a percent that is
-// the lamp's own scale and not a luminance. A gradient lamp says five
-// places in order along itself. The dialect turns each of those into
-// swatches at unit luminance and a list of them into a ramp; the reverse
-// samples a ramp back to as many places as a lamp has. Brightness is not
-// translated here: it is a law between a leader and a follower, and it
-// lives with them. Chromaticities and gamuts are swatch's, not hue's;
-// what is hue's is mirek, the places along a lamp, and the three
-// gamuts its lamps report by letter.
+// Package hue is the philips hue dialect: how a hue lamp names a colour, and
+// how that becomes a swatch and comes back. A hue lamp never says a colour.
+//
+// It says a place on the horseshoe, a chromaticity, or a colour temperature in
+// mirek, and separately how bright, as a percent that is the lamp's own scale
+// and not a luminance. A gradient lamp says five places in order along itself.
+//
+// The dialect turns each of those into swatches at unit luminance and a list of
+// them into a ramp; the reverse samples a ramp back to as many places as a lamp
+// has. Brightness is not translated here: it is a law between a leader and a
+// follower, and it lives with them.
+//
+// Chromaticities and gamuts are swatch's, not hue's; what is hue's is mirek,
+// the places along a lamp, and the three gamuts its lamps report by letter.
 package hue
 
 import (
@@ -58,11 +60,10 @@ func Points(r functions.Ramp, n int) []swatch.XY {
 	return out
 }
 
-// The gamuts hue's lamps report, by the letter hue gives them, as
-// philips publishes the corners. Vendor data, typed: these are facts
-// about lamps, not derivable. A lamp reports its own triangle on the
-// wire and that is the one to fit to; these are for a lamp that does
-// not, and for tests.
+// The gamuts hue's lamps report, by the letter hue gives them, as philips
+// publishes the corners. Vendor data, typed: these are facts about lamps, not
+// derivable. A lamp reports its own triangle on the wire and that is the one to
+// fit to; these are for a lamp that does not, and for tests.
 var (
 	GamutA = swatch.Gamut{Red: swatch.XY{X: 0.704, Y: 0.296},
 		Green: swatch.XY{X: 0.2151,

@@ -1,8 +1,9 @@
-// Package css is the container everything normalises to: a sheet of
-// named colours, each one a swatch. Rudimentary on purpose. It holds
-// names in the order they were given, writes itself out as the custom
-// properties a browser, daffy or a colourway file would read, and that
-// is all it does until it has to do more.
+// Package css is the container everything normalises to: a sheet of named
+// colours, each one a swatch. Rudimentary on purpose.
+//
+// It holds names in the order they were given, writes itself out as the custom
+// properties a browser, daffy or a colourway file would read, and that is all
+// it does until it has to do more.
 package css
 
 import (
@@ -64,11 +65,10 @@ func (s *Sheet) Rules() []Rule {
 	return out
 }
 
-// String is the sheet as CSS: one custom property per name on :root,
-// the value as the hex a screen can make, and beside it in a comment
-// the same colour as oklch, which is the form that says what it is.
-// Out of gamut, the hex is the nearest the lamps can do and the comment
-// says so.
+// String is the sheet as CSS: one custom property per name on :root, the value
+// as the hex a screen can make, and beside it in a comment the same colour as
+// oklch, which is the form that says what it is. Out of gamut, the hex is the
+// nearest the lamps can do and the comment says so.
 func (s *Sheet) String() string {
 	var b strings.Builder
 	b.WriteString(":root {\n")

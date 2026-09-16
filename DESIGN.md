@@ -7,15 +7,16 @@ comments, which `go doc` prints.
 
 ## the problem
 
-one person keeps a theme in a terminal, an editor, a web page and a lamp,
-and matches them by eye, one hex code at a time. a hex code is three lamp
-levels for one kind of screen; it cannot say what a lamp should do, or
-whether the same colour is the same colour somewhere else. the library
-gives that person one primitive that can, and works up from it.
+one person keeps a theme in a terminal, an editor, a web page and a lamp, and
+matches them by eye, one hex code at a time. a hex code is three lamp levels for
+one kind of screen; it cannot say what a lamp should do, or whether the same
+colour is the same colour somewhere else.
+
+the library gives that person one primitive that can, and works up from it.
 
 ## the shape
 
-four layers, each importing only what is below it:
+five layers, each importing only what is below it:
 
     primitives/swatch     one colour, complete. stored as cie xyz. knows
                           nothing about devices, eyes or arithmetic.
@@ -24,6 +25,11 @@ four layers, each importing only what is below it:
     spaces/               coordinate systems on the swatch: ok (oklab and
                           its polar form), srgb (lamps, hex, hsl, hsv).
                           each supplies a mixer for the ramp.
+    dialects/             the vendors: how somebody else names a colour,
+                          and how that name becomes a swatch and comes
+                          back. hue (a lamp says a place and a mirek, not
+                          a colour), grafana (five shades of a hue, since
+                          it takes no theme and must be told in hex).
     css/                  the container everything normalises to: a sheet
                           of named swatches, written as custom properties.
 
@@ -36,12 +42,12 @@ see. `make visualtest` and `make visualtest-css` run it.
 - store xyz, work in oklab (13 sep). xyz is the 1931 root every device
   space is defined against, so the working space can change without
   touching a stored value; oklab is where distance matches an eye, so
-  every operation goes through it. the swatch's fields are unexported so
-  nobody averages xyz by accident.
+  every operation goes through it.
+- the swatch's fields are unexported so nobody averages xyz by accident.
 - derive, don't type (13 sep). the white is integrated from the observer
   and the daylight tables; srgb's matrix is derived from the standard's
-  four chromaticities and that white; matrix inverses are computed. the
-  only typed numbers are the ones with no derivation: the two cie
+  four chromaticities and that white; matrix inverses are computed.
+- the only typed numbers are the ones with no derivation: the two cie
   tables, srgb's four pairs and its curve, and oklab's fit.
 - precision set once (13 sep). `ok.Distance`, `ok.Exact` for arithmetic
   noise, `ok.Eye` for the smallest difference a person notices. every
@@ -63,18 +69,19 @@ see. `make visualtest` and `make visualtest-css` run it.
 ## what it is not
 
 not a css engine: it reads custom properties whose values are colours and
-refuses everything else out loud. not a renderer: it never draws a
-shape. not a device: how bright a lamp's white is, which colours it
-cannot make, and what a particular eye can read are facts about the
-device and the reader, and get their own libraries (the vendor layer,
-and libreadme).
+refuses everything else out loud. not a renderer: it never draws a shape.
+
+not a device: how bright a lamp's white is, which colours it cannot make, and
+what a particular eye can read are facts about the device and the reader, and
+get their own libraries (the vendor layer, and libreadme).
 
 ## how to read it
 
-swatch.go, then observer.go for where the white comes from; then ok.go
-top to bottom, stopping before "the numbers"; then srgb.go's matrix
-derivation; then ramp.go's package comment for the seam; then css.go.
-the tests are the same conversation with numbers in it. FUDGE.md last,
-so you know what all of it is standing on.
+swatch.go, then observer.go for where the white comes from; then ok.go top to
+bottom, stopping before "the numbers"; then srgb.go's matrix derivation; then
+ramp.go's package comment for the seam; then css.go. the tests are the same
+conversation with numbers in it.
+
+FUDGE.md last, so you know what all of it is standing on.
 
 jane michelle arc, 2026.

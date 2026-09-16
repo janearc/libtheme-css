@@ -11,16 +11,18 @@ import (
 	"github.com/janearc/libtheme-css/spaces/srgb"
 )
 
-// Colourway is what a colourway file holds once read: its roles, every
-// custom property that is a hex colour, in file order, and its ramps,
-// which are numbered families of roles: --sunset-1 to --sunset-6 is an
-// even ramp called sunset. That is the whole grammar, and it is ours:
-// a sheet this library wrote, or a colourway written by hand in the
-// same shape. Anything else in the file, selectors, gradients, the
-// rest of css, is not read. This is a container, not a parser; a file
-// that wants a ramp read promotes its stops to roles, as the
-// vaporwave file does. Ramps mix in oklab, the library's line between
-// two colours, which is said here so nobody is surprised.
+// Colourway is what a colourway file holds once read: its roles, every custom
+// property that is a hex colour, in file order, and its ramps, which are
+// numbered families of roles: --sunset-1 to --sunset-6 is an even ramp called
+// sunset.
+//
+// That is the whole grammar, and it is ours: a sheet this library wrote, or a
+// colourway written by hand in the same shape. Anything else in the file,
+// selectors, gradients, the rest of css, is not read.
+//
+// This is a container, not a parser; a file that wants a ramp read promotes its
+// stops to roles, as the vaporwave file does. Ramps mix in oklab, the library's
+// line between two colours, which is said here so nobody is surprised.
 type Colourway struct {
 	Roles *Sheet
 	Ramps map[string]functions.Ramp

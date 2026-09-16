@@ -4,17 +4,20 @@ import "github.com/janearc/libtheme-css/primitives/swatch"
 
 // Fit pulls a colour into a gamut, holding its lightness and hue.
 //
-// Chroma is what gives way, never lightness and never hue. A person who
-// picked a colour chose a hue and a level; the saturation is the part
-// they will accept less of. Projecting to the nearest point of the
-// gamut bends hue instead, worst around blue to magenta, so the colour
-// comes back a different colour rather than a less intense one.
+// Chroma is what gives way, never lightness and never hue. A person who picked
+// a colour chose a hue and a level; the saturation is the part they will accept
+// less of.
 //
-// The gamut is whatever the predicate says is inside it, so the same
-// rule fits a display, a lamp or a printer. The second return is how
-// much chroma was given up, zero when nothing moved, so a caller can
-// report the fit rather than clip in silence. A colour with no
-// achievable chroma at that lightness comes back grey.
+// Projecting to the nearest point of the gamut bends hue instead, worst around
+// blue to magenta, so the colour comes back a different colour rather than a
+// less intense one.
+//
+// The gamut is whatever the predicate says is inside it, so the same rule fits
+// a display, a lamp or a printer. The second return is how much chroma was
+// given up, zero when nothing moved, so a caller can report the fit rather than
+// clip in silence.
+//
+// A colour with no achievable chroma at that lightness comes back grey.
 func Fit(c OKLCH, in func(swatch.Swatch) bool) (OKLCH, float64) {
 	if in(c.Rect().Swatch()) {
 		return c, 0
