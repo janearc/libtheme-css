@@ -7,3 +7,8 @@ name libtheme-css
 
 # the lint is the builder's dotfile, whole: describing none here takes
 # every rule as it stands.
+
+# the design page ends with the author's byline, which is the one place in
+# this tree a name belongs; the sweep is told so rather than the byline
+# being moved to a file nobody reads.
+exclude DESIGN.md
