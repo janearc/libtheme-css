@@ -11,6 +11,16 @@ exclude CHANGELOG.md
 
 # it is very hard to describe this package in less than 25 rows.
 # so i didn't.
+# any lint line here replaces every lint rule in your game config, so
+# these copy them all; the allowance alone turned lint off.
+lint width 80
+lint rows 25
+lint comments
+lint print
+lint exclaim
+lint shout
+lint words hyperscaler enterprise-grade blazing-fast load-bearing
+lint paragraph 4
 lint allow README.md rows
 
 run known .           :: go run ./cmd/libtheme known

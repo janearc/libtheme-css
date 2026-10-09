@@ -13,8 +13,8 @@ writes it back out. it handles colour and nothing else.
   from xyz, so adding a device never changes a stored colour.
 - distance and blending are done in oklab, where equal steps look equal.
   in the screen's own rgb they do not.
-- every number comes from a published table or standard. the few that
-  had to be picked by hand are listed in FUDGE.md.
+- every number comes from a published table or standard. FUDGE.md lists
+  the few that had to be picked by hand.
 - css was chosen as an intermediary format because it's common and seems
   like it could do it, whether it was the "right" format or not. `theme`
   is N O T a css parser or library or any ofthat.

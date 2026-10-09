@@ -21,7 +21,9 @@ import (
 	"fmt"
 	"os"
 	"strings"
+	"time"
 
+	"github.com/janearc/libtheme-css/internal/age"
 	"github.com/janearc/libtheme-css/primitives/functions"
 	"github.com/janearc/libtheme-css/primitives/swatch"
 	"github.com/janearc/libtheme-css/spaces/srgb"
@@ -49,8 +51,17 @@ var pages = []page{
 	{"css", cssPage, cssCSS},
 }
 
+// build and built are stamped by game build: the commit, and the
+// commit's time. --age prints them.
+var build, built = "dev", ""
+
 // main is the pager: a page name and a mode, or every page in turn.
 func main() {
+	if len(os.Args) > 1 &&
+		(os.Args[1] == "--age" || os.Args[1] == "version") {
+		fmt.Println(age.Of("visualdocs", build, built, time.Now()))
+		return
+	}
 	// arguments in any order: an optional page name and an optional mode.
 	// no page means every page; no mode means paint.
 	var name, mode string

@@ -26,14 +26,20 @@ import (
 	"os"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/janearc/libtheme-css/css"
+	"github.com/janearc/libtheme-css/internal/age"
 	"github.com/janearc/libtheme-css/primitives/functions"
 	"github.com/janearc/libtheme-css/primitives/swatch"
 	"github.com/janearc/libtheme-css/spaces/ok"
 	"github.com/janearc/libtheme-css/spaces/radiation"
 	"github.com/janearc/libtheme-css/spaces/srgb"
 )
+
+// build and built are stamped by game build: the commit, and the
+// commit's time. --age prints them.
+var build, built = "dev", ""
 
 // main is the verb table.
 func main() {
@@ -43,6 +49,9 @@ func main() {
 	}
 	var err error
 	switch os.Args[1] {
+	case "--age", "version":
+		fmt.Println(age.Of("libtheme", build, built, time.Now()))
+		return
 	case "known":
 		mode := ""
 		if len(os.Args) > 2 {
@@ -147,12 +156,23 @@ func percentOrNumber(s string) (float64, error) {
 	return strconv.ParseFloat(s, 64)
 }
 
+// painting is whether colour cells are drawn: only into a terminal, and
+// not when NO_COLOR asks for none. Piped into a file, a diff or a screen
+// reader, the names and numbers say it all, and nothing is drawn.
+func painting() bool {
+	if os.Getenv("NO_COLOR") != "" {
+		return false
+	}
+	info, err := os.Stdout.Stat()
+	return err == nil && info.Mode()&os.ModeCharDevice != 0
+}
+
 // paint is a cell of the colour, as the terminal's own lamps would show it.
 // It uses a 24-bit background. If the colour is out of gamut, it uses the
-// nearest the screen can do. With NO_COLOR set, it writes hashes instead.
+// nearest the screen can do. When not painting, it is empty.
 func paint(s swatch.Swatch, width int) string {
-	if os.Getenv("NO_COLOR") != "" {
-		return strings.Repeat("#", width)
+	if !painting() {
+		return ""
 	}
 	c, _ := srgb.FromSwatch(s)
 	r, g, b := c.Bytes()
@@ -172,9 +192,9 @@ func show(arg string) error {
 	c, in := srgb.FromSwatch(s)
 	gamut := "in gamut"
 	if !in {
-		gamut = "OUT OF GAMUT, clipped"
+		gamut = "out of gamut, clipped"
 	}
-	fmt.Printf("%s  %s\n", paint(s, 12), arg)
+	fmt.Println(strings.TrimRight(arg+"  "+paint(s, 12), " "))
 	fmt.Printf("  xyz     %.5f %.5f %.5f\n", x, y, z)
 	fmt.Printf("  oklab   %.4f %.4f %.4f\n", lab.L, lab.A, lab.B)
 	fmt.Printf("  oklch   %s\n", lch)
@@ -305,7 +325,7 @@ func roundtrip() error {
 		case d <= ok.Exact:
 			verdict = "identical"
 		case d > ok.Eye:
-			verdict = "DIFFERENT"
+			verdict = "different to a person"
 			failed = true
 		}
 		fmt.Printf("%s %-6s %-8s %-24s %-8.5f %s\n",

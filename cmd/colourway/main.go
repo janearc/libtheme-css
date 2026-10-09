@@ -26,9 +26,15 @@ package main
 import (
 	"fmt"
 	"os"
+	"time"
 
 	"github.com/janearc/libtheme-css/colourway"
+	"github.com/janearc/libtheme-css/internal/age"
 )
+
+// build and built are stamped by game build: the commit, and the
+// commit's time. --age prints them.
+var build, built = "dev", ""
 
 // main is the verb table.
 func main() {
@@ -38,6 +44,9 @@ func main() {
 	}
 	var err error
 	switch os.Args[1] {
+	case "--age", "version":
+		fmt.Println(age.Of("colourway", build, built, time.Now()))
+		return
 	case "render":
 		if len(os.Args) != 4 {
 			usage()
