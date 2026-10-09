@@ -76,3 +76,27 @@ func TestGamut(t *testing.T) {
 		t.Error("fit moved a point that was inside")
 	}
 }
+
+// the same light is the same number, to the last bit, however many times
+// it is asked for. the sum over the spectrum once walked a map, whose
+// order changes on every walk, and floating-point addition is not the same
+// in every order: two hundred askings gave two hundred answers that
+// differed in the last bit or two. found in miami, where an artefact is
+// compared byte for byte.
+func TestTheSameLightIsTheSameNumber(t *testing.T) {
+	for _, kelvin := range []float64{1800, 5200, 6504, 12000} {
+		first := Planckian(kelvin)
+		for i := 0; i < 200; i++ {
+			if got := Planckian(kelvin); got != first {
+				t.Fatalf("%vK: asking again gave %v, not %v", kelvin,
+					got, first)
+			}
+		}
+	}
+	white := Illuminant(D65())
+	for i := 0; i < 200; i++ {
+		if got := Illuminant(D65()); got != white {
+			t.Fatalf("the white moved: %v, then %v", white, got)
+		}
+	}
+}

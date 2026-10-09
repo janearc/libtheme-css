@@ -12,7 +12,7 @@
 //	visualdocs [PAGE] --css     the same, as a stylesheet
 //	visualdocs [PAGE] --go      the go that produced it: the page's own file
 //
-// pages: swatch, observer, ok, eye, srgb, ramp, css
+// pages: swatch, observer, bands, ok, eye, srgb, ramp, css
 package main
 
 import (
@@ -40,6 +40,7 @@ type page struct {
 var pages = []page{
 	{"swatch", swatchPage, swatchCSS},
 	{"observer", observerPage, observerCSS},
+	{"bands", bandsPage, bandsCSS},
 	{"ok", okPage, okCSS},
 	{"eye", eyePage, eyeCSS},
 	{"srgb", srgbPage, srgbCSS},

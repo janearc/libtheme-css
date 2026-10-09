@@ -1,22 +1,41 @@
 package swatch
 
-import "math"
+import (
+	"math"
+
+	"github.com/janearc/libtheme-css/internal/si"
+)
 
 // Planckian is the swatch of a black body at a temperature in kelvin: the
 // colour a lamp means when it gives a colour temperature.
 //
-// The spectrum is Planck's law taken at every wavelength the observer has a row
-// for, and Illuminant does the rest, so the locus is derived from the same
-// tables as White and is never typed in. Below a few hundred kelvin there is no
-// visible light to speak of and the result is black.
+// The spectrum is Blackbody's, and Illuminant does the rest, so the locus is
+// derived from the same tables as White and is never typed in. Below a few
+// hundred kelvin there is no visible light to speak of and the result is
+// black.
 func Planckian(kelvin float64) Swatch {
 	if kelvin <= 0 {
 		return Black
 	}
+	return Illuminant(Blackbody(kelvin))
+}
+
+// Blackbody is the spectrum of a black body at a temperature in kelvin, by
+// Planck's law, at every wavelength the observer has a row for: power by
+// wavelength in nanometres. At zero kelvin or below it is empty.
+//
+// The power is relative. Planck's leading 2hc squared is left out, since it
+// is the same at every wavelength and only proportions are asked for here.
+// Wavelengths the observer does not list are not in the map, so this is a
+// lamp as an eye meets it, not as a thermometer would.
+func Blackbody(kelvin float64) map[int]float64 {
+	if kelvin <= 0 {
+		return map[int]float64{}
+	}
 	const (
-		h = 6.62607015e-34 // planck, J·s
-		c = 2.99792458e8   // light, m/s
-		k = 1.380649e-23   // boltzmann, J/K
+		h = si.Planck
+		c = si.Speed
+		k = si.Boltzmann
 	)
 	spectrum := make(map[int]float64, len(observer))
 	for nm := range observer {
@@ -24,5 +43,5 @@ func Planckian(kelvin float64) Swatch {
 		spectrum[nm] = 1 / (math.Pow(wl,
 			5) * (math.Exp(h*c/(wl*k*kelvin)) - 1))
 	}
-	return Illuminant(spectrum)
+	return spectrum
 }

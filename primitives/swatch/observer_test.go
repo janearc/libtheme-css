@@ -60,7 +60,7 @@ func TestInvisibleLightIsNoLight(t *testing.T) {
 		t.Errorf("ultraviolet came out as %v, not black",
 			Illuminant(ultraviolet))
 	}
-	lit := d65()
+	lit := D65()
 	for nm, p := range infrared {
 		lit[nm] = p
 	}

@@ -2,6 +2,7 @@ package swatch
 
 import (
 	_ "embed"
+	"sort"
 	"strconv"
 	"strings"
 )
@@ -64,6 +65,23 @@ func table(csv string) map[int][]float64 {
 // inherited, and it is stated once, here.
 var observer = table(observerCSV)
 
+// Observed is the shortest and the longest wavelength, in nanometres, the
+// observer has a row for: the library's range of visible, stated once, in
+// the table, and inherited by every range downstream.
+func Observed() (lo, hi int) {
+	first := true
+	for nm := range observer {
+		if first || nm < lo {
+			lo = nm
+		}
+		if first || nm > hi {
+			hi = nm
+		}
+		first = false
+	}
+	return lo, hi
+}
+
 // Illuminant is the swatch of a light given as a spectrum: power by wavelength
 // in nanometres. Each wavelength's power is weighted by how much the observer
 // counts it toward X, Y and Z, and the three weighted sums are taken over every
@@ -73,13 +91,26 @@ var observer = table(observerCSV)
 // the visible range being applied, not a limit of the spectrum. The three sums
 // are then scaled so that Y is exactly 1: the relative form, in which this
 // light is, by definition, the white.
+//
+// The sums are taken from the shortest wavelength to the longest, always.
+// Adding floating-point numbers in a different order gives a different last
+// bit, and a map is walked in a different order every time.
+//
+// So the same light used to come back as a very slightly different colour
+// on every call. Nothing at eight bits a channel could see it. It is fixed
+// anyway, because the same question should have the same answer.
 func Illuminant(spectrum map[int]float64) Swatch {
+	order := make([]int, 0, len(spectrum))
+	for nm := range spectrum {
+		order = append(order, nm)
+	}
+	sort.Ints(order)
 	var x, y, z float64
-	for nm, power := range spectrum {
+	for _, nm := range order {
 		if w, ok := observer[nm]; ok && len(w) == 3 {
-			x += power * w[0]
-			y += power * w[1]
-			z += power * w[2]
+			x += spectrum[nm] * w[0]
+			y += spectrum[nm] * w[1]
+			z += spectrum[nm] * w[2]
 		}
 	}
 	if y == 0 {
@@ -102,15 +133,16 @@ func Monochrome(nm int) Swatch {
 	return Swatch{w[0], w[1], w[2]}
 }
 
-// d65 is CIE standard illuminant D65: not a real sky but the average of noon
+// D65 is CIE standard illuminant D65: not a real sky but the average of noon
 // daylight measured in the 1960s, written down as a spectrum, with a nominal
-// colour temperature of 6500 kelvin.
+// colour temperature of 6500 kelvin. It is relative power by wavelength in
+// nanometres, 300 to 830, as published, and a new map on every call.
 //
 // It is actually 6504: the spectrum was fixed first, then physicists revised a
 // constant in the formula that turns temperature into a spectrum, and the
 // number moved under it. Nobody redefined the white; the label is slightly
 // wrong forever. sRGB and every screen you own assume this white.
-func d65() map[int]float64 {
+func D65() map[int]float64 {
 	out := map[int]float64{}
 	for nm, row := range table(d65CSV) {
 		if len(row) > 0 {
@@ -124,7 +156,7 @@ func d65() map[int]float64 {
 // out as X 0.95047, Z 1.08883, the two numbers most colour libraries
 // type in; here they are computed from the two published tables at
 // start-up, so the derivation can be checked rather than the typing.
-var White = Illuminant(d65())
+var White = Illuminant(D65())
 
 // Black is no light at all.
 var Black = Swatch{}

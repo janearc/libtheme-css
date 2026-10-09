@@ -74,19 +74,21 @@ var rgbToXYZ = func() mat.M {
 
 var xyzToRGB = rgbToXYZ.Inverse()
 
-// The curve. A lamp level is not light: the standard spends more of its
-// numbers on the dark end, where eyes can tell shades apart, by a
-// straight piece near zero and a power of 2.4 above it. These four
-// constants are the standard's.
-func toLinear(c float64) float64 {
+// ToLinear is the srgb curve from a lamp's level to linear light.
+//
+// A lamp level is not light: the standard spends more of its numbers on
+// the dark end, where eyes can tell shades apart, by a straight piece near
+// zero and a power of 2.4 above it. These four constants are the standard's.
+func ToLinear(c float64) float64 {
 	if c <= 0.04045 {
 		return c / 12.92
 	}
 	return math.Pow((c+0.055)/1.055, 2.4)
 }
 
-// fromLinear is the srgb curve from linear light to a lamp's value.
-func fromLinear(c float64) float64 {
+// FromLinear is the srgb curve from linear light to a lamp's level: ToLinear,
+// undone. Light above 1 comes back above 1; clipping is FromSwatch's job.
+func FromLinear(c float64) float64 {
 	if c <= 0.0031308 {
 		return 12.92 * c
 	}
@@ -117,14 +119,28 @@ func FromSwatch(s swatch.Swatch) (c RGB, inGamut bool) {
 		}
 		return math.Max(0, math.Min(1, v))
 	}
-	return RGB{fromLinear(clip(r)), fromLinear(clip(g)),
-		fromLinear(clip(b))}, inGamut
+	return RGB{FromLinear(clip(r)), FromLinear(clip(g)),
+		FromLinear(clip(b))}, inGamut
+}
+
+// Light is a swatch as amounts of light from the three srgb lamps, in
+// linear light and unclipped: what a renderer adds and multiplies. White is
+// 1, 1, 1. A colour outside the lamps' reach needs a negative amount of one
+// of them, and says so by having one; nothing here pretends otherwise.
+func Light(s swatch.Swatch) (r, g, b float64) {
+	return xyzToRGB.Apply(s.XYZ())
+}
+
+// FromLight is amounts of light from the three srgb lamps as a swatch:
+// Light, undone.
+func FromLight(r, g, b float64) swatch.Swatch {
+	return swatch.FromXYZ(rgbToXYZ.Apply(r, g, b))
 }
 
 // Swatch stores the lamp levels back as a swatch.
 func (c RGB) Swatch() swatch.Swatch {
-	return swatch.FromXYZ(rgbToXYZ.Apply(toLinear(c.R), toLinear(c.G),
-		toLinear(c.B)))
+	return swatch.FromXYZ(rgbToXYZ.Apply(ToLinear(c.R), ToLinear(c.G),
+		ToLinear(c.B)))
 }
 
 // Bytes is the lamps as the three bytes a terminal wants.

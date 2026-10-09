@@ -80,6 +80,52 @@ standard values at all. the escape codes are standardised; the colours are not.
 every terminal's author picked their own, and yours are in a ghostty config you
 wrote, so in this one place the fudge is yours and you can change it.
 
+## 2026: the order of a sum
+
+a colour from a spectrum is three sums over four hundred wavelengths, and
+adding floating-point numbers in a different order gives a different last
+bit. the sums used to walk a map, which go hands back in a different order
+every time.
+
+so the same light was a very slightly different number on every asking:
+about one part in ten to the fifteenth. nothing on any screen could show
+it. it is still a fudge, and the only one in this ledger that was an
+accident.
+
+it is gone: the sums run from the shortest wavelength to the longest,
+always. found from miami, where a picture is compared byte for byte.
+`primitives/swatch/observer.go`.
+
+## 2026: bands
+
+light in `primitives/bands` is carried in slices of the spectrum, 24 to an
+octave, even in the logarithm of wavelength. 24 is picked, not derived, and
+these are the measurements it was picked from: the oklab distance after a
+round trip into bands and back, against `ok.Eye`, which is 0.02.
+
+    per octave  daylight  worst black body  worst line  visible bands
+             6   0.0051       0.0256          not run         7
+             8   0.0015       0.0066          0.878           9
+            12   0.0009       0.0037          0.511          14
+            16   0.0004       0.0018          0.498          17
+            24   0.0002       0.0010          0.283          26
+            48   0.00004      0.0002          0.151          51
+
+smooth light, daylight and lamps, comes back inside what an eye can see at
+8 and up; at 6 a 1000 kelvin lamp is past it. at 24 the worst black body
+is inside by a factor of twenty. the black bodies run 1000 to 20000 kelvin
+in steps of 250; the lines run 420 to 680 nm in steps of 5.
+
+a single spectral line does not come back at any step worth paying for. a
+band spreads a line across its width, and a line is so saturated that a
+small smear is a long way in oklab. a laser or a sodium lamp in bands is
+exact about its power and approximate about its colour.
+
+so 24 is a price, not a truth: 26 bands across the visible, about 16 nm
+wide at 550, and out to webb's 28 microns in about 150. one step is a
+redshift of 2.9 percent. each band is weighed by the observer's mean
+response over the whole wavelengths inside it. `primitives/bands/bands.go`.
+
 ## today: one reader
 
 on top of all of it sits a profile of one person's eyes, measured by that
