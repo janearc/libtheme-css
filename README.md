@@ -1,25 +1,49 @@
 # libtheme
-the documentation is a program. `go tool game run visualdocs` pages through it:
-the spectrum as the 1931 observer saw it, the grey line, the wheel, two colours
-0.02 apart, the same two stops blended in oklab and in the lamps.
 
-`go run ./cmd/visualdocs ramp --css` says a page in css; `--go` prints the
-source that painted it, so picture, sheet and code cannot drift apart.
+one person keeps a theme in a terminal, an editor, a web page and a lamp,
+and matches them by eye. libtheme starts from one primitive, the swatch, so
+a colour is the same colour wherever it lands.
 
-one person keeps a theme in a terminal, an editor, a web page and a lamp, and
-matches them by eye, one hex code at a time. this library gives them one
-primitive, the swatch, and works up from it, so the same colour is the same
-colour everywhere it lands.
+colour is just light that you can see with your eyes, however they see, and
+light is just radiation, and radiation, when you're a programmer, is just
+math. so libtheme manages all forms of radiation as easily as it manages srgb.
+xrays, microwave, gamma, in your vim theme. yep.
 
-    primitives/swatch     one colour, complete, as cie xyz (1931)
-    primitives/functions  a ramp: stops and a mixer, t to a swatch
-    spaces/ok             oklab and oklch, the axes an eye agrees with
-    spaces/srgb           the screen's lamps; hex, hsl, hsv; derived
-    css                   the container: a sheet of named swatches
-    dialects/             hue, grafana, ghostty, claude, nvim, glamour
-    ../cmd/visualdocs     the documentation, shown, one page per idea
-    ../cmd/libtheme       the console end: show, ramp, read, known
+## quick reference
 
-game builds it; `go tool game run visualdocs` and `run known` read it. every
-number here stands on a number somebody picked: FUDGE.md is the ledger,
-1931 to your shell. DESIGN.md is the shape and the decisions.
+```
+# build the package
+$ go install github.com/janearc/game/cmd/game@latest
+$ ./bin/game build
+
+# demonstrates what theme understands from derivation
+$ game run known
+
+# the programming guide to libtheme
+$ game run visualdocs
+
+# the same thing, but in css
+$ game run visualdocs-css
+
+# the same thing, but in golang!
+$ game run visualdocs-go
+```
+
+## less quick reference
+
+the documentation is a program. `game run visualdocs` takes you through it,
+from the 1931 observer's spectrum to two stops blended in oklab and on the
+screen. `--css` prints a page as css, and `--go` the code that painted it.
+
+    primitives/swatch     one colour, as cie xyz (1931)
+    primitives/functions  ramps: stops, a mixer, t from 0 to 1
+    primitives/bands      light as amounts in slices of the spectrum
+    spaces/ok             oklab and oklch
+    spaces/srgb           the screen: hex, hsl, hsv
+    spaces/radiation      radiation the eye does not ordinarily see
+    css                   a sheet of named swatches
+    colourway             one sheet, rendered into every dialect
+    dialects/             hue, grafana, ghostty, claude, nvim, vim, glamour
+    cmd/visualdocs        the documentation, one page per idea
+    cmd/libtheme          show, ramp, read, known
+    cmd/colourway         render, sheet, diff, show

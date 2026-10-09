@@ -1,9 +1,9 @@
 // Package css is the container everything normalises to: a sheet of named
-// colours, each one a swatch. Rudimentary on purpose.
+// colours, each one a swatch. It is rudimentary on purpose.
 //
-// It holds names in the order they were given, writes itself out as the custom
-// properties a browser, daffy or a colourway file would read, and that is all
-// it does until it has to do more.
+// It holds names in the order they were given. It writes itself out as the
+// custom properties that a browser or a colourway file would read.
+// That is all it does until it has to do more.
 package css
 
 import (
@@ -42,9 +42,9 @@ func (s *Sheet) Get(name string) (swatch.Swatch, bool) {
 // Names are the names, in order.
 func (s *Sheet) Names() []string { return append([]string(nil), s.names...) }
 
-// Rule is one custom property as the sheet would write it: the name, the
-// value a screen can make, and the comment beside it. Exposed so that a
-// printer can paint the parts without parsing the text back.
+// Rule is one custom property as the sheet would write it. It has the name,
+// the value a screen can make, the comment beside it, and the swatch. It is
+// exported so a printer can paint the parts without parsing the text back.
 type Rule struct {
 	Name, Value, Comment string
 	Swatch               swatch.Swatch
@@ -65,10 +65,10 @@ func (s *Sheet) Rules() []Rule {
 	return out
 }
 
-// String is the sheet as CSS: one custom property per name on :root, the value
-// as the hex a screen can make, and beside it in a comment the same colour as
-// oklch, which is the form that says what it is. Out of gamut, the hex is the
-// nearest the lamps can do and the comment says so.
+// String is the sheet as CSS. It writes one custom property per name on
+// :root. The value is the hex a screen can make. Beside it, in a comment, is
+// the same colour as oklch, which says what the colour is. Out of gamut, the
+// hex is the nearest the lamps can do and the comment says "clipped".
 func (s *Sheet) String() string {
 	var b strings.Builder
 	b.WriteString(":root {\n")

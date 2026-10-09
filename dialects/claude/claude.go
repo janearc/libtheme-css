@@ -1,18 +1,17 @@
 // Package claude is the claude code dialect: the colours claude code
 // draws its own screen in, by name.
 //
-// Claude code takes no theme file. With a theme that follows the
-// terminal, it draws in numbered palette colours: its text in 252, the
-// words typed to it in 188 on a band of 0, and so on.
+// Claude code takes no theme file. When the theme follows the terminal,
+// it draws in numbered palette colours. Its text is 252. The words typed
+// to it are 188, on a band of 0.
 //
-// So its colours are set where the terminal's are, in the terminal
-// theme's palette, and a colourway names them by what they are. This
-// dialect is that table, read off claude code's screen on 2026-10-04,
-// and the move between the names and the numbers.
+// So its colours are set in the terminal theme's palette. A colourway
+// names them by what they are. This dialect is that table, and it moves
+// between the names and the numbers.
 //
-// The band is palette 0, which is also the terminal's black: one lamp,
-// two names. A colourway sets it as black, and the dialect says so
-// rather than keeping a second name that could disagree.
+// The band is palette 0, which is also the terminal's black. A colourway
+// sets it as black. The dialect does not keep a second name for it,
+// because two names could disagree.
 package claude
 
 import (
@@ -22,12 +21,12 @@ import (
 	"github.com/janearc/libtheme-css/primitives/swatch"
 )
 
-// Slots are claude code's colours: the role a colourway names each by,
-// the palette number claude code draws it in, and what it is.
+// Slots are claude code's colours. Each has the role a colourway names it
+// by, the palette number claude code draws it in, and what it is for.
 //
 // From is the general role a slot follows when a colourway does not set
-// it, and Toward, for the bands of a diff, how far the ground is mixed
-// toward that role rather than taking it. A first draft, 2026-10-05.
+// it. Toward is used for the bands of a diff. It says how far the ground
+// is mixed toward that role, instead of taking the role's colour.
 var Slots = []struct {
 	Role   string
 	Number int
@@ -53,8 +52,8 @@ var Slots = []struct {
 	{"claude-diff-code", 231, "the code on those bands", "ink", 0},
 }
 
-// Palette is the claude code colours a colourway sets, by palette
-// number, which is what a terminal or a multiplexer is told.
+// Palette is the claude code colours a colourway sets, keyed by palette
+// number. A terminal or a multiplexer is told these numbers.
 func Palette(roles *css.Sheet) map[int]swatch.Swatch {
 	palette := map[int]swatch.Swatch{}
 	for _, slot := range Slots {
@@ -65,10 +64,10 @@ func Palette(roles *css.Sheet) map[int]swatch.Swatch {
 	return palette
 }
 
-// Into is a colourway with its claude code colours also said by number,
-// as palette-N, so the ghostty dialect writes them into the terminal
-// theme. A colourway that sets both a name and its number disagrees with
-// itself, and is refused.
+// Into is a colourway with its claude code colours also set by number, as
+// palette-N. The ghostty dialect then writes them into the terminal
+// theme. Slots below 16 are skipped. If a colourway sets both a name and
+// its number, Into returns an error.
 func Into(roles *css.Sheet) (*css.Sheet, error) {
 	said := css.New()
 	for _, rule := range roles.Rules() {
@@ -91,9 +90,9 @@ func Into(roles *css.Sheet) (*css.Sheet, error) {
 }
 
 // Of is a terminal palette's claude code colours as a colourway's roles,
-// for the numbers it has. The band is left out: below 16 a colour has
-// the terminal's name already, black. palette-N roles for the same
-// numbers should be dropped by the caller, since these name them.
+// for the numbers the palette has. The band is left out. Below 16 the
+// terminal already names the colour, black. The caller should drop
+// palette-N roles for the same numbers, since these roles name them.
 func Of(palette map[int]swatch.Swatch) *css.Sheet {
 	roles := css.New()
 	for _, slot := range Slots {

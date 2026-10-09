@@ -7,6 +7,8 @@ import (
 	"regexp"
 	"strings"
 	"testing"
+
+	"github.com/janearc/libtheme-css/spaces/radiation"
 )
 
 // capture runs f with stdout caught, so a test can read what a verb
@@ -78,5 +80,21 @@ func TestKnownCSSIsCSS(t *testing.T) {
 	if escape.MatchString(out) {
 		t.Errorf("known --css carries escapes; it is for piping into " +
 			"a file")
+	}
+}
+
+// Every wavelength across a profile falls in its own cell of the bar, so a
+// round trip that lands elsewhere is the colour's loss, not the bar's.
+func TestAcrossLandsInItsOwnCell(t *testing.T) {
+	for _, profile := range radiation.Profiles {
+		for i, nm := range across(profile) {
+			if got := cellOf(profile, nm); got != i {
+				t.Errorf("%s: %g nm is cell %d, want %d",
+					profile.Name, nm, got, i)
+			}
+		}
+		if cellOf(profile, profile.Source.Hi*2) != -1 {
+			t.Errorf("%s: past the source is not -1", profile.Name)
+		}
 	}
 }

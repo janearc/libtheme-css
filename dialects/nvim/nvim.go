@@ -1,16 +1,16 @@
 // Package nvim is the neovim dialect: a colour scheme said from a
 // colourway's roles, and read back into them.
 //
-// A scheme is a table of colours by role, the highlight groups that use
-// them, and the sixteen for neovim's own terminal, so a shell inside vim
-// draws like the terminal around it.
+// A scheme is a table of colours by role and the highlight groups that
+// use them. It also holds the sixteen for neovim's own terminal, so a
+// shell inside vim draws like the terminal around it.
 //
-// The groups are fixed, in groups.lua; only the colours come from the
+// The groups are fixed, in groups.lua. Only the colours come from the
 // colourway. The sixteen are the terminal's, by the names the ghostty
 // dialect gives them.
 //
-// A colourway can give the editor a colour of its own: nvim-ink wins
-// over ink here and nowhere else, for an editor whose ink is a little
+// A colourway can give the editor a colour of its own. nvim-ink wins over
+// ink here and nowhere else. This suits an editor whose ink is a little
 // brighter than its terminal's, or whose terminal keeps its own black.
 package nvim
 
@@ -31,9 +31,9 @@ import (
 //go:embed groups.lua
 var groups string
 
-// Roles are the scheme's colours in the order it writes them: the name
-// the highlight groups use, the role a colourway gives it, and what it
-// is for.
+// Roles are the scheme's colours in the order it writes them. Each has
+// the name the highlight groups use, the role a colourway gives it, and
+// what it is for.
 var Roles = []struct{ Name, Role, Use string }{
 	{"bg", "ground", "the ground"},
 	{"ink", "ink", "body prose"},
@@ -53,9 +53,10 @@ var Roles = []struct{ Name, Role, Use string }{
 	{"hint", "hint", "hints"},
 }
 
-// Scheme is a colour scheme: its name, whether its ground is the light
-// one (lighter than its ink), its colours by the names the groups use,
-// and the sixteen, which a scheme read from a file may not have.
+// Scheme is a colour scheme. It has a name and a flag for whether its
+// ground is the light one, meaning lighter than its ink. It has its
+// colours by the names the groups use. It has the sixteen, which a scheme
+// read from a file may not have.
 type Scheme struct {
 	Name     string
 	Light    bool
@@ -64,7 +65,8 @@ type Scheme struct {
 }
 
 // Of is the scheme a colourway's roles describe. Every role is required,
-// since a group with no colour falls back to somebody else's.
+// including the sixteen. A group with no colour would fall back to
+// someone else's.
 func Of(name string, roles *css.Sheet) (Scheme, error) {
 	scheme := Scheme{Name: name, Colours: map[string]swatch.Swatch{},
 		Terminal: make([]swatch.Swatch, 16)}
@@ -87,16 +89,16 @@ func Of(name string, roles *css.Sheet) (Scheme, error) {
 	return scheme, nil
 }
 
-// snap is a colour as the file will hold it, on the lamps' byte grid,
-// so the contrast written beside it is the contrast of what is written,
-// and a scheme read back says the same.
+// snap is a colour as the file will hold it, on the lamps' byte grid. Then
+// the contrast written beside it is the contrast of what is written, and a
+// scheme read back says the same.
 func snap(value swatch.Swatch) swatch.Swatch {
 	snapped, _ := parse(ghostty.Hex(value))
 	return snapped
 }
 
-// pick is a role's colour for the editor: its own, nvim-role, if the
-// colourway gives it one, else the role's.
+// pick is a role's colour for the editor. It uses nvim-role if the
+// colourway gives one, else the role's own colour.
 func pick(roles *css.Sheet, role string) (swatch.Swatch, bool) {
 	if value, found := roles.Get("nvim-" + role); found {
 		return value, true
@@ -109,15 +111,15 @@ func missing(role, needs string) error {
 	return fmt.Errorf("nvim: %s is missing; %s needs it", role, needs)
 }
 
-// lighter is whether a scheme's ground is the light one: lighter than
-// its ink. a fixed threshold would call a mid-tone ground dark under ink
+// lighter is whether a scheme's ground is the light one: lighter than its
+// ink. A fixed threshold would call a mid-tone ground dark when the ink is
 // darker still.
 func lighter(colours map[string]swatch.Swatch) bool {
 	return luminance(colours["bg"]) > luminance(colours["ink"])
 }
 
-// Roles is the scheme said back as a colourway's roles: its colours by
-// role, then the sixteen by name, if it has them.
+// Roles is the scheme's roles as a colourway: colours by role, then
+// sixteen by name if present.
 func (scheme Scheme) Roles() *css.Sheet {
 	roles := css.New()
 	for _, entry := range Roles {
@@ -140,9 +142,9 @@ var (
 	named = regexp.MustCompile(`^\s*vim\.g\.colors_name\s*=\s*"([^"]+)"`)
 )
 
-// Read is a scheme file's colours: the `local c = {` table by name, and
-// the `local term = {` table's sixteen. Everything else, the groups
-// among it, is passed over, so a scheme written by hand in the same
+// Read is a scheme file's colours. It reads the `local c = {` table by
+// name and the sixteen in the `local term = {` table. It skips everything
+// else, including the groups. So a scheme written by hand in the same
 // shape reads as well as one this dialect wrote.
 func Read(source io.Reader) (Scheme, error) {
 	raw, err := io.ReadAll(source)
@@ -174,9 +176,9 @@ type reading struct {
 	table string
 }
 
-// take reads one line of a scheme file into the scheme. Comments are
-// passed over, whole lines and the ends of lines both, so a colour named
-// in a note is not taken for one in the table.
+// take reads one line of a scheme file into the scheme. It skips
+// comments, both whole lines and the ends of lines. So a colour named in
+// a note is not taken for one in the table.
 func (scheme *Scheme) take(text string, place *reading) error {
 	if code, _, found := strings.Cut(text, "--"); found {
 		text = code
@@ -225,19 +227,19 @@ func (scheme *Scheme) takeTerminal(text string, place *reading) error {
 	return nil
 }
 
-// Group is one highlight group as groups.lua sets it: its name, the
-// scheme's names for the colours of its letters and its ground, and its
-// styles (bold, italic, underline, strikethrough).
+// Group is one highlight group as groups.lua sets it. It has the name, the
+// scheme's names for its foreground and ground colours, and its styles
+// (bold, italic, underline, strikethrough).
 type Group struct {
 	Name, Fg, Bg string
 	Styles       []string
 }
 
-// groupLine is one group in groups.lua: g(0, "Name", { key = value, ... }).
+// groupLine matches a group in groups.lua: g(0, "Name", { key = value, ... }).
 var groupLine = regexp.MustCompile(`^g\(0,\s*"([^"]+)",\s*\{([^}]*)\}\)`)
 
 // Groups are the highlight groups every scheme sets, as groups.lua says
-// them, so another dialect can say the same groups in its own words.
+// them. Another dialect can then say the same groups in its own words.
 func Groups() []Group {
 	found := []Group{}
 	for line := range strings.SplitSeq(groups, "\n") {
@@ -284,10 +286,10 @@ for i, v in ipairs(term) do vim.g["terminal_color_" .. (i - 1)] = v end
 `
 )
 
-// Write puts the scheme in neovim's lua after a header, each line of
-// which becomes a comment. Each text colour's comment carries its
-// contrast with the ground, worked out here, so the number beside it is
-// never stale.
+// Write puts the scheme in neovim's lua after a header. Each line of the
+// header becomes a comment. The comment on each colour other than the
+// ground carries its contrast with the ground. Write works the number out
+// each time, so it is never stale.
 func (scheme Scheme) Write(out io.Writer, header string) error {
 	var text strings.Builder
 	for line := range strings.SplitSeq(strings.TrimSpace(header), "\n") {
@@ -331,8 +333,8 @@ func (scheme Scheme) Write(out io.Writer, header string) error {
 	return err
 }
 
-// Inverted is the scheme with every colour turned to its opposite, each
-// lamp 255 less itself, for a screen the system inverts.
+// Inverted is the scheme with every colour turned to its opposite. Each
+// lamp becomes 255 less itself. This is for a screen the system inverts.
 func (scheme Scheme) Inverted() Scheme {
 	inverted := Scheme{Name: scheme.Name,
 		Colours: map[string]swatch.Swatch{}}
@@ -346,8 +348,9 @@ func (scheme Scheme) Inverted() Scheme {
 	return inverted
 }
 
-// Contrast is wcag's ratio between two colours: their relative
-// luminances, each with 0.05 added, the lighter over the darker.
+// Contrast is wcag's ratio between two colours. Take their relative
+// luminances and add 0.05 to each. The ratio is the lighter over the
+// darker.
 func Contrast(first, second swatch.Swatch) float64 {
 	lighter, darker := luminance(first), luminance(second)
 	if lighter < darker {

@@ -11,18 +11,18 @@ import (
 	"github.com/janearc/libtheme-css/spaces/srgb"
 )
 
-// Colourway is what a colourway file holds once read: its roles, every custom
-// property that is a hex colour, in file order, and its ramps, which are
-// numbered families of roles: --sunset-1 to --sunset-6 is an even ramp called
-// sunset.
+// Colourway is what a colourway file holds once read. Roles are every custom
+// property that is a hex colour, in file order. Ramps are numbered families
+// of roles: --sunset-1 to --sunset-6 is an even ramp called sunset. A family
+// needs at least two members.
 //
-// That is the whole grammar, and it is ours: a sheet this library wrote, or a
-// colourway written by hand in the same shape. Anything else in the file,
-// selectors, gradients, the rest of css, is not read.
+// That is the whole grammar, and it is ours: a sheet this library wrote, or
+// a colourway written by hand in the same shape. Anything else in the file
+// is not read. That includes selectors, gradients and the rest of css.
 //
-// This is a container, not a parser; a file that wants a ramp read promotes its
-// stops to roles, as the vaporwave file does. Ramps mix in oklab, the library's
-// line between two colours, which is said here so nobody is surprised.
+// This is a container, not a parser. A file that wants a ramp read promotes
+// its stops to roles. Ramps mix in oklab, the library's line between two
+// colours.
 type Colourway struct {
 	Roles *Sheet
 	Ramps map[string]functions.Ramp
@@ -36,8 +36,8 @@ var (
 	familyRe = regexp.MustCompile(`^(.*)-(\d+)$`)
 )
 
-// Read reads a colourway: hex custom properties as roles, numbered
-// families as ramps. It is not a css parser and reads nothing else.
+// Read reads a colourway. Hex custom properties become roles. Numbered
+// families become ramps. It is not a css parser and reads nothing else.
 func Read(src string) Colourway {
 	cw := Colourway{Roles: New(), Ramps: map[string]functions.Ramp{}}
 	for _, m := range roleRe.FindAllStringSubmatch(src, -1) {

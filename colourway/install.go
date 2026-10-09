@@ -11,9 +11,9 @@ import (
 	"strings"
 )
 
-// places are where each program reads a rendered file, by the folder the
-// file sits in under a colourways folder: in the user's config folder,
-// or, for vim, in the home itself.
+// places says where each program reads its rendered files. The key is the
+// folder the file sits in under a colourways folder. Most places are in the
+// user's config folder. The vim place is in the home folder.
 var places = map[string]struct {
 	inConfig bool
 	path     string
@@ -24,13 +24,12 @@ var places = map[string]struct {
 	"glamour":     {true, "glamour"},
 }
 
-// shipped are the folders of a colourways folder an install takes: the
-// sources, and what they render into.
+// shipped are the folders an install copies: sources and their outputs.
 var shipped = []string{"sources", "ghostty", "nvim/colors", "vim/colors",
 	"glamour"}
 
-// Config is the user's config folder: XDG_CONFIG_HOME when it is set to an
-// absolute path, as the spec asks, and ~/.config otherwise.
+// Config is the user's config folder. It is XDG_CONFIG_HOME if that is set
+// to an absolute path, as the spec asks, and ~/.config otherwise.
 func Config(home string) string {
 	if dir := os.Getenv("XDG_CONFIG_HOME"); filepath.IsAbs(dir) {
 		return dir
@@ -38,8 +37,8 @@ func Config(home string) string {
 	return filepath.Join(home, ".config")
 }
 
-// Place is where a program reads the files rendered into a folder of a
-// colourways folder, and whether the folder is a program's at all.
+// Place returns where a program reads the files in a folder of a
+// colourways folder. It returns false if the folder is not a program's.
 func Place(folder, home string) (string, bool) {
 	place, known := places[folder]
 	if !known {
@@ -51,9 +50,9 @@ func Place(folder, home string) (string, bool) {
 	return filepath.Join(home, place.path), true
 }
 
-// Folder is where a user's colourways live: colourways or colorways in
-// their config folder, whichever is there; if neither is, colorways for
-// an American English locale and colourways for everyone else.
+// Folder is the user's colourways folder. It is colourways or colorways in
+// the config folder, whichever exists. If neither exists, it is colorways
+// when LANG starts with en_US, and colourways otherwise.
 func Folder(home string) string {
 	for _, spelling := range []string{"colourways", "colorways"} {
 		dir := filepath.Join(Config(home), spelling)
@@ -67,18 +66,18 @@ func Folder(home string) string {
 	return filepath.Join(Config(home), "colourways")
 }
 
-// Installed is what an install did with each file it was given: written,
-// already the same, or kept, because a file of the user's was there and
-// differed, and replacing was not asked for. Replaced are the written
-// files that took the place of one of the user's that differed.
+// Installed records what an install did with each file. Written files were
+// written, and Same files were already the same. Kept files are the user's
+// files that differed and were left alone, since replace was not asked for.
+// Replaced files took the place of a user's file that differed.
 type Installed struct {
 	Written, Same, Kept, Replaced []string
 }
 
-// Install copies a colourways folder's sources and renders into the
-// user's own colourways folder, where paratune looks, and each render to
-// where its program reads it. A file of theirs that differs is kept
-// unless replace is asked for, so nothing they tuned is lost.
+// Install copies the sources and renders of a colourways folder into the
+// user's own colourways folder. It also copies each render to where its
+// program reads it. A user's file that differs is kept unless replace is
+// true, so nothing they tuned is lost.
 func Install(from, home string, replace bool) (Installed, error) {
 	done, into := Installed{}, Folder(home)
 	if info, err := os.Stat(filepath.Join(from, "sources")); err != nil ||
@@ -119,9 +118,10 @@ func Install(from, home string, replace bool) (Installed, error) {
 	return done, nil
 }
 
-// Copy puts one file in place and says which it was: written, the same,
-// or kept. A link is written through, to the file it names; a link to
-// nothing, or a file that cannot be read, is an error, never overwritten.
+// Copy puts one file in place and records which it was: written, the same,
+// or kept. If the target is a link, Copy writes through to the file the link
+// names. A link to nothing is an error. So is a file that cannot be read.
+// Neither is overwritten.
 func (done *Installed) Copy(source, target string, replace bool) error {
 	raw, err := os.ReadFile(source)
 	if err != nil {
@@ -157,8 +157,9 @@ func (done *Installed) Copy(source, target string, replace bool) error {
 	return nil
 }
 
-// writeWhole writes a file beside its place and renames it in, so a write
-// cut short leaves the old file whole, never half of the new one.
+// writeWhole writes a temporary file beside the target and renames it into
+// place. A write cut short then leaves the old file whole, not half of the
+// new one.
 func writeWhole(target string, raw []byte) error {
 	if err := os.MkdirAll(filepath.Dir(target), 0o755); err != nil {
 		return err
@@ -182,9 +183,10 @@ func writeWhole(target string, raw []byte) error {
 	return os.Rename(temporary.Name(), target)
 }
 
-// Say tells a reader what an install did, under the command they ran:
-// where the colourways went, how many files of each kind, and every file
-// of theirs it kept, by name.
+// Say tells the reader what an install did, under the command they ran. It
+// says where the colourways went and how many files were written, already
+// the same, and kept. It names each file it replaced and each file of
+// theirs it kept. If any were kept, it says how to replace them.
 func (done Installed) Say(out io.Writer, home string) {
 	fmt.Fprintf(out, "colourways in %s, and each program's files "+
 		"where it reads them\n", Folder(home))

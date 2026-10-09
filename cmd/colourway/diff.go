@@ -18,10 +18,10 @@ import (
 	"github.com/janearc/libtheme-css/spaces/ok"
 )
 
-// rolesOf is a colourway's roles from any file colourway reads, told by
-// its name: a source (.css), a vim scheme (.lua), a markdown style
-// (.json), or else a terminal theme. /dev/null, which git gives for a
-// file added or removed, is no roles.
+// rolesOf returns the roles of any file colourway reads. The name picks the
+// reader: .css is a source, .lua a neovim scheme, .json a markdown style.
+// Anything else is a terminal theme. /dev/null gives no roles, because git
+// passes it for a file that was added or removed.
 func rolesOf(path string) (*css.Sheet, error) {
 	if path == os.DevNull {
 		return css.New(), nil
@@ -47,8 +47,8 @@ func rolesOf(path string) (*css.Sheet, error) {
 	return terminalRoles(theme), nil
 }
 
-// change is one role compared: its name, its colour before and after, and
-// which of the two it has.
+// change is one role compared. It holds the name, the colour before and
+// after, and whether each side has the role.
 type change struct {
 	name          string
 	before, after swatch.Swatch
@@ -73,9 +73,10 @@ func compared(before, after *css.Sheet) []change {
 	return changes
 }
 
-// report writes how two colourways differ: a count, then each role that
-// changed, came or went, with its hex before and after. Colour draws a
-// swatch beside each. It says whether anything differed.
+// report writes how two colourways differ. It prints a count, then a line
+// for each role that changed, was added or was removed, with its hex before
+// and after. If colour is true, it draws a swatch beside each. It returns
+// true if anything differed.
 func report(out io.Writer, changes []change, colour bool) bool {
 	same, changed, added, removed := 0, 0, 0, 0
 	lines := []string{}
@@ -111,10 +112,10 @@ func single(mark, name string, value swatch.Swatch, colour bool) string {
 		hexOf(value))
 }
 
-// changedLine is one changed role, before and after: how far it moved in
-// oklab, times a hundred, with a note when an eye could not tell (ok.Eye
-// is the space author's just-noticeable difference), and the change in
-// lightness, chroma and hue.
+// changedLine writes one changed role, before and after. It shows how far
+// the role moved in oklab, times a hundred. It adds a note when the move is
+// under ok.Eye, the smallest difference an eye can tell. It also shows the
+// change in lightness, chroma and hue.
 func changedLine(one change, colour bool) string {
 	was, is := ok.FromSwatch(one.before), ok.FromSwatch(one.after)
 	distance := ok.Distance(was, is)
@@ -137,8 +138,8 @@ func hexOf(value swatch.Swatch) string {
 	return strings.ToLower(ghostty.Hex(value))
 }
 
-// swatchOf is two cells lit in a colour, then a space, when colour is
-// wanted, and nothing otherwise.
+// swatchOf returns two cells lit in the colour, then a space. It returns
+// an empty string if colour is false.
 func swatchOf(value swatch.Swatch, colour bool) string {
 	if !colour {
 		return ""
@@ -148,10 +149,10 @@ func swatchOf(value swatch.Swatch, colour bool) string {
 	return fmt.Sprintf("\x1b[48;2;%d;%d;%dm  \x1b[0m ", r, g, b)
 }
 
-// diff is colourway diff: two files, or git's arguments with --git,
-// compared. Outside git it says whether they differed by its exit, as
-// diff does. Inside git it always succeeds, since git takes a failure as
-// the diff breaking, and says any trouble in the diff instead.
+// diff is colourway diff. It compares two files, or git's arguments with
+// --git. Outside git it returns true if they differed, and main exits 1 on
+// that, as diff does. Inside git it always succeeds, because git takes a
+// failure to mean the diff broke. It prints any trouble instead.
 func diff(arguments []string) (bool, error) {
 	colour, git := terminal(), false
 	for len(arguments) > 0 && strings.HasPrefix(arguments[0], "--") {
@@ -170,11 +171,12 @@ func diff(arguments []string) (bool, error) {
 	return compare(arguments[0], arguments[1], colour)
 }
 
-// gitDiff is the diff as git's external driver asks for it: seven
-// arguments for a file changed (path, then the old file, hex and mode,
-// then the new), nine for one renamed, one for a path unmerged.
+// gitDiff runs the diff as git's external driver asks for it. Git passes
+// seven arguments for a changed file: path, old file, old hex, old mode,
+// new file, new hex, new mode. It passes nine for a renamed file and one
+// for an unmerged path.
 //
-// Trouble is written, not returned, so git goes on.
+// It prints trouble instead of returning it, so git goes on.
 func gitDiff(arguments []string, colour bool) {
 	switch len(arguments) {
 	case 1:
@@ -209,15 +211,14 @@ func compare(beforePath, afterPath string, colour bool) (bool, error) {
 	return report(os.Stdout, compared(before, after), colour), nil
 }
 
-// terminal is whether what is written goes straight to a terminal, which
-// is when a swatch can be drawn without being asked for.
+// terminal returns true if stdout is a terminal. A swatch is then drawn
+// without being asked for.
 func terminal() bool {
 	stat, err := os.Stdout.Stat()
 	return err == nil && stat.Mode()&os.ModeCharDevice != 0
 }
 
-// show is colourway show: one line for each role a file has, its hex and
-// its oklch, which is the form git compares colourways in.
+// show lists each role a file has, with hex and oklch values.
 func show(path string) error {
 	roles, err := rolesOf(path)
 	if err != nil {

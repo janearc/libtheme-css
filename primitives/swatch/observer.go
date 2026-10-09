@@ -7,9 +7,9 @@ import (
 	"strings"
 )
 
-// The 1931 observer and the daylight it is most often asked to look at,
-// as the CIE published them, so that the numbers below are derived and
-// not typed. See data/README.md for where the tables come from.
+// The CIE 1931 observer and D65 daylight, as the CIE published them. The
+// numbers below are derived from these tables, not typed. data/README.md
+// says where the tables come from.
 
 //go:embed data/ciexyz31_1.csv
 var observerCSV string
@@ -55,14 +55,14 @@ func table(csv string) map[int][]float64 {
 // degrees wide (the width of a thumbnail at arm's length, which lands on the
 // fovea), at daylight brightness.
 //
-// Under those circumstances, and for that average person, wavelengths outside
-// roughly 380 to 780 nanometres produce no response, and the table says so by
-// tending to zero at its ends and stopping at 360 and 830.
+// For that average person, in those conditions, wavelengths outside roughly
+// 380 to 780 nanometres produce no response. The table shows this by tending
+// to zero at its ends, and it stops at 360 and 830.
 //
 // A different observer, a wider field, a dim room, or an eye that is not
-// average would give a different table, and this library would accept it in the
-// same shape. Every range the library applies downstream is this one,
-// inherited, and it is stated once, here.
+// average would give a different table. This library would accept it in the
+// same shape. Every range the library uses downstream comes from this one,
+// and it is stated once, here.
 var observer = table(observerCSV)
 
 // Observed is the shortest and the longest wavelength, in nanometres, the
@@ -96,9 +96,9 @@ func Observed() (lo, hi int) {
 // Adding floating-point numbers in a different order gives a different last
 // bit, and a map is walked in a different order every time.
 //
-// So the same light used to come back as a very slightly different colour
-// on every call. Nothing at eight bits a channel could see it. It is fixed
-// anyway, because the same question should have the same answer.
+// A fixed order means the same light gives the same swatch on every call.
+// Nothing at eight bits a channel could see the difference, but the same
+// question should have the same answer.
 func Illuminant(spectrum map[int]float64) Swatch {
 	order := make([]int, 0, len(spectrum))
 	for nm := range spectrum {
@@ -122,9 +122,9 @@ func Illuminant(spectrum map[int]float64) Swatch {
 // Monochrome is light of one wavelength at unit power, as the observer sees it:
 // the observer's own row, as a swatch. Outside the table it is no light.
 //
-// The spectrum drawn from 380 to 780 through this is the visible range as the
-// seventeen saw it, and most of it is outside what any screen can make, which
-// every screen shows by clipping.
+// Drawn through this from 380 to 780, the spectrum is the visible range as
+// the seventeen observers saw it. Most of it is outside what any screen can
+// make, so every screen clips it.
 func Monochrome(nm int) Swatch {
 	w, ok := observer[nm]
 	if !ok || len(w) != 3 {
@@ -135,10 +135,10 @@ func Monochrome(nm int) Swatch {
 
 // D65 is CIE standard illuminant D65: not a real sky but the average of noon
 // daylight measured in the 1960s, written down as a spectrum, with a nominal
-// colour temperature of 6500 kelvin. It is relative power by wavelength in
-// nanometres, 300 to 830, as published, and a new map on every call.
+// colour temperature of 6500 kelvin. It returns relative power by wavelength
+// in nanometres, 300 to 830, as published. Each call returns a new map.
 //
-// It is actually 6504: the spectrum was fixed first, then physicists revised a
+// It is actually 6504. The spectrum was fixed first. Then physicists revised a
 // constant in the formula that turns temperature into a spectrum, and the
 // number moved under it. Nobody redefined the white; the label is slightly
 // wrong forever. sRGB and every screen you own assume this white.

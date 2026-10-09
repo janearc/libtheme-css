@@ -104,10 +104,10 @@ func Distance(a, b OKLab) float64 {
 // The tolerances. A distance below Exact is arithmetic noise: two float sums
 // walked in a different order, a round trip through a matrix and its inverse.
 //
-// A distance below Eye is one most people cannot see side by side, which is
-// what "the same colour" means to a person; 0.02 is the figure the space's
-// author gives for a just-noticeable difference, and it is why the space
-// exists, since 0.02 means the same thing for a dark blue as for a pale yellow.
+// A distance below Eye is one most people cannot see side by side. That is
+// what "the same colour" means to a person. 0.02 is the figure the space's
+// author gives for a just-noticeable difference. It is why the space exists:
+// 0.02 means the same thing for a dark blue as for a pale yellow.
 //
 // Anything a device can or cannot resolve is that device's fact and lives with
 // the device, to be compared against these.
@@ -139,13 +139,13 @@ var Mix = functions.Mixer{Name: "oklab", Mix: func(a, b swatch.Swatch,
 // would respond, called LMS for long, medium and short wavelength.
 //
 // XYZ was built in 1931 to be non-negative, not to be cones; this matrix undoes
-// that choice. Then each response has its cube root taken: the eye reports
-// ratios, not amounts, so doubling the light does not look like twice as much,
-// and a cube root is the compression that matches what people report.
+// that choice. Then each response has its cube root taken. The eye reports
+// ratios, not amounts, so doubling the light does not look like twice as much.
+// A cube root is the compression that matches what people report.
 //
 // Last, the three compressed responses are combined into one lightness and two
-// opponent axes, because an eye cannot see a reddish green or a bluish yellow,
-// and those pairs are what it actually compares.
+// opponent axes. An eye cannot see a reddish green or a bluish yellow, so those
+// pairs are what it actually compares.
 //
 // The nine numbers in each forward matrix are fitted, not derived: Björn
 // Ottosson chose them in 2020 by searching for the values under which hue stays

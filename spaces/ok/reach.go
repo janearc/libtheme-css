@@ -2,9 +2,10 @@ package ok
 
 import "github.com/janearc/libtheme-css/primitives/swatch"
 
-// Reach is a grid of the colours a gamut can reach: hue across, lightness down,
-// and chroma as a separate pull rather than a third axis, because at every
-// point there is a range from grey to the edge and only the edge can be drawn.
+// Reach is a grid of the colours a gamut can reach: hue across, lightness
+// down. Chroma is one setting for the whole grid, not a third axis. At every
+// hue and lightness there is a range from grey to the edge, and a flat grid
+// can draw only one point of it.
 //
 // A picker draws this; a person picks from it; every cell is inside the gamut
 // by construction, so a colour the display cannot show is not on the grid.

@@ -1,18 +1,18 @@
 // Package ghostty is the ghostty dialect: a terminal theme said from a
 // colourway's roles, and read back into them.
 //
-// Ghostty takes a theme as a file of settings: the ground and the ink,
-// the cursor and the selection, and a palette of 256 numbered colours,
-// the first sixteen of which are the ones programs ask for by name.
+// Ghostty takes a theme as a file of settings. They are the ground, the
+// ink, the cursor and the selection. The file also has a palette of 256
+// numbered colours. Programs ask for the first sixteen by name.
 //
-// A colourway names each of them by role, and this dialect is the table
-// between the two, both ways, and the file's format; nobody writes a
-// theme by hand.
+// A colourway names each of these by role. This dialect is the table
+// between the two, in both directions. It also knows the file's format,
+// so nobody has to write a theme by hand.
 //
 // The roles are the ones the sheets already used: ground, ink, cursor,
 // cursor-ink, surface-1 for the selection, selection-ink and the sixteen
-// by name. palette-N sets any entry from 16 to 255, which is how a sheet
-// reaches a colour a program picks by number.
+// by name. palette-N sets any entry from 16 to 255. A sheet uses it to
+// reach a colour a program picks by number.
 package ghostty
 
 import (
@@ -47,8 +47,8 @@ var Ansi = [16]string{
 	"bright-blue", "bright-magenta", "bright-cyan", "bright-white",
 }
 
-// Theme is a ghostty theme's colours: its settings by key, and its
-// palette by number.
+// Theme is a ghostty theme's colours. Settings is keyed by setting name.
+// Palette is keyed by palette number.
 type Theme struct {
 	Settings map[string]swatch.Swatch
 	Palette  map[int]swatch.Swatch
@@ -61,8 +61,8 @@ func empty() Theme {
 }
 
 // Of is the theme a colourway's roles describe. The ground, the ink and
-// the sixteen are required, since a terminal missing any of them draws
-// in somebody else's colours; the other settings are written when the
+// the sixteen are required. A terminal missing any of them would draw in
+// someone else's colours. The other settings are written when the
 // colourway has them.
 func Of(roles *css.Sheet) (Theme, error) {
 	theme := empty()
@@ -98,9 +98,9 @@ func Of(roles *css.Sheet) (Theme, error) {
 	return theme, nil
 }
 
-// Roles is the theme said back as a colourway's roles: the settings and
-// the sixteen by name, every other palette entry as palette-N, in the
-// order a theme writes them.
+// Roles is the theme said back as a colourway's roles. The settings and
+// the sixteen are named by role. Every other palette entry becomes
+// palette-N. They come in the order a theme writes them.
 func (theme Theme) Roles() *css.Sheet {
 	roles := css.New()
 	for _, setting := range Keys {
@@ -132,15 +132,15 @@ func (theme Theme) above16() []int {
 	return numbers
 }
 
-// cellColour are ghostty's own words for a colour, the cell's, which a
-// setting may name in place of a hex. They are not colours a colourway
-// can hold, and are passed over.
+// cellColour are ghostty's own words for a colour. A setting may use one
+// in place of a hex. They are not colours a colourway can hold, so Read
+// skips them.
 var cellColour = map[string]bool{"cell-foreground": true,
 	"cell-background": true}
 
-// Read is a theme file's colours. Comments, blank lines and settings
-// that are not colours are passed over; a colour that does not parse is
-// an error naming its line.
+// Read is a theme file's colours. It skips comments, blank lines and
+// settings that are not colours. A colour that does not parse is an error
+// that names its line.
 func Read(source io.Reader) (Theme, error) {
 	theme := empty()
 	colours := map[string]bool{}
@@ -178,10 +178,10 @@ func Read(source io.Reader) (Theme, error) {
 	return theme, scanner.Err()
 }
 
-// Write puts the theme in ghostty's format after a header, each line of
-// which becomes a comment: the settings, then the sixteen, then any
-// entries above them. Only what the theme has is written; a theme read
-// from a partial file is written back partial.
+// Write puts the theme in ghostty's format after a header. Each line of
+// the header becomes a comment. The settings come first, then the
+// sixteen, then any entries above them. Only what the theme has is
+// written. A theme read from a partial file is written back partial.
 func (theme Theme) Write(out io.Writer, header string) error {
 	var text strings.Builder
 	for line := range strings.SplitSeq(strings.TrimSpace(header), "\n") {
@@ -212,9 +212,9 @@ func (theme Theme) Write(out io.Writer, header string) error {
 	return err
 }
 
-// Inverted is the theme with every colour turned to its opposite, each
-// lamp 255 less itself. On a screen the operating system inverts, it is
-// drawn as the original.
+// Inverted is the theme with every colour turned to its opposite. Each
+// lamp becomes 255 less itself. A screen that the operating system
+// inverts then draws it as the original.
 func (theme Theme) Inverted() Theme {
 	inverted := empty()
 	for key, value := range theme.Settings {
@@ -236,8 +236,8 @@ func atLine(number int, err error) error {
 	return fmt.Errorf("ghostty: line %d: %w", number, err)
 }
 
-// Hex is a swatch as the #rrggbb a theme file holds: the nearest the
-// lamps can make.
+// Hex is a swatch as the #rrggbb a theme file holds. It is the nearest
+// colour the lamps can make.
 func Hex(value swatch.Swatch) string {
 	lamps, _ := srgb.FromSwatch(value)
 	return lamps.Hex()

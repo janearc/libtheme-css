@@ -14,10 +14,10 @@ import (
 	"github.com/janearc/libtheme-css/dialects/nvim"
 )
 
-// sheet makes a source from programs' files and prints it: the
-// terminal's settings and palette, claude code's colours named out of
-// that palette, the editor's table, then the markdown style's colours.
-// A role a later file sets differently is reported, and the first kept.
+// sheet makes a source from programs' files and prints it. The order is the
+// terminal's settings and palette, claude code's colours named from that
+// palette, the editor's table, then the markdown style's colours. If a later
+// file sets a role differently, it reports that and keeps the first.
 func sheet(arguments []string) error {
 	files := map[string]string{}
 	for ; len(arguments) >= 2; arguments = arguments[2:] {
@@ -67,8 +67,8 @@ func sheet(arguments []string) error {
 	return nil
 }
 
-// terminalRoles are a theme's roles with claude code's colours named,
-// and their palette numbers left out, since the names say them.
+// terminalRoles returns a theme's roles with claude code's colours named.
+// It leaves out their palette numbers, because the names say them.
 func terminalRoles(theme ghostty.Theme) *css.Sheet {
 	named := claude.Of(theme.Palette)
 	roles := css.New()
@@ -94,10 +94,10 @@ func claudeNumber(name string) bool {
 	return false
 }
 
-// merge sets every role of one sheet into another. Where the two
-// disagree, the first is kept, and the second is kept beside it under
-// its program's own name, nvim-ink, when the program has one; either
-// way it is said.
+// merge copies every role of one sheet into another. If both have a role
+// with different values, the first is kept. The second is also kept under
+// the program's own prefix, such as nvim-ink, when the program has one.
+// Either way it prints a note to stderr.
 func merge(into, from *css.Sheet, file, own string) {
 	for _, rule := range from.Rules() {
 		held, found := into.Get(rule.Name)
@@ -118,7 +118,7 @@ func merge(into, from *css.Sheet, file, own string) {
 	}
 }
 
-// comments are a theme file's opening comment lines, without their
+// comments returns a theme file's opening comment lines, without their
 // marks.
 func comments(text string) string {
 	lines := []string{}

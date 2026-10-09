@@ -22,6 +22,7 @@ package main
 
 import (
 	"fmt"
+	"math"
 	"os"
 	"strconv"
 	"strings"
@@ -30,6 +31,7 @@ import (
 	"github.com/janearc/libtheme-css/primitives/functions"
 	"github.com/janearc/libtheme-css/primitives/swatch"
 	"github.com/janearc/libtheme-css/spaces/ok"
+	"github.com/janearc/libtheme-css/spaces/radiation"
 	"github.com/janearc/libtheme-css/spaces/srgb"
 )
 
@@ -93,7 +95,7 @@ func usage() {
 }
 
 // parse reads the two spellings a person types: a hex code, or css's
-// oklch(). Everything else is for later.
+// oklch(). Any other spelling is an error.
 func parse(s string) (swatch.Swatch, error) {
 	s = strings.TrimSpace(s)
 	if strings.HasPrefix(s, "oklch(") && strings.HasSuffix(s, ")") {
@@ -113,8 +115,9 @@ func parse(s string) (swatch.Swatch, error) {
 		if c.C, err = strconv.ParseFloat(fields[1], 64); err != nil {
 			return swatch.Black, err
 		}
-		// css's "none" for a hue means there isn't one to speak of: the
-		// colour is grey to an eye, and any angle would do. zero does.
+		// css's "none" for a hue means there is no hue to speak of.
+		// The colour is grey to an eye, so any angle would do. Zero is
+		// used.
 		if fields[2] == "none" {
 			c.H = 0
 		} else if c.H, err = strconv.ParseFloat(
@@ -144,9 +147,9 @@ func percentOrNumber(s string) (float64, error) {
 	return strconv.ParseFloat(s, 64)
 }
 
-// paint is a cell of the colour, as the terminal's own lamps would show
-// it: 24-bit background, the nearest the screen can do if it is out of
-// gamut.
+// paint is a cell of the colour, as the terminal's own lamps would show it.
+// It uses a 24-bit background. If the colour is out of gamut, it uses the
+// nearest the screen can do. With NO_COLOR set, it writes hashes instead.
 func paint(s swatch.Swatch, width int) string {
 	if os.Getenv("NO_COLOR") != "" {
 		return strings.Repeat("#", width)
@@ -185,13 +188,13 @@ func show(arg string) error {
 	return nil
 }
 
-// ramp draws the line between two colours twice: once in oklab, which is the
-// line the library uses, and once as a straight line through the lamps, which
-// is what every other tool does, so the difference is on screen and not in an
-// argument.
+// ramp draws the line between two colours twice. The first is in oklab,
+// which is the line the library uses. The second is a straight line through
+// the lamps (srgb), which is what other tools do. This puts the difference
+// on screen instead of in an argument.
 //
-// Both are the same Ramp with a different mixer, which is the whole point of
-// the mixer being a parameter.
+// Both are the same Ramp with a different mixer. That is why the mixer is a
+// parameter.
 func ramp(a, b string, n int) error {
 	sa, err := parse(a)
 	if err != nil {
@@ -222,26 +225,23 @@ func hex(s swatch.Swatch) string {
 	return c.Hex()
 }
 
-// No attributes on text at all. Dim was tried and is unreadable on a dark
-// palette to the person this is for, and bold reads differently on every
-// terminal; the output has to read on any palette, light or dark, so the words
-// are plain and only the swatches are painted.
+// The text has no attributes. Dim is unreadable on a dark palette, and
+// bold reads differently on every terminal. The output has to read on any
+// palette, so the words are plain and only the swatches are painted.
 //
-// Telling a light terminal from a dark one is a vendor question, held for the
-// terminal vendor package.
+// Telling a light terminal from a dark one depends on the terminal, and
+// this does not try.
 const (
 	dim   = ""
 	bold  = ""
 	plain = ""
 )
 
-// heading is one dim line saying what the block under it is, so the
-// output separates itself from whatever make printed above it.
+// heading prints one line saying what the block under it is. It separates
+// the output from whatever printed above it.
 func heading(text string) { fmt.Printf("-- %s\n", text) }
 
-// paintSheet writes the sheet with each rule's colour painted before it,
-// the name in bold, the value plain, the comment dim. no parsing: the
-// sheet hands over its rules as structure.
+// paintSheet writes the sheet with each rule's colour painted before it.
 func paintSheet(sheet *css.Sheet) {
 	rules := sheet.Rules()
 	width := 0
@@ -260,13 +260,13 @@ func paintSheet(sheet *css.Sheet) {
 	fmt.Printf("     }\n")
 }
 
-// roundtrip is the translation test: every known colour is written the two ways
-// the tool can read, hex and oklch(), both spellings are read back through
-// parse, and the two swatches are compared.
+// roundtrip is the translation test. Every known colour is written two
+// ways, as hex and as oklch(). Both are read back through parse and the two
+// swatches are compared.
 //
-// within Exact they are the same colour to arithmetic; within Eye they are the
-// same colour to a person, which is what the oklch spelling, printed to three
-// places, can promise. a colourway file is only as good as this trip.
+// Within Exact they are the same colour to arithmetic. Within Eye they are
+// the same colour to a person, which is all the oklch spelling, printed to
+// three places, can promise. A colourway file is only as good as this trip.
 func roundtrip() error {
 	type entry struct {
 		name string
@@ -311,25 +311,109 @@ func roundtrip() error {
 		fmt.Printf("%s %-6s %-8s %-24s %-8.5f %s\n",
 			paint(e.s, 2), e.name, h, l, d, verdict)
 	}
+	if err := roundtripRadiation(); err != nil {
+		return err
+	}
 	if failed {
 		return fmt.Errorf("a round trip lost more than an eye can miss")
 	}
 	return nil
 }
 
-// known is everything the library can put on screen without being told a
-// colour: the points it defines and the lines between them. It is the visual
-// test.
+// roundtripRadiation is the same trip for radiation. Each wavelength is
+// drawn in false colour, written as hex, read back through parse, and named
+// again with Of. It comes back when Of names a wavelength in the same cell
+// of the bar.
 //
-// Each entry names where the colour is defined, because that is the list this
+// Profiles drawn onto the same range take the same trip, cell for cell, so
+// one bar answers for each range. A wavelength's colour is outside srgb, so
+// it clips, and a run of wavelengths can clip to the same hex. Past about
+// 690 nm of the render, every wavelength looks the same red.
+//
+// Nothing here fails. The count says how much a colourway file can carry.
+func roundtripRadiation() error {
+	fmt.Println()
+	heading("radiation: each wavelength drawn, written as hex, read back")
+	heading("and named again. x marks one that lands in another cell.")
+	for _, group := range byRender(radiation.Profiles) {
+		bar, marks, back, err := tripAcross(group[0])
+		if err != nil {
+			return err
+		}
+		names := "profiles are"
+		if len(group) == 1 {
+			names = "profile is"
+		}
+		heading(fmt.Sprintf("%d %s drawn onto %g to %g nm, so one bar"+
+			" answers.", len(group), names, group[0].Render.Lo,
+			group[0].Render.Hi))
+		fmt.Printf("%s\n%s  %d of %d come back\n", bar, marks, back,
+			cells)
+	}
+	return nil
+}
+
+// tripAcross takes one profile's wavelengths through the trip. It returns
+// the bar as drawn, a row marking each cell that did not come back, and how
+// many did.
+func tripAcross(
+	profile radiation.Profile,
+) (bar, marks string, back int, err error) {
+	var drawn, missed strings.Builder
+	for i, nm := range across(profile) {
+		colour := profile.Swatch(nm)
+		drawn.WriteString(paint(colour, 2))
+		read, parseErr := parse(hex(colour))
+		if parseErr != nil {
+			return "", "", 0, parseErr
+		}
+		named, found := profile.Of(read)
+		if found && cellOf(profile, named) == i {
+			back++
+			missed.WriteString("  ")
+		} else {
+			missed.WriteString(" x")
+		}
+	}
+	return drawn.String(), missed.String(), back, nil
+}
+
+// byRender groups profiles by the range they are drawn onto, in the order
+// each range first appears.
+func byRender(profiles []radiation.Profile) [][]radiation.Profile {
+	var groups [][]radiation.Profile
+	for _, profile := range profiles {
+		placed := false
+		for i, group := range groups {
+			if group[0].Render == profile.Render {
+				groups[i] = append(group, profile)
+				placed = true
+				break
+			}
+		}
+		if !placed {
+			groups = append(groups, []radiation.Profile{profile})
+		}
+	}
+	return groups
+}
+
+// known is everything the library can put on screen without being told a
+// colour: the points it defines and the lines between them. It is the
+// visual test.
+//
+// Each entry names where the colour is defined. That is the list this
 // library is really keeping.
 //
-// Black and white are the swatch's, from the observer and the daylight; red,
-// green and blue are srgb's, from the standard's chromaticities; the grey line
-// is oklab's, the only line the space defines on its own.
+// Black and white are the swatch's, from the observer and the daylight.
+// Red, green and blue are srgb's, from the standard's chromaticities. The
+// grey line is oklab's, the only line the space defines on its own.
 //
-// A grey by itself is not on the list, because "grey" is not a colour until you
-// say how light, and the line says that better than any one point.
+// A grey by itself is not on the list. "Grey" is not a colour until you say
+// how light, and the line says that better than any one point.
+//
+// Radiation's profiles are lines too. Each lays one kind of radiation across
+// the visible spectrum, so its colours stand for wavelengths no eye sees.
 func known(mode string) error {
 	type entry struct {
 		name, from string
@@ -367,8 +451,8 @@ func known(mode string) error {
 			paint(e.s, 8), e.name, c.Hex(), lch, e.from)
 	}
 	// The one line the library defines on its own, drawn with each mixer
-	// the spaces supply: the same two stops, and the disagreement between
-	// the spaces about what a straight line is, on screen.
+	// the spaces supply. The two stops are the same, so the disagreement
+	// between the spaces about what a straight line is shows on screen.
 	fmt.Println()
 	for _, in := range []functions.Mixer{ok.Mix, srgb.Mix} {
 		r := functions.Even(in, swatch.Black, swatch.White)
@@ -379,12 +463,58 @@ func known(mode string) error {
 		fmt.Printf("%s  black to white\n   %s\n",
 			line.String(), r.String(hex))
 	}
+	knownRadiation()
 	return nil
 }
 
-// read is a colourway file as the library sees it: its roles painted,
-// then every ramp it holds, stops with their positions, and the ramp
-// sampled across a bar. what the reader found, and nothing it inferred.
+// cells is how many cells a radiation bar has, and so how many wavelengths
+// a round trip samples.
+const cells = 24
+
+// knownRadiation draws each of radiation's profiles as a bar: the
+// shortest wavelength at the violet end, the longest at the red.
+func knownRadiation() {
+	fmt.Println()
+	heading("radiation in false colour: each kind laid across the visible")
+	heading("spectrum, its shortest wavelength at the violet end.")
+	for _, profile := range radiation.Profiles {
+		var bar strings.Builder
+		for _, nm := range across(profile) {
+			bar.WriteString(paint(profile.Swatch(nm), 2))
+		}
+		fmt.Printf("%s  %s\n   %.3g to %.3g nm\n", bar.String(),
+			profile.Name, profile.Source.Lo, profile.Source.Hi)
+	}
+}
+
+// across is one wavelength for each cell of a profile's bar, from the
+// middle of the cell. They are spaced evenly in the logarithm of
+// wavelength, as the profile lays them onto the visible.
+func across(profile radiation.Profile) []float64 {
+	nms := make([]float64, cells)
+	span := profile.Source.Hi / profile.Source.Lo
+	for i := range nms {
+		nms[i] = profile.Source.Lo *
+			math.Pow(span, (float64(i)+0.5)/cells)
+	}
+	return nms
+}
+
+// cellOf is the cell of a profile's bar that a wavelength falls in. It is
+// -1 for a wavelength outside the profile's source.
+func cellOf(profile radiation.Profile, nm float64) int {
+	at := math.Log(nm/profile.Source.Lo) /
+		math.Log(profile.Source.Hi/profile.Source.Lo)
+	if at < 0 || at >= 1 {
+		return -1
+	}
+	return int(at * cells)
+}
+
+// read shows a colourway file as the library sees it. It paints the roles.
+// Then for each ramp it lists the stops with their positions, and paints
+// the ramp sampled across a bar. It shows what the reader found and
+// nothing it inferred.
 func read(path string) error {
 	src, err := os.ReadFile(path)
 	if err != nil {

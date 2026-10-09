@@ -20,8 +20,8 @@ you see is the nearest the lamps can do, which is what every screen
 has always shown you of a rainbow. the white, d65, is daylight run
 through the same table, derived at start-up, not typed.`
 
-// lifted is a wavelength's colour at full brightness: the hue shows, and
-// the clipping to the screen's reach is the honest part.
+// lifted is a wavelength's colour at full brightness, so the hue shows. It
+// is clipped to what the screen can show.
 func lifted(s swatch.Swatch) swatch.Swatch {
 	c, _ := srgb.FromSwatch(s)
 	m := c.R
@@ -51,8 +51,9 @@ func observerPage() {
 
 // observerCSS is the page as a css sheet: the spectrum as twenty stops.
 func observerCSS() string {
-	// the spectrum as a gradient of hex stops, one per twenty nanometres:
-	// what a browser can be handed, clipped to srgb exactly as the bar is.
+	// the spectrum as a gradient of hex stops, one per twenty nanometres.
+	// A browser can be handed it. It is clipped to srgb exactly as the bar
+	// is.
 	var stops []string
 	for nm := 380; nm <= 700; nm += 20 {
 		at := float64(nm-380) / 320 * 100

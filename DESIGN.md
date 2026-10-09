@@ -1,122 +1,164 @@
 # libtheme
 
-one colour, complete, and the operations on it. a theme is a sheet of named
-colours; this library reads such a sheet, converts each colour between the
-spaces a screen, an eye and a lamp use, blends between colours where the eye
-would, and writes the sheet back out. it owns colour and nothing else.
+libtheme stores a colour once and converts it for whatever shows it: a
+terminal, an editor, a web page, a lamp. a theme is a sheet of named
+colours. libtheme reads a sheet, converts and blends its colours, and
+writes it back out. it handles colour and nothing else.
 
 ## requirements
 
-- the same colour is the same colour in a terminal, an editor, a web page
-  and a lamp, without a person matching hex codes by eye.
-- a colour is stored once, in a form every device space is defined against,
-  so a device can be added without touching a stored value.
-- distance and blending are measured where the eye agrees, not where the
-  lamps do.
-- every number in the library derives from a published table or standard,
-  and the ones that cannot are listed in one place (FUDGE.md).
-- a sheet is css custom properties, so any tool that reads css can read it.
-- the documentation runs: every page paints its own examples through the
-  library, so the picture, the sheet and the code cannot drift apart.
+- a colour looks the same in a terminal, an editor, a web page and a
+  lamp, and nobody has to match hex codes by eye to get there.
+- a colour is stored once, as cie xyz. every device space is defined
+  from xyz, so adding a device never changes a stored colour.
+- distance and blending are done in oklab, where equal steps look equal.
+  in the screen's own rgb they do not.
+- every number comes from a published table or standard. the few that
+  had to be picked by hand are listed in FUDGE.md.
+- css was chosen as an intermediary format because it's common and seems
+  like it could do it, whether it was the "right" format or not. `theme`
+  is N O T a css parser or library or any ofthat.
+- the documentation is a program. each page draws its examples with the
+  library, so the picture, the sheet and the code can't drift apart.
 
-## the shape
+## the packages
 
-    primitives/swatch      one colour as cie xyz (1931); the observer and
-                           the d65 tables it is derived from, in data/
-    primitives/functions   a ramp: stops and a mixer, t to a swatch
+    primitives/swatch      one colour, stored as cie xyz (1931). the
+                           observer and d65 tables it comes from are in
+                           primitives/swatch/data
+    primitives/functions   ramps: a list of stops and a mixer. give it a
+                           t from 0 to 1 and it returns a swatch
     primitives/bands       light as power in slices of the spectrum, 24
-                           to an octave, folded to a swatch by the observer
-    spaces/ok              oklab and oklch; distance, tolerance, fit, reach
-    spaces/srgb            the screen's lamps: hex, hsl, hsv, bytes
-    css                    the container: a sheet of named swatches, read
-                           and written as custom properties
-    dialects/hue           how a hue lamp names a colour, and back
-    dialects/grafana       five shades of a hue, for a tool that takes hex
-    dialects/ghostty       a terminal theme: settings, the sixteen, palette-N
-    dialects/claude        claude code's colours by name, as palette numbers
-    dialects/nvim          a neovim scheme: its table, fixed groups, the sixteen
-    dialects/glamour       a markdown style and the highlighter's token colours
-    ../cmd/libtheme        the console end: show, ramp, read, known
-    colourway              a colourway's source, written back, resolved,
-                           and rendered into each program's files
-    ../cmd/colourway       the same from a shell, a source made from
-                           programs' files, and two colourways compared
-                           as colours: diff, and show for git's textconv
-    ../cmd/visualdocs      the documentation, shown, one page per idea
-    spaces/radiation       what is not visible, as a false colour profile
+                           slices to an octave. the observer turns it
+                           into a swatch
+    spaces/ok              oklab and oklch: distance, the tolerance
+                           check, fitting a colour into a gamut, and a
+                           grid of how far a gamut reaches
+    spaces/srgb            the screen: hex, hsl, hsv and bytes
+    spaces/radiation       radiation an eye can't see, shown through a
+                           false colour profile
+    css                    a sheet of named swatches, read and written
+                           as css custom properties
+    colourway              a colourway: its source, written back,
+                           resolved, and rendered into each program's
+                           files
+    dialects/hue           how a hue lamp names a colour, both ways
+    dialects/grafana       five shades of one hue, as hex, for grafana
+    dialects/ghostty       a ghostty theme: its settings, the sixteen
+                           terminal colours, and palette-N lines
+    dialects/claude        the palette numbers claude code draws in, by
+                           name
+    dialects/nvim          a neovim colour scheme: its lua table, the
+                           fixed groups, and the sixteen
+    dialects/vim           the neovim scheme in vimscript, for vim,
+                           without the tree-sitter groups vim can't hold
+    dialects/glamour       a glamour markdown style and its
+                           highlighter's token colours
+    cmd/libtheme           libtheme from a shell: show, ramp, read, known
+    cmd/colourway          colourways from a shell: render, sheet, diff,
+                           and show, which git uses as a textconv
+    cmd/visualdocs         the documentation, one page per idea
     internal/mat           the matrix arithmetic the spaces share
     internal/si            the si's defining constants, typed once
 
-each layer imports only what is below it: functions and bands import the
-swatch, spaces import both, css imports the spaces, dialects import css.
-the bands' tests measure in oklab, so they import a space; the package
-does not.
+## what imports what
 
-one dialect imports another: nvim takes the terminal's sixteen from
-ghostty, since a shell inside vim draws in the same names.
+a package imports only packages from an earlier step:
 
-dialects overlap little, so the colourway package has a vocabulary above
-them: grounds (ground, surface-1, panel, cursor-line), text (ink, dim,
-heading, link, code, string, gutter, border) and states (err, warn, info,
-hint, ok). a program's own name, like nvim-ink, stays an override.
+1. internal/si and internal/mat import nothing.
+2. swatch imports si. functions and bands import swatch.
+3. the spaces import swatch, plus functions or bands.
+4. css imports the spaces.
+5. most dialects import css. hue and grafana work from the spaces.
+6. colourway imports the dialects, and each command imports what it
+   shows.
 
-Resolve fills in what a colourway does not say: a role from another
-general role, then from the sixteen (heading from magenta, link from
-blue, code from green), a ground by mixing the ground toward the ink in
-oklab, and failing those the ink or the ground, saying where each came from.
+two dialects import other dialects. nvim takes the sixteen terminal
+colours from ghostty, because a shell running inside neovim draws with
+the terminal's colours. vim takes the whole scheme from nvim.
 
-every program renders from the resolved roles, so every terminal
-colourway has a scheme and a style, and the terminal's selection follows
-surface-1 when a source leaves it to be derived.
+bands' tests import spaces/ok to measure their results. the bands
+package itself does not.
 
-a colourway that sets some of a program's roles and not others now gets
-the others derived, so its files can change on the next render. the
-nine colourways of 2026-10-05 rendered their vim schemes and markdown
-styles byte for byte the same.
+## colourway roles
 
-claude code's colours derive too, by the claude dialect's table: its
-text from the ink, a code span from code, the mode line from info, a
-diff's bands as the ground mixed toward ok and err.
+every dialect names its colours its own way, and the names barely
+overlap. so the colourway package has general names, which every
+dialect maps from:
 
-so a terminal theme gains palette lines for the numbers claude code
-draws in (252, 188, 153, 180, 175, 219, 22, 52, 231), and every program
-that draws in those xterm numbers sees the colourway's colours there.
+- grounds: ground, surface-1, panel, cursor-line
+- text: ink, dim, heading, link, code, string, gutter, border
+- states: err, warn, info, hint, ok
+
+a program's own name, like nvim-ink, overrides a general role for that
+program only.
+
+colourway.Resolve fills in the roles a colourway leaves out. for each
+one, it tries these in order:
+
+1. another general role, or one of the sixteen: heading from magenta,
+   link from blue, code from green, and so on.
+2. for a ground, the ground mixed toward the ink in oklab.
+3. the ink for text, and the ground for a ground.
+
+Resolved.From records where each filled-in role came from.
+
+Resolve then fills in claude code's colours from the general roles,
+using the claude dialect's table: its text from ink, a code span from
+code, the mode line from info, and a diff's bands from the ground mixed
+toward ok and err.
+
+every program renders from the resolved roles. so every terminal
+colourway also gets a neovim scheme and a markdown style, and the
+terminal's selection colour follows surface-1 when the source doesn't
+set it.
+
+a ghostty theme gets palette lines for the numbers claude code draws
+in: 252, 188, 153, 180, 175, 219, 22, 52 and 231. any program that
+draws in those xterm numbers gets the colourway's colours.
 
 ## decisions
 
-- store xyz, work in oklab.
-- the swatch's fields are unexported; nothing averages xyz by accident.
-- derive, do not type: the white is integrated from the tables, srgb's
-  matrix from the standard's chromaticities and that white.
-- the only typed numbers are the two cie tables, srgb's four pairs and
-  its curve, oklab's fit, the bands' step, and the si's defining
-  constants, in internal/si.
-- light is carried in bands even in the logarithm of wavelength, one step
-  for everything, so redshift is a slide along the bands and two lights
-  always line up. the step is picked; FUDGE.md has what it was picked
-  from.
-- one tolerance for arithmetic noise, one for what an eye can see; every
-  equality in the library uses one of the two.
-- the mixer is a parameter of a ramp, since spaces disagree about what a
-  straight line is and css lets a sheet say which.
-- no form: no fields, shapes or animation. a ramp answers what colour t
-  is and never asks where t came from.
-- a hue on a grey is `none`, as css spells it.
-- `go tool game run visualdocs` and `go tool game run known` are the
-  acceptance tests.
+- store xyz, work in oklab. xyz is what every device space is defined
+  from, and oklab is where a distance looks like a distance.
+- a swatch's fields are unexported, so nothing can average two xyz
+  values by accident.
+- derive numbers instead of typing them. the white point is integrated
+  from the cie tables, and srgb's matrix is computed from the
+  standard's chromaticities and that white.
+- the only numbers typed in by hand are the two cie tables, srgb's four
+  chromaticity pairs and its transfer curve, oklab's fitted matrices,
+  the bands' step, and the si's defining constants.
+- light is held in bands spaced evenly in the logarithm of wavelength,
+  with one step for everything. a redshift is then a slide along the
+  bands, and any two lights line up band for band. the step was picked
+  by hand, and FUDGE.md says what it was picked from.
+- there are two tolerances, one for arithmetic noise and one for what an
+  eye can see. every equality check in the library uses one of them.
+- a ramp takes its mixer as a parameter. spaces disagree about what a
+  straight line between two colours is, and css lets a sheet say which
+  space to blend in.
+- libtheme has no fields, shapes or animation. a ramp tells you what
+  colour is at t, and never asks where t came from.
+- a grey has no hue. libtheme writes its hue as none, the way css does.
+- the acceptance tests are the documentation and the known set:
+  `go run ./cmd/visualdocs` and `go run ./cmd/libtheme known`.
+  `make visualdocs` and `make visualtest` run the same two.
 
 ## what it is not
 
-- not a css engine. it reads custom properties whose values are colours
-  and refuses everything else, out loud.
-- not a renderer. it draws nothing.
-- not a device. a lamp's brightness, a screen's gamut and a reader's eye
-  are facts about the device and the reader, and belong to their own
-  libraries: the dialects, and libreadme.
+- not a css engine. it reads custom properties whose values are
+  colours, and anything else is an error.
+- not a renderer. the library draws nothing. the commands in cmd/ do
+  the drawing.
+- not a device. a lamp's brightness, a screen's gamut and a reader's
+  eyes are facts about the device and the reader. they belong in the
+  dialects and in libreadme.
 
 ## see also
 
-README.md for the first screen, FUDGE.md for where every number comes
-from, and the package comments, which `go doc` prints.
+README.md is the first screen. FUDGE.md lists where every number comes
+from. the package comments are the rest: `go doc ./primitives/swatch`,
+for one.
 
 jane michelle arc, 2026.

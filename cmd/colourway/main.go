@@ -75,7 +75,7 @@ func usage() {
   colourway sheet [--ghostty FILE] [--nvim FILE] [--glamour FILE]`)
 }
 
-// render writes every program's file a source can fill, and says what
+// render writes every program's file that a source can fill. It prints what
 // it wrote and what it skipped.
 func render(path, dir string) error {
 	source, err := colourway.Read(path)

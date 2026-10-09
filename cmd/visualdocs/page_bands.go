@@ -28,8 +28,7 @@ func at(s swatch.Swatch, y float64) swatch.Swatch {
 	return swatch.FromXYZ(x/ly*y, y, z/ly*y)
 }
 
-// bandOf is the light of one whole band at unit power, for painting what
-// the band looks like.
+// bandOf is the light of one whole band at unit power.
 func bandOf(nm int) bands.Light {
 	return bands.Split(map[int]float64{nm: 1})
 }
@@ -88,8 +87,8 @@ func lamp(lo, hi int, y float64) bands.Light {
 	return l.Scale(y / has)
 }
 
-// bandsCSS is the page as a css sheet: the visible bands as hard stops,
-// one colour a band, the way the second bar paints them.
+// bandsCSS is the page as a css sheet. It writes the visible bands as hard
+// stops, one colour a band, the way the second bar paints them.
 func bandsCSS() string {
 	var stops []string
 	first, last := bands.Of(380), bands.Of(700)

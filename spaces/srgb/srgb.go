@@ -1,7 +1,7 @@
 // Package srgb is the swatch as a screen is driven: three lamp levels, red,
-// green and blue, on the curve every screen since 1996 assumes. It is the door
-// to hex, and to the two cylinders, hsl and hsv, which are the same lamps
-// described by angle.
+// green and blue, on the curve every screen since 1996 assumes. It converts
+// to hex, and to hsl and hsv, the two cylinders that describe the same lamps
+// by angle.
 //
 // A swatch may fall outside what the lamps can make; every exit here says
 // whether it did.
@@ -33,8 +33,8 @@ type HSL struct {
 	H, S, L float64
 }
 
-// HSV is the other cylinder: hue, saturation, and value, the brightest
-// lamp on its own, so full red and white both have V 1.
+// HSV is the other cylinder: hue, saturation and value. Value is the
+// brightest lamp on its own, so full red and white both have V 1.
 type HSV struct {
 	H, S, V float64
 }
@@ -186,8 +186,9 @@ func FromHex(h string) (RGB, error) {
 	return RGB{float64(r) / 255, float64(g) / 255, float64(b) / 255}, nil
 }
 
-// The lamps at full, and all three at once, which the derived matrix
-// makes come out as exactly the white.
+// The lamps at full, one at a time and all three together, and black.
+// White converts to exactly the swatch's white, since the matrix is
+// derived from it.
 var (
 	Red   = RGB{1, 0, 0}
 	Green = RGB{0, 1, 0}

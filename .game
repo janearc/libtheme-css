@@ -1,14 +1,23 @@
+# vim: set filetype=game:
 # game: this repository
-#
-# name is the project: the block in the builder's own config that says
-# where this tree's two remotes are. nothing here holds a remote, and a
-# builder with no block for it builds locally.
+
+# this is libtheme.
 name libtheme-css
 
-# the lint is the builder's dotfile, whole: describing none here takes
-# every rule as it stands.
-
-# the design page ends with the author's byline, which is the one place in
-# this tree a name belongs; the sweep is told so rather than the byline
-# being moved to a file nobody reads.
+# has my name, makes game grumpy
 exclude DESIGN.md
+exclude NOTICE
+exclude CHANGELOG.md
+
+# it is very hard to describe this package in less than 25 rows.
+# so i didn't.
+lint allow README.md rows
+
+run known .           :: go run ./cmd/libtheme known
+run known .           :: go run ./cmd/libtheme known --paint
+run known .           :: go run ./cmd/libtheme roundtrip
+
+# visualdocs is v nice
+run visualdocs .      :: go run ./cmd/visualdocs
+run visualdocs-css .  :: go run ./cmd/visualdocs --css
+run visualdocs-go .   :: go run ./cmd/visualdocs --go

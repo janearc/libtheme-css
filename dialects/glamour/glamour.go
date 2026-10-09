@@ -1,22 +1,23 @@
 // Package glamour is the glamour dialect: a markdown style said from a
 // colourway's roles, and read back into them.
 //
-// Glamour, which glow and others draw markdown with, takes a style as
-// json: for each part of a document, its colour, its ground and how it
-// is set. Code blocks go to chroma, whose colours sit in the same file.
+// Glamour is what glow and other programs draw markdown with. It takes a
+// style as json. For each part of a document, the style holds its colour,
+// its ground and how it is set. Code blocks go to chroma, whose colours
+// are in the same file.
 //
-// This dialect sets every colour in the style from a role, and leaves
-// how things are set (margins, prefixes, bold) to base.json, a style
-// that reads well.
+// This dialect sets every colour in the style from a role. It leaves how
+// things are set (margins, prefixes, bold) to base.json, a style that
+// reads well.
 //
 // The roles are md-something. Each falls back to the roles a colourway
-// for a terminal and an editor already has, and in the end to the ink,
-// so a colourway with no markdown roles still makes a style that agrees
+// for a terminal and an editor already has, and in the end to the ink.
+// So a colourway with no markdown roles still makes a style that agrees
 // with its vim: headings in heading, links in link, comments in dim.
 //
 // A ground with nothing to fall back to is left out, and the part sits
-// on the page. No terminal paints a code block's ground: chroma clears
-// it and glamour does not draw it. md-block-ground is written for the
+// on the page. No terminal paints a code block's ground. Chroma clears
+// it, and glamour does not draw it. md-block-ground is written for the
 // renderers that do.
 package glamour
 
@@ -37,16 +38,16 @@ var base []byte
 // chroma is where chroma's token colours sit in a style.
 const chroma = "code_block.chroma."
 
-// Role is one of the style's colours: the role a colourway names it
-// by, the roles it falls back to in order, and the keys in the style it
-// sets.
+// Role is one of the style's colours. It has the role name a colourway
+// uses, the roles it falls back to in order, and the keys in the style
+// that it sets.
 type Role struct {
 	Name      string
 	Fallbacks []string
 	Keys      []string
 }
 
-// Roles are the style's colours. The grounds have no last resort; every
+// Roles are the style's colours. The grounds have no last resort. Every
 // other role ends at the ink.
 var Roles = []Role{
 	{"md-body", list("ink"), list("document.color")},
@@ -113,9 +114,9 @@ func ground(role string) bool {
 	return strings.HasSuffix(role, "-ground")
 }
 
-// Of is the style a colourway's roles describe, as glamour reads it.
-// The ink is required, or md-body in its place, since every colour that
-// is not a ground ends there.
+// Of is the style a colourway's roles describe, as glamour reads it. The
+// colourway needs ink, or md-body in its place. Every colour that is not
+// a ground ends there.
 func Of(roles *css.Sheet) ([]byte, error) {
 	if _, found := lastResort(roles); !found {
 		return nil, fmt.Errorf("glamour: no ink, and no md-body")
@@ -137,9 +138,10 @@ func Of(roles *css.Sheet) ([]byte, error) {
 	return json.MarshalIndent(style, "", "  ")
 }
 
-// resolve is a role's colour: its own, else its fallbacks' in order,
-// each of those followed through its own fallbacks, and only then the
-// last resort, unless it is a ground.
+// resolve is a role's colour. It tries the role itself, then its
+// fallbacks in order. Each fallback is followed through its own fallbacks
+// first. Only then does it use the last resort, unless the role is a
+// ground.
 func resolve(roles *css.Sheet, role string,
 	fallbacks []string) (swatch.Swatch, bool) {
 	if value, found := follow(roles, role, fallbacks); found {
@@ -171,8 +173,9 @@ func follow(roles *css.Sheet, role string,
 	return swatch.Swatch{}, false
 }
 
-// lastResort is the colour every role that is not a ground ends at: the
-// ink, or md-body when the roles are a style's, read back.
+// lastResort is the colour every role that is not a ground ends at. It is
+// the ink. If there is no ink, it is md-body, as in roles read back from
+// a style.
 func lastResort(roles *css.Sheet) (swatch.Swatch, bool) {
 	if value, found := roles.Get("ink"); found {
 		return value, true
@@ -180,9 +183,9 @@ func lastResort(roles *css.Sheet) (swatch.Swatch, bool) {
 	return roles.Get("md-body")
 }
 
-// Read is a style's colours as a colourway's roles: each role from the
-// first of its keys the style sets. A key that is not a colour is an
-// error naming it.
+// Read is a style's colours as a colourway's roles. Each role takes its
+// colour from the first of its keys that the style sets. A key that is
+// not a colour is an error that names the key.
 func Read(source []byte) (*css.Sheet, error) {
 	style := map[string]any{}
 	if err := json.Unmarshal(source, &style); err != nil {

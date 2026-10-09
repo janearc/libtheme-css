@@ -30,7 +30,8 @@ import (
 //go:embed page_*.go
 var sources embed.FS
 
-// page is one idea: a name, how to paint it, how to say it in css.
+// page is one idea. It has a name, a function that paints it, and a
+// function that says it in css.
 type page struct {
 	name string
 	show func()
@@ -123,19 +124,19 @@ func names() string {
 	return strings.Join(n, ", ")
 }
 
-// paint is a run of cells in the colour, as the terminal's lamps show
-// it: the nearest they can do when the colour is outside their reach.
+// paint is a run of cells in the colour, as the terminal's lamps show it.
+// If the colour is outside their reach, it is the nearest they can do.
 //
-// What the docs assume about the terminal, and it is all they assume: it paints
-// a 24-bit background, and its default text colour reads on its default
+// The docs assume two things about the terminal and nothing more. It paints
+// a 24-bit background. Its default text colour reads on its default
 // background.
 //
-// nothing sets a foreground, nothing dims or bolds, so the words read on a
-// light terminal as well as a dark one and only the swatches carry colour.
+// Nothing sets a foreground and nothing dims or bolds. The words read on a
+// light terminal as well as a dark one, and only the swatches carry colour.
 //
-// with NO_COLOR set, the convention every terminal tool honours, no escape is
-// written at all: a swatch is a run of hashes, its shape without its colour,
-// and the hex beside it in the text is what it was.
+// With NO_COLOR set, no escape is written at all. A swatch is a run of
+// hashes, its shape without its colour. The hex beside it in the text says
+// the colour.
 func paint(s swatch.Swatch, width int) string {
 	if noColour() {
 		return strings.Repeat("#", width)
@@ -174,8 +175,7 @@ func say(lines ...string) {
 	}
 }
 
-// lines is a page's prose as the lines it was written in, the newline
-// after the opening backtick dropped.
+// lines splits prose into lines, dropping the first newline.
 func lines(prose string) []string {
 	return strings.Split(strings.TrimPrefix(prose, "\n"), "\n")
 }

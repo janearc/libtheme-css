@@ -1,7 +1,7 @@
 // Package vim is the vim dialect: a colourway's scheme said in vimscript,
-// for vim, which does not read neovim's lua. It is neovim's scheme, the
-// same colours on the same groups, less the groups only neovim has: the
-// tree-sitter names, which vim cannot hold.
+// for vim, which does not read neovim's lua. It is neovim's scheme, with
+// the same colours on the same groups. It leaves out the groups only
+// neovim has, which are the tree-sitter names. Vim cannot hold them.
 package vim
 
 import (
@@ -27,7 +27,7 @@ const note = `" in a terminal, vim draws these colours ` +
 // and underscores.
 var vimName = regexp.MustCompile(`^[A-Za-z][A-Za-z0-9_]*$`)
 
-// Write puts a scheme in vimscript after a header, each line of which
+// Write puts a scheme in vimscript after a header. Each line of the header
 // becomes a comment.
 func Write(out io.Writer, scheme nvim.Scheme, header string) error {
 	var text strings.Builder
@@ -54,8 +54,8 @@ func Write(out io.Writer, scheme nvim.Scheme, header string) error {
 	return err
 }
 
-// highlight is one group as vim's highlight command, and whether vim can
-// hold the group at all.
+// highlight is one group as vim's highlight command. The bool says
+// whether vim can hold the group at all.
 func highlight(group nvim.Group, scheme nvim.Scheme) (string, bool) {
 	if !vimName.MatchString(group.Name) {
 		return "", false
@@ -76,8 +76,8 @@ func highlight(group nvim.Group, scheme nvim.Scheme) (string, bool) {
 }
 
 // terminal is the sixteen for vim's own terminal, so a shell inside vim
-// (:terminal) draws like the terminal around it; nothing, for a scheme
-// that has no sixteen.
+// (:terminal) draws like the terminal around it. It returns nothing for
+// a scheme that has no sixteen.
 func terminal(scheme nvim.Scheme) string {
 	if len(scheme.Terminal) != 16 {
 		return ""

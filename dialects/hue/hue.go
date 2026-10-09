@@ -1,17 +1,19 @@
 // Package hue is the philips hue dialect: how a hue lamp names a colour, and
 // how that becomes a swatch and comes back. A hue lamp never says a colour.
 //
-// It says a place on the horseshoe, a chromaticity, or a colour temperature in
-// mirek, and separately how bright, as a percent that is the lamp's own scale
-// and not a luminance. A gradient lamp says five places in order along itself.
+// It says a place on the horseshoe, a chromaticity. Or it says a colour
+// temperature in mirek. Separately it says how bright, as a percent. That
+// percent is the lamp's own scale, not a luminance. A gradient lamp says
+// five places in order along itself.
 //
-// The dialect turns each of those into swatches at unit luminance and a list of
-// them into a ramp; the reverse samples a ramp back to as many places as a lamp
-// has. Brightness is not translated here: it is a law between a leader and a
-// follower, and it lives with them.
+// The dialect turns each of those into swatches at unit luminance. It turns
+// a list of them into a ramp. The reverse samples a ramp back to as many
+// places as a lamp has. Brightness is not translated here. It belongs to
+// the program that drives the lamps.
 //
-// Chromaticities and gamuts are swatch's, not hue's; what is hue's is mirek,
-// the places along a lamp, and the three gamuts its lamps report by letter.
+// Chromaticities and gamuts belong to swatch, not hue. What belongs to hue
+// is mirek, the places along a lamp, and the three gamuts its lamps report
+// by letter.
 package hue
 
 import (
@@ -26,9 +28,10 @@ func Swatch(p swatch.XY) swatch.Swatch { return swatch.FromXY(p, 1) }
 // Of is the swatch's place on the horseshoe, as hue would want it.
 func Of(s swatch.Swatch) swatch.XY { return s.XY() }
 
-// Mirek is a colour temperature as hue sends it, reciprocal megakelvin,
-// as a swatch on the planckian locus at unit luminance. Hue's lamps
-// speak 153 to 500, which is 6536 K down to 2000 K.
+// Mirek is a colour temperature as hue sends it, in reciprocal megakelvin.
+// It returns a swatch on the planckian locus at unit luminance. Hue's lamps
+// speak 153 to 500, which is 6536 K down to 2000 K. A mirek of zero or
+// less is black.
 func Mirek(m int) swatch.Swatch {
 	if m <= 0 {
 		return swatch.Black
@@ -36,10 +39,9 @@ func Mirek(m int) swatch.Swatch {
 	return swatch.Planckian(1e6 / float64(m))
 }
 
-// Ramp is a lamp's places in order as a ramp: even stops, mixed in
-// oklab, so the colour between two of a gradient's points is the one
-// the eye would put there. One place is a ramp that is that colour
-// everywhere.
+// Ramp is a lamp's places in order as a ramp. The stops are even and mixed
+// in oklab, so the colour between two points of a gradient is the one the
+// eye would put there. One place is a ramp of that colour everywhere.
 func Ramp(places ...swatch.XY) functions.Ramp {
 	swatches := make([]swatch.Swatch, len(places))
 	for i, p := range places {
@@ -49,9 +51,9 @@ func Ramp(places ...swatch.XY) functions.Ramp {
 }
 
 // Points is a ramp sampled back to n places, for a lamp with n of them:
-// five for a gradient signe, one for a bulb. The samples are taken
-// evenly from 0 to 1, so a ramp made from a lamp's own places comes back
-// as those places.
+// five for a gradient signe, one for a bulb. The samples are taken evenly
+// from 0 to 1. So a ramp made from a lamp's own places comes back as those
+// places.
 func Points(r functions.Ramp, n int) []swatch.XY {
 	out := make([]swatch.XY, 0, n)
 	for _, s := range r.Samples(n) {
@@ -60,10 +62,12 @@ func Points(r functions.Ramp, n int) []swatch.XY {
 	return out
 }
 
-// The gamuts hue's lamps report, by the letter hue gives them, as philips
-// publishes the corners. Vendor data, typed: these are facts about lamps, not
-// derivable. A lamp reports its own triangle on the wire and that is the one to
-// fit to; these are for a lamp that does not, and for tests.
+// These are the gamuts hue's lamps report, by the letter hue gives them. The
+// corners are as philips publishes them: vendor data, typed in, since facts
+// about lamps cannot be derived.
+//
+// A lamp reports its own triangle on the wire, and that is the one to fit to.
+// These are for a lamp that does not report one, and for tests.
 var (
 	GamutA = swatch.Gamut{Red: swatch.XY{X: 0.704, Y: 0.296},
 		Green: swatch.XY{X: 0.2151,

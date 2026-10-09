@@ -1,7 +1,7 @@
 // Package functions holds the things that turn a number into a swatch. The name
 // is general on purpose: a ramp is a function of one number, t from 0 to 1, and
-// there may be others. They are built from swatches and a way of blending them,
-// and nothing else, which is why they sit under primitives and import no space.
+// there may be others. They are built only from swatches and a way of blending
+// them. That is why they sit under primitives and import no space.
 //
 // The seam. Where t comes from is not this library's business. A ramp answers
 // "what colour is t" and never asks "which cell is this, how far from the

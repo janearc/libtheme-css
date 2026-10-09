@@ -18,14 +18,14 @@ import (
 // and the one number this package types in. It is chosen, not derived; the
 // measurements it was chosen from are in FUDGE.md under "bands".
 //
-// The bands are even in the logarithm of wavelength rather than in
-// nanometres, so redshift, which multiplies every wavelength by the same
-// factor, is a slide along the bands and not a resampling.
+// The bands are even in the logarithm of wavelength, not in nanometres.
+// Redshift multiplies every wavelength by the same factor, so it is a slide
+// along the bands, not a resampling.
 const PerOctave = 24
 
 // Band is one slice of the spectrum. Band i runs from 2^(i/PerOctave)
-// nanometres up to, and not including, 2^((i+1)/PerOctave), so band 0
-// starts at one nanometre and every PerOctave bands the wavelength doubles.
+// nanometres up to, but not including, 2^((i+1)/PerOctave). Band 0 starts
+// at one nanometre, and the wavelength doubles every PerOctave bands.
 // Visible light is about bands 205 to 230.
 type Band int
 
@@ -50,9 +50,9 @@ func (g grid) edges(b Band) (lo, hi float64) {
 		math.Exp2(float64(b+1) / float64(g))
 }
 
-// Light is an amount of light in each of a run of neighbouring bands: the
-// power in band First, then First+1, and so on. Its units are whatever the
-// spectrum it came from used, times a nanometre. The zero value is no light.
+// Light is the power in each of a run of neighbouring bands, starting at
+// band First. Its units are whatever the spectrum it came from used, times
+// a nanometre. The zero value is no light.
 type Light struct {
 	g     grid
 	first Band
@@ -138,7 +138,7 @@ func Add(a, b Light) Light {
 // so that D65, at the power its table gives, has Y of 1.
 //
 // So a light Split from D65 comes back as White, as nearly as bands can
-// carry it, and twice that light has Y of 2.
+// carry it. Twice that light has Y of 2.
 func (l Light) Swatch() swatch.Swatch {
 	var x, y, z float64
 	for i, p := range l.power {

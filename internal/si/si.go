@@ -1,6 +1,6 @@
-// Package si is the physical constants libtheme uses, each one of the si's
-// defining constants: fixed by definition since 2019, so they are exact,
-// not measured, and typed here once.
+// Package si holds the physical constants libtheme uses. Each is one of the
+// si's defining constants, fixed by definition since 2019. They are exact,
+// not measured, and each is typed here once.
 package si
 
 // The constants.

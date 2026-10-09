@@ -1,11 +1,11 @@
-// Package colourway is a colourway's source, one css sheet, and the
-// files it is rendered into through the dialects: ghostty's theme,
+// Package colourway holds a colourway's source and the files rendered from
+// it. The source is one css sheet. The rendered files are ghostty's theme,
 // neovim's and vim's schemes and glamour's style, each with an inverted
 // twin.
 //
-// The source is the truth. A rendered file says which source it came
-// from and is never edited; a tool that changes a colourway changes its
-// source, writes it back with Write, and renders again.
+// The source is the truth. Every rendered file says which source it came
+// from, and nobody edits it. To change a colourway, change its source, write
+// it back with Write, and render again.
 package colourway
 
 import (
@@ -16,8 +16,9 @@ import (
 	"github.com/janearc/libtheme-css/css"
 )
 
-// Source is a colourway's source: its name, the words it opens with, its
-// roles, and the path it is named by in what it renders.
+// Source is a colourway's source. Name comes from the file name. About is
+// the comment the file opens with. Roles are its colours. Origin is the
+// path that rendered files name as their source.
 type Source struct {
 	Name   string
 	About  string
@@ -37,15 +38,16 @@ func Read(path string) (Source, error) {
 		Origin: "sources/" + base}, nil
 }
 
-// Write puts a source back as a sheet: its opening words, then its
-// roles, each with its oklch beside it.
+// Write saves the source to path as a css sheet. It writes the opening
+// words as a comment, then the roles, each with its oklch beside it.
 func (source Source) Write(path string) error {
 	text := Commented(source.About) + source.Roles.String()
 	return os.WriteFile(path, []byte(text), 0o644)
 }
 
-// Opening is a css file's first comment, as plain lines: the words a
-// colourway opens with.
+// Opening returns the text of a css file's first comment, without the
+// comment marks. These are the words a colourway opens with. It returns an
+// empty string if the file does not open with a comment.
 func Opening(text string) string {
 	text = strings.TrimSpace(text)
 	end := strings.Index(text, "*/")

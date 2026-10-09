@@ -77,17 +77,16 @@ func (s Swatch) XY() XY {
 }
 
 // Gamut is the triangle of chromaticities a device can reach: three primaries
-// at their corners. srgb is one; every lamp that reports one is another. A
-// point outside is shown by the device as some point inside, and Fit says
-// which, so a caller can know what the device will do before asking.
+// at their corners. srgb is one; every lamp that reports one is another. The
+// device shows a point outside the triangle as some point inside it. Fit says
+// which point, so a caller knows what the device will do before asking.
 type Gamut struct {
 	Red, Green, Blue XY
 }
 
 // Contains is whether the point is inside the triangle, edges included.
-// A point Fit has just put on an edge is inside by construction, and
-// floating point can put it a hair past; the hair is allowed for, so
-// Fit's answer always Contains.
+// Fit puts points on an edge, and floating point can land one a hair past
+// it. Contains allows for that hair, so every point Fit returns is inside.
 func (g Gamut) Contains(p XY) bool {
 	const hair = 1e-9
 	d1 := side(p, g.Red, g.Green)
