@@ -50,10 +50,10 @@ var (
 	Radio       = Profile{"radio", Range{1e5, 1e11}, Visible}
 )
 
-// the fermi mission has a little bit diffrent range than iso, and when you
+// the fermi mission has a little bit different range than iso, and when you
 // render gamma ray emitting objects in css or the console, you sometimes need
 // to use a different range, depending on where that observation was
-// eollected.
+// collected.
 var Fermi = Profile{
 	"fermi",
 	Range{FromEnergy(300 * GeV), FromEnergy(10 * KeV)},

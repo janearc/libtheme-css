@@ -108,8 +108,8 @@ const gamutSlack = 1e-4
 // nearest thing the lamps can do, and an honest word that it is not the same
 // colour.
 //
-// The tolerance is a millionth, so a colour on the edge of the triangle, like a
-// primary at full, counts as in.
+// The tolerance is gamutSlack, 1e-4 in linear light, so a colour on the edge
+// of the triangle, like a primary at full, counts as in.
 func FromSwatch(s swatch.Swatch) (c RGB, inGamut bool) {
 	r, g, b := xyzToRGB.Apply(s.XYZ())
 	inGamut = true
