@@ -5,6 +5,7 @@
 - moved si out of internal into primitives so `nilgai` can use them in
   searching for blazars.
 - fixed slightly broken ci 
+- fixed it one more time.
 - created primitives/length so callers can refer to angstrom or pc or
   whatever, normal css stuff
 - si.Gravitation is G, kept apart from the defining constants because

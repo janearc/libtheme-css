@@ -17,10 +17,11 @@ const (
 
 // the units radiation is spoken in. each has one name, and its multiples
 // come from the si's prefixes: a keV is si.Kilo(Electronvolt), the
-// hydrogen line is 1420.405751 * si.Mega(Hertz). an eV is an energy, not
-// a wavelength, but most papers on gamma radiation speak in eV, so
-// FromEnergy and Energy move between the two. wavelengths are in
-// nanometres, and lengths in metres go through MetresToNm.
+// hydrogen line is 1420.405751 * si.Mega(Hertz).
+//
+// an eV is an energy, not a wavelength, but most papers on gamma radiation
+// speak in eV, so FromEnergy and Energy move between the two. wavelengths
+// are in nanometres, and lengths in metres go through MetresToNm.
 const (
 	Electronvolt = 1.0
 	Hertz        = 1.0

@@ -1,8 +1,9 @@
 // Package length holds the lengths physics and astronomy are measured
 // in, each in metres and each named once. Multiples come from the si's
-// prefixes: a kiloparsec is si.Kilo(Parsec), a micron is
-// si.Micro(Metre). Every length here but the Planck length is exact, by
-// a definition cited beside it.
+// prefixes: a kiloparsec is si.Kilo(Parsec), a micron is si.Micro(Metre).
+//
+// Every length here but the Planck length is exact, by a definition
+// cited beside it.
 package length
 
 import (
