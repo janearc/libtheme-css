@@ -4,6 +4,8 @@ import (
 	"math"
 	"testing"
 
+	"pgregory.net/rapid"
+
 	"github.com/janearc/libtheme-css/primitives/swatch"
 )
 
@@ -40,6 +42,56 @@ func TestMirekIsWarm(t *testing.T) {
 	p := Of(Mirek(370))
 	if p.X < 0.44 || p.X > 0.48 {
 		t.Errorf("370 mirek gave x %.4f", p.X)
+	}
+}
+
+// The numbers the mirek properties pick. Each is defined by this test.
+const (
+	// coolest is the lowest mirek of a hue lamp, which is its coolest white.
+	// It is defined by hue's lamps: the doc of Mirek gives 153.
+	coolest = 153
+	// warmest is the highest mirek of a hue lamp, which is its warmest white.
+	// It is defined by hue's lamps: the doc of Mirek gives 500.
+	warmest = 500
+	// perMegakelvin is what a mirek divides into to give kelvin. It is
+	// defined by the unit: reciprocal megakelvin.
+	perMegakelvin = 1e6
+	// oneMirek is the step to the next mirek. It is defined by the unit.
+	oneMirek = 1
+	// atZero is a mirek that is none. It is defined by counting.
+	atZero = 0
+)
+
+// The property: a mirek in a lamp's range is the black body at a million
+// over it, and the whites get warmer, redder in x, as the mirek goes up.
+func TestAMirekIsABlackBodyAndWarmsAsItRises(t *testing.T) {
+	rapid.Check(t, isABlackBody)
+}
+
+// isABlackBody is one draw of the property above.
+func isABlackBody(t *rapid.T) {
+	mirek := rapid.IntRange(coolest, warmest-oneMirek).Draw(t, "mirek")
+	got := Mirek(mirek)
+	if want := swatch.Planckian(perMegakelvin / float64(mirek)); got != want {
+		t.Fatalf("mirek %d: %v, want %v", mirek, got, want)
+	}
+	warmer := Mirek(mirek + oneMirek)
+	if Of(warmer).X < Of(got).X {
+		t.Fatalf("mirek %d is not warmer than %d", mirek+oneMirek, mirek)
+	}
+}
+
+// The anti-test: a mirek of nothing or less is not a temperature, and is no
+// light, at any size.
+func TestAMirekOfNothingOrLessIsNoLight(t *testing.T) {
+	rapid.Check(t, nothingBelowZero)
+}
+
+// nothingBelowZero is one draw of the property above.
+func nothingBelowZero(t *rapid.T) {
+	mirek := rapid.IntRange(math.MinInt32, atZero).Draw(t, "mirek")
+	if got := Mirek(mirek); got != swatch.NoLight() {
+		t.Fatalf("mirek %d gave light: %v", mirek, got)
 	}
 }
 

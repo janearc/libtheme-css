@@ -1,0 +1,12 @@
+{
+  "picked by": "the test author, 2026-10-24. The places are two points on the horseshoe. The smallest mirek is the reciprocal megakelvin's first step, defined by the unit. The gamuts are typed from philips' published corners.",
+  "places": [{"X": 0.64, "Y": 0.33}, {"X": 0.3127, "Y": 0.329}],
+  "unit luminance": 1,
+  "smallest mirek": 1,
+  "kelvin per megakelvin": 1000000,
+  "gamuts": {
+    "A": {"Red": {"X": 0.704, "Y": 0.296}, "Green": {"X": 0.2151, "Y": 0.7106}, "Blue": {"X": 0.138, "Y": 0.08}},
+    "B": {"Red": {"X": 0.675, "Y": 0.322}, "Green": {"X": 0.409, "Y": 0.518}, "Blue": {"X": 0.167, "Y": 0.04}},
+    "C": {"Red": {"X": 0.6915, "Y": 0.3083}, "Green": {"X": 0.17, "Y": 0.7}, "Blue": {"X": 0.1532, "Y": 0.0475}}
+  }
+}

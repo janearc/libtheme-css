@@ -24,6 +24,7 @@ import (
 	"strings"
 
 	"github.com/janearc/libtheme-css/css"
+	"github.com/janearc/libtheme-css/internal/plain"
 	"github.com/janearc/libtheme-css/primitives/swatch"
 	"github.com/janearc/libtheme-css/spaces/srgb"
 )
@@ -184,9 +185,7 @@ func Read(source io.Reader) (Theme, error) {
 // written. A theme read from a partial file is written back partial.
 func (theme Theme) Write(out io.Writer, header string) error {
 	var text strings.Builder
-	for line := range strings.SplitSeq(strings.TrimSpace(header), "\n") {
-		fmt.Fprintln(&text, strings.TrimRight("# "+line, " "))
-	}
+	text.WriteString(plain.Comment("#", header))
 	fmt.Fprintln(&text)
 	for _, setting := range Keys {
 		if value, found := theme.Settings[setting.Key]; found {
@@ -218,10 +217,10 @@ func (theme Theme) Write(out io.Writer, header string) error {
 func (theme Theme) Inverted() Theme {
 	inverted := empty()
 	for key, value := range theme.Settings {
-		inverted.Settings[key] = invert(value)
+		inverted.Settings[key] = Complement(value)
 	}
 	for number, value := range theme.Palette {
-		inverted.Palette[number] = invert(value)
+		inverted.Palette[number] = Complement(value)
 	}
 	return inverted
 }
@@ -252,9 +251,18 @@ func parse(hex string) (swatch.Swatch, error) {
 	return lamps.Swatch(), nil
 }
 
-// invert is a colour's opposite on the lamps.
-func invert(value swatch.Swatch) swatch.Swatch {
+// fullByte is a lamp at full, in a byte. It is defined by the byte.
+const fullByte = 255
+
+// Complement is the colour's opposite on the lamps: each of red, green and
+// blue is the byte that, added to its own, makes 255. A screen that the
+// system inverts draws the complement as the original.
+//
+// The colour is first taken to the byte grid a file holds, clipped to the
+// nearest the lamps can make, and the complement is of that. The other
+// dialects that turn a colour over do it here, so they agree to the byte.
+func Complement(value swatch.Swatch) swatch.Swatch {
 	lamps, _ := srgb.FromSwatch(value)
-	r, g, b := lamps.Bytes()
-	return srgb.RGB8(255-r, 255-g, 255-b).Swatch()
+	red, green, blue := lamps.Bytes()
+	return srgb.RGB8(fullByte-red, fullByte-green, fullByte-blue).Swatch()
 }

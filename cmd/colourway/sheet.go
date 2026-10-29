@@ -3,7 +3,9 @@ package main
 import (
 	"bytes"
 	"fmt"
+	"io"
 	"os"
+	"slices"
 	"strings"
 
 	"github.com/janearc/libtheme-css/colourway"
@@ -18,14 +20,10 @@ import (
 // terminal's settings and palette, claude code's colours named from that
 // palette, the editor's table, then the markdown style's colours. If a later
 // file sets a role differently, it reports that and keeps the first.
-func sheet(arguments []string) error {
-	files := map[string]string{}
-	for ; len(arguments) >= 2; arguments = arguments[2:] {
-		files[arguments[0]] = arguments[1]
-	}
-	if len(arguments) != 0 || len(files) == 0 {
-		usage()
-		os.Exit(2)
+func sheet(arguments []string, to streams) error {
+	files, err := sheetFiles(arguments)
+	if err != nil {
+		return err
 	}
 	merged, about := css.New(), ""
 	if path, found := files["--ghostty"]; found {
@@ -37,7 +35,7 @@ func sheet(arguments []string) error {
 		if err != nil {
 			return err
 		}
-		merge(merged, terminalRoles(theme), path, "")
+		merge(to.errs, merged, terminalRoles(theme), path, "")
 		about = comments(string(raw))
 	}
 	if path, found := files["--nvim"]; found {
@@ -50,7 +48,7 @@ func sheet(arguments []string) error {
 		if err != nil {
 			return err
 		}
-		merge(merged, scheme.Roles(), path, "nvim-")
+		merge(to.errs, merged, scheme.Roles(), path, "nvim-")
 	}
 	if path, found := files["--glamour"]; found {
 		raw, err := os.ReadFile(path)
@@ -61,10 +59,33 @@ func sheet(arguments []string) error {
 		if err != nil {
 			return err
 		}
-		merge(merged, roles, path, "")
+		merge(to.errs, merged, roles, path, "")
 	}
-	fmt.Print(colourway.Commented(about) + merged.String())
+	fmt.Fprint(to.out, colourway.Commented(about)+merged.String())
 	return nil
+}
+
+// sheetOptions are the programs sheet can read a file of.
+var sheetOptions = []string{"--ghostty", "--nvim", "--glamour"}
+
+// pair is an option and its file. It is defined by the usage.
+const pair = 2
+
+// sheetFiles is the file for each option, from the arguments. An option
+// nobody knows, one without a file, and no option at all are wrong calls.
+func sheetFiles(arguments []string) (map[string]string, error) {
+	files := map[string]string{}
+	for ; len(arguments) >= pair; arguments = arguments[pair:] {
+		option := arguments[0]
+		if !slices.Contains(sheetOptions, option) {
+			return nil, usageError{"sheet has no option " + option}
+		}
+		files[option] = arguments[1]
+	}
+	if len(arguments) != nothing || len(files) == nothing {
+		return nil, usageError{"sheet wants an option and its file"}
+	}
+	return files, nil
 }
 
 // terminalRoles returns a theme's roles with claude code's colours named.
@@ -97,8 +118,8 @@ func claudeNumber(name string) bool {
 // merge copies every role of one sheet into another. If both have a role
 // with different values, the first is kept. The second is also kept under
 // the program's own prefix, such as nvim-ink, when the program has one.
-// Either way it prints a note to stderr.
-func merge(into, from *css.Sheet, file, own string) {
+// Either way it prints a note to errs.
+func merge(errs io.Writer, into, from *css.Sheet, file, own string) {
 	for _, rule := range from.Rules() {
 		held, found := into.Get(rule.Name)
 		switch {
@@ -107,11 +128,11 @@ func merge(into, from *css.Sheet, file, own string) {
 		case ghostty.Hex(held) == rule.Value:
 		case own != "":
 			into.Set(own+rule.Name, rule.Swatch)
-			fmt.Fprintf(os.Stderr,
+			fmt.Fprintf(errs,
 				"colourway: %s: %s says %s; kept as %s\n",
 				rule.Name, file, rule.Value, own+rule.Name)
 		default:
-			fmt.Fprintf(os.Stderr,
+			fmt.Fprintf(errs,
 				"colourway: %s: %s says %s; kept %s\n",
 				rule.Name, file, rule.Value, ghostty.Hex(held))
 		}

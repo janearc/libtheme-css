@@ -24,6 +24,7 @@ import (
 
 	"github.com/janearc/libtheme-css/css"
 	"github.com/janearc/libtheme-css/dialects/ghostty"
+	"github.com/janearc/libtheme-css/internal/plain"
 	"github.com/janearc/libtheme-css/primitives/swatch"
 	"github.com/janearc/libtheme-css/spaces/srgb"
 )
@@ -68,6 +69,9 @@ type Scheme struct {
 // including the sixteen. A group with no colour would fall back to
 // someone else's.
 func Of(name string, roles *css.Sheet) (Scheme, error) {
+	if err := plain.Name(name); err != nil {
+		return Scheme{}, fmt.Errorf("nvim: scheme name: %w", err)
+	}
 	scheme := Scheme{Name: name, Colours: map[string]swatch.Swatch{},
 		Terminal: make([]swatch.Swatch, 16)}
 	for _, entry := range Roles {
@@ -93,8 +97,7 @@ func Of(name string, roles *css.Sheet) (Scheme, error) {
 // the contrast written beside it is the contrast of what is written, and a
 // scheme read back says the same.
 func snap(value swatch.Swatch) swatch.Swatch {
-	snapped, _ := parse(ghostty.Hex(value))
-	return snapped
+	return parse(ghostty.Hex(value))
 }
 
 // pick is a role's colour for the editor. It uses nvim-role if the
@@ -138,8 +141,10 @@ var (
 	tableEntry = regexp.MustCompile(`^\s*(\w+)\s*=\s*"(#[0-9a-fA-F]{6})"`)
 	// hexes are the quoted colours on a line of the terminal's table.
 	hexes = regexp.MustCompile(`"(#[0-9a-fA-F]{6})"`)
-	// named is the scheme's name, as it sets it.
-	named = regexp.MustCompile(`^\s*vim\.g\.colors_name\s*=\s*"([^"]+)"`)
+	// named is the scheme's name, as it sets it: a quoted string, in which
+	// a backslash escapes the character after it.
+	named = regexp.MustCompile(
+		`^\s*vim\.g\.colors_name\s*=\s*("(?:[^"\\]|\\.)+")`)
 )
 
 // Read is a scheme file's colours. It reads the `local c = {` table by
@@ -180,6 +185,10 @@ type reading struct {
 // comments, both whole lines and the ends of lines. So a colour named in
 // a note is not taken for one in the table.
 func (scheme *Scheme) take(text string, place *reading) error {
+	if found := named.FindStringSubmatch(text); found != nil {
+		scheme.takeName(found[1])
+		return nil
+	}
 	if code, _, found := strings.Cut(text, "--"); found {
 		text = code
 	}
@@ -187,42 +196,46 @@ func (scheme *Scheme) take(text string, place *reading) error {
 	switch {
 	case trimmed == "":
 		return nil
-	case named.MatchString(text):
-		scheme.Name = named.FindStringSubmatch(text)[1]
 	case trimmed == "local c = {", trimmed == "local term = {":
 		place.table = trimmed
 	case strings.HasPrefix(trimmed, "}"):
 		place.table = ""
 	case place.table == "local c = {":
-		return scheme.takeColour(text)
+		scheme.takeColour(text)
 	case place.table == "local term = {":
-		return scheme.takeTerminal(text, place)
+		return scheme.takeTerminal(text)
 	}
 	return nil
 }
 
+// takeName reads the scheme's name from the quoted string that sets it.
+// The string is a lua string with its quotes; the name is what it holds.
+// An escape that go does not read (lua has some of its own) leaves the
+// name as the file spells it.
+func (scheme *Scheme) takeName(quoted string) {
+	name, err := strconv.Unquote(quoted)
+	if err != nil {
+		name = strings.TrimSuffix(strings.TrimPrefix(quoted, `"`), `"`)
+	}
+	scheme.Name = name
+}
+
 // takeColour reads one entry of the colour table.
-func (scheme *Scheme) takeColour(text string) error {
+func (scheme *Scheme) takeColour(text string) {
 	found := tableEntry.FindStringSubmatch(text)
 	if found == nil {
-		return nil
+		return
 	}
-	value, err := parse(found[2])
-	scheme.Colours[found[1]] = value
-	return err
+	scheme.Colours[found[1]] = parse(found[2])
 }
 
 // takeTerminal reads the sixteen's colours on one line of their table.
-func (scheme *Scheme) takeTerminal(text string, place *reading) error {
+func (scheme *Scheme) takeTerminal(text string) error {
 	for _, found := range hexes.FindAllStringSubmatch(text, -1) {
 		if len(scheme.Terminal) == 16 {
 			return fmt.Errorf("more than sixteen")
 		}
-		value, err := parse(found[1])
-		if err != nil {
-			return err
-		}
-		scheme.Terminal = append(scheme.Terminal, value)
+		scheme.Terminal = append(scheme.Terminal, parse(found[1]))
 	}
 	return nil
 }
@@ -286,23 +299,57 @@ for i, v in ipairs(term) do vim.g["terminal_color_" .. (i - 1)] = v end
 `
 )
 
+// Complete says whether the scheme has everything a file needs: every
+// colour the groups use, and the sixteen. A scheme read from a fragment may
+// not, and a file is not written from one.
+func (scheme Scheme) Complete() error {
+	for _, entry := range Roles {
+		if _, has := scheme.Colours[entry.Name]; !has {
+			return fmt.Errorf("nvim: the scheme has no %s, %s",
+				entry.Name, entry.Use)
+		}
+	}
+	if count := len(scheme.Terminal); count != len(ghostty.Ansi) {
+		return fmt.Errorf("nvim: %d of the sixteen", count)
+	}
+	return nil
+}
+
+// luaEscapes put a backslash before the two characters that end or escape a
+// lua string.
+var luaEscapes = strings.NewReplacer(`\`, `\\`, `"`, `\"`)
+
+// luaString is text as a lua string in double quotes. Backslashes and
+// quotes get a backslash. Everything else is written as it is.
+//
+// go's own %q writes \uXXXX for some characters, which LuaJIT does not
+// read. Lua takes every other byte as itself. The text holds no control
+// character or line break, since plain.Name refused them.
+func luaString(text string) string {
+	return `"` + luaEscapes.Replace(text) + `"`
+}
+
 // Write puts the scheme in neovim's lua after a header. Each line of the
 // header becomes a comment. The comment on each colour other than the
 // ground carries its contrast with the ground. Write works the number out
 // each time, so it is never stale.
 func (scheme Scheme) Write(out io.Writer, header string) error {
-	var text strings.Builder
-	for line := range strings.SplitSeq(strings.TrimSpace(header), "\n") {
-		fmt.Fprintln(&text, strings.TrimRight("-- "+line, " "))
+	if err := plain.Name(scheme.Name); err != nil {
+		return fmt.Errorf("nvim: scheme name: %w", err)
 	}
+	if err := scheme.Complete(); err != nil {
+		return err
+	}
+	var text strings.Builder
+	text.WriteString(plain.Comment("--", header))
 	fmt.Fprintf(&text, "--\n--   :colorscheme %s\n\n", scheme.Name)
 	text.WriteString(preamble)
 	background := "dark"
 	if scheme.Light {
 		background = "light"
 	}
-	fmt.Fprintf(&text, "vim.o.background = %q\n", background)
-	fmt.Fprintf(&text, "vim.g.colors_name = %q\n\n", scheme.Name)
+	fmt.Fprintf(&text, "vim.o.background = %s\n", luaString(background))
+	fmt.Fprintf(&text, "vim.g.colors_name = %s\n\n", luaString(scheme.Name))
 	fmt.Fprintln(&text, "local c = {")
 	ground := scheme.Colours["bg"]
 	for _, entry := range Roles {
@@ -339,10 +386,11 @@ func (scheme Scheme) Inverted() Scheme {
 	inverted := Scheme{Name: scheme.Name,
 		Colours: map[string]swatch.Swatch{}}
 	for _, value := range scheme.Terminal {
-		inverted.Terminal = append(inverted.Terminal, invert(value))
+		inverted.Terminal = append(inverted.Terminal,
+			ghostty.Complement(value))
 	}
 	for name, value := range scheme.Colours {
-		inverted.Colours[name] = invert(value)
+		inverted.Colours[name] = ghostty.Complement(value)
 	}
 	inverted.Light = lighter(inverted.Colours)
 	return inverted
@@ -366,18 +414,9 @@ func luminance(value swatch.Swatch) float64 {
 	return y / white
 }
 
-// parse reads a #rrggbb.
-func parse(hex string) (swatch.Swatch, error) {
-	lamps, err := srgb.FromHex(hex)
-	if err != nil {
-		return swatch.Swatch{}, err
-	}
-	return lamps.Swatch(), nil
-}
-
-// invert is a colour's opposite on the lamps.
-func invert(value swatch.Swatch) swatch.Swatch {
-	lamps, _ := srgb.FromSwatch(value)
-	r, g, b := lamps.Bytes()
-	return srgb.RGB8(255-r, 255-g, 255-b).Swatch()
+// parse reads a #rrggbb that is known to be one. Every caller has the shape
+// from a pattern that matched six hex digits, or from Hex, so a string that
+// is no colour is the program's own fault and stops it.
+func parse(hex string) swatch.Swatch {
+	return srgb.MustHex(hex).Swatch()
 }

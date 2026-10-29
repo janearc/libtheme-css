@@ -126,6 +126,68 @@ func TestOfNeedsTheInk(t *testing.T) {
 	}
 }
 
+// styled is a style as the json says it, decoded.
+func styled(t *testing.T, text string) map[string]any {
+	t.Helper()
+	style := map[string]any{}
+	if err := json.Unmarshal([]byte(text), &style); err != nil {
+		t.Fatal(err)
+	}
+	return style
+}
+
+// said is a style as json again, so a test can compare two by their text.
+func said(t *testing.T, style map[string]any) string {
+	t.Helper()
+	text, err := json.Marshal(style)
+	if err != nil {
+		t.Fatal(err)
+	}
+	return string(text)
+}
+
+// Setting a dotted key makes the objects on the way, replaces a parent that
+// is not an object, and leaves every other setting as it was.
+func TestSetMakesItsParents(t *testing.T) {
+	for name, one := range map[string]struct{ before, key, after string }{
+		"the key is there": {`{"a":{"b":"x","c":"y"}}`, "a.b",
+			`{"a":{"b":"new","c":"y"}}`},
+		"a leaf is new":   {`{"a":{"c":"y"}}`, "a.b", `{"a":{"b":"new","c":"y"}}`},
+		"parents are new": {`{"z":"y"}`, "a.b.c", `{"a":{"b":{"c":"new"}},"z":"y"}`},
+		"a parent is not an object": {`{"a":"text"}`, "a.b",
+			`{"a":{"b":"new"}}`},
+		"one part": {`{"a":"old","z":"y"}`, "a", `{"a":"new","z":"y"}`},
+	} {
+		style := styled(t, one.before)
+		set(style, one.key, "new")
+		if got := said(t, style); got != one.after {
+			t.Errorf("%s: %s, want %s", name, got, one.after)
+		}
+	}
+}
+
+// Removing a dotted key takes that one value out. It makes nothing: a key
+// whose parents are missing, or a parent that is not an object, leaves the
+// style exactly as it was.
+func TestRemoveTakesOneValueAndMakesNothing(t *testing.T) {
+	for name, one := range map[string]struct{ before, key, after string }{
+		"the key is there": {`{"a":{"b":"x","c":"y"}}`, "a.b", `{"a":{"c":"y"}}`},
+		"the leaf is not there": {`{"a":{"c":"y"}}`, "a.b",
+			`{"a":{"c":"y"}}`},
+		"a parent is not there": {`{"z":"y"}`, "a.b.c", `{"z":"y"}`},
+		"a parent halfway":      {`{"a":{"z":"y"}}`, "a.b.c", `{"a":{"z":"y"}}`},
+		"a parent is not an object": {`{"a":"text"}`, "a.b",
+			`{"a":"text"}`},
+		"one part": {`{"a":"old","z":"y"}`, "a", `{"z":"y"}`},
+	} {
+		style := styled(t, one.before)
+		remove(style, one.key)
+		if got := said(t, style); got != one.after {
+			t.Errorf("%s: %s, want %s", name, got, one.after)
+		}
+	}
+}
+
 // a ground nobody can fall back to is taken out of the style, not left
 // in base.json's colours.
 func TestUnsetGroundsLeave(t *testing.T) {
@@ -141,5 +203,56 @@ func TestUnsetGroundsLeave(t *testing.T) {
 		if value, found := got[key]; found {
 			t.Errorf("%s is still %s", key, value)
 		}
+	}
+}
+
+// remember is deferred to keep what a panic was.
+func remember(cause *any) { *cause = recover() }
+
+// stopped is what the function panicked with, or nil.
+func stopped(run func()) (cause any) {
+	defer remember(&cause)
+	run()
+	return nil
+}
+
+// readTheBase is a call that hands styleOf the embedded base.
+func readTheBase() { styleOf(base) }
+
+// notAStyle is a call that hands styleOf bytes that are no json object.
+func notAStyle() { styleOf([]byte("{")) }
+
+// The anti-test: a base that is not json stops the program and names the
+// file, and a base that is json is read. The base is embedded, so the
+// fault is the program's own and there is no caller to hand it to.
+func TestABaseThatIsNotJSONStopsTheProgram(t *testing.T) {
+	err, ok := stopped(notAStyle).(error)
+	if !ok || !strings.Contains(err.Error(), "base.json") {
+		t.Errorf("styleOf({) stopped with %v", err)
+	}
+	if got := stopped(readTheBase); got != nil {
+		t.Errorf("the embedded base stopped the program: %v", got)
+	}
+}
+
+// The anti-test: Of does not leave its changes in the base. A style made
+// for one colourway is not in the next one's, so a second colourway with
+// less in it does not inherit the first's colours.
+func TestOneStyleDoesNotLeakIntoTheNext(t *testing.T) {
+	bare := css.New()
+	bare.Set("ink", srgb.MustHex("#38241e").Swatch())
+	first, err := Of(bare)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := Of(editor()); err != nil {
+		t.Fatal(err)
+	}
+	second, err := Of(bare)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if string(first) != string(second) {
+		t.Error("a colourway in between changed the next style")
 	}
 }

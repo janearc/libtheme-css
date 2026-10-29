@@ -3,8 +3,8 @@ package swatch
 import (
 	_ "embed"
 	"sort"
-	"strconv"
-	"strings"
+
+	"github.com/janearc/libtheme-css/internal/table"
 )
 
 // The CIE 1931 observer and D65 daylight, as the CIE published them. The
@@ -17,30 +17,19 @@ var observerCSV string
 //go:embed data/d65.csv
 var d65CSV string
 
-// table reads "wavelength, v1, v2, ..." lines into a map by wavelength.
-func table(csv string) map[int][]float64 {
-	out := map[int][]float64{}
-	for _, line := range strings.Split(csv, "\n") {
-		fields := strings.Split(strings.TrimSpace(line), ",")
-		if len(fields) < 2 {
-			continue
-		}
-		nm, err := strconv.Atoi(strings.TrimSpace(fields[0]))
-		if err != nil {
-			continue
-		}
-		row := make([]float64, 0, len(fields)-1)
-		for _, f := range fields[1:] {
-			v, err := strconv.ParseFloat(strings.TrimSpace(f), 64)
-			if err != nil {
-				continue
-			}
-			row = append(row, v)
-		}
-		out[nm] = row
-	}
-	return out
-}
+// The shape of the tables, as data/README.md describes them. The observer
+// has X, Y and Z. Daylight has one power.
+const (
+	// observerValues is how many values follow a wavelength in the
+	// observer's table: X, Y and Z. It is defined by the observer.
+	observerValues = 3
+	// daylightValues is how many follow in daylight's: the power. It is
+	// defined by the table.
+	daylightValues = 1
+	// firstValue is where the one value of a daylight row is. It is
+	// defined by the table.
+	firstValue = 0
+)
 
 // observer is the CIE 1931 2-degree standard observer: for each
 // wavelength, how much of it counts toward X, Y and Z. It is the
@@ -63,7 +52,7 @@ func table(csv string) map[int][]float64 {
 // average would give a different table. This library would accept it in the
 // same shape. Every range the library uses downstream comes from this one,
 // and it is stated once, here.
-var observer = table(observerCSV)
+var observer = table.Must("ciexyz31_1.csv", observerCSV, observerValues)
 
 // Observed is the shortest and the longest wavelength, in nanometres, the
 // observer has a row for: the library's range of visible, stated once, in
@@ -114,7 +103,7 @@ func Illuminant(spectrum map[int]float64) Swatch {
 		}
 	}
 	if y == 0 {
-		return Black
+		return noLight
 	}
 	return Swatch{x / y, 1, z / y}
 }
@@ -128,7 +117,7 @@ func Illuminant(spectrum map[int]float64) Swatch {
 func Monochrome(nm int) Swatch {
 	w, ok := observer[nm]
 	if !ok || len(w) != 3 {
-		return Black
+		return noLight
 	}
 	return Swatch{w[0], w[1], w[2]}
 }
@@ -144,10 +133,8 @@ func Monochrome(nm int) Swatch {
 // wrong forever. sRGB and every screen you own assume this white.
 func D65() map[int]float64 {
 	out := map[int]float64{}
-	for nm, row := range table(d65CSV) {
-		if len(row) > 0 {
-			out[nm] = row[0]
-		}
+	for nm, row := range table.Must("d65.csv", d65CSV, daylightValues) {
+		out[nm] = row[firstValue]
 	}
 	return out
 }
@@ -156,7 +143,26 @@ func D65() map[int]float64 {
 // out as X 0.95047, Z 1.08883, the two numbers most colour libraries
 // type in; here they are computed from the two published tables at
 // start-up, so the derivation can be checked rather than the typing.
-var White = Illuminant(D65())
+//
+// White is a variable for the programs that already read it. A program can
+// assign to it, so the library never reads it itself: it computes with
+// WhitePoint, which no program can change.
+var White = white
 
-// Black is no light at all.
-var Black = Swatch{}
+// white is the library's own white, derived once.
+var white = Illuminant(D65())
+
+// WhitePoint is D65 as the observer sees it, scaled so Y is 1: the library's
+// white, which every matrix and every conversion is made from. Unlike White,
+// it cannot be assigned to.
+func WhitePoint() Swatch { return white }
+
+// Black is no light at all. Like White it is a variable for programs that
+// already read it; the library computes with NoLight.
+var Black = noLight
+
+// noLight is the library's own no light.
+var noLight = Swatch{}
+
+// NoLight is no light at all, which no program can change.
+func NoLight() Swatch { return noLight }

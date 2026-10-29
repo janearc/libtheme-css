@@ -9,6 +9,8 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+
+	"github.com/janearc/libtheme-css/internal/host"
 )
 
 // places says where each program reads its rendered files. The key is the
@@ -79,15 +81,22 @@ type Installed struct {
 // program reads it. A user's file that differs is kept unless replace is
 // true, so nothing they tuned is lost.
 func Install(from, home string, replace bool) (Installed, error) {
+	return install(host.NewDisk(), from, home, replace)
+}
+
+// install is Install on the file system it is given, so a test can make that
+// file system fail where a disk seldom does.
+func install(files host.Files, from, home string,
+	replace bool) (Installed, error) {
 	done, into := Installed{}, Folder(home)
-	if info, err := os.Stat(filepath.Join(from, "sources")); err != nil ||
-		!info.IsDir() {
+	sources := filepath.Join(from, "sources")
+	if info, err := files.Stat(sources); err != nil || !info.IsDir() {
 		return done, fmt.Errorf("%s has no sources/ to install: "+
 			"name a colourways folder, such as colourways/ in a "+
 			"clone of chroma", from)
 	}
 	for _, folder := range shipped {
-		entries, err := os.ReadDir(filepath.Join(from, folder))
+		entries, err := files.ReadDir(filepath.Join(from, folder))
 		if errors.Is(err, fs.ErrNotExist) {
 			continue
 		}
@@ -96,7 +105,7 @@ func Install(from, home string, replace bool) (Installed, error) {
 		}
 		for _, entry := range entries {
 			source := filepath.Join(from, folder, entry.Name())
-			info, err := os.Stat(source)
+			info, err := files.Stat(source)
 			if err != nil || info.IsDir() ||
 				strings.HasPrefix(entry.Name(), ".") {
 				continue
@@ -108,7 +117,7 @@ func Install(from, home string, replace bool) (Installed, error) {
 					filepath.Join(place, name))
 			}
 			for _, target := range targets {
-				err := done.Copy(source, target, replace)
+				err := done.copy(files, source, target, replace)
 				if err != nil {
 					return done, err
 				}
@@ -123,19 +132,25 @@ func Install(from, home string, replace bool) (Installed, error) {
 // names. A link to nothing is an error. So is a file that cannot be read.
 // Neither is overwritten.
 func (done *Installed) Copy(source, target string, replace bool) error {
-	raw, err := os.ReadFile(source)
+	return done.copy(host.NewDisk(), source, target, replace)
+}
+
+// copy is Copy on the file system it is given.
+func (done *Installed) copy(files host.Files, source, target string,
+	replace bool) error {
+	raw, err := files.ReadFile(source)
 	if err != nil {
 		return err
 	}
-	if linked, err := os.Lstat(target); err == nil &&
+	if linked, err := files.Lstat(target); err == nil &&
 		linked.Mode()&fs.ModeSymlink != 0 {
-		named, err := filepath.EvalSymlinks(target)
+		named, err := files.EvalSymlinks(target)
 		if err != nil {
 			return fmt.Errorf("%s is a link to nothing", target)
 		}
 		target = named
 	}
-	there, err := os.ReadFile(target)
+	there, err := files.ReadFile(target)
 	existed := err == nil
 	switch {
 	case existed && bytes.Equal(there, raw):
@@ -147,7 +162,7 @@ func (done *Installed) Copy(source, target string, replace bool) error {
 	case !existed && !errors.Is(err, fs.ErrNotExist):
 		return err
 	}
-	if err := writeWhole(target, raw); err != nil {
+	if err := writeWhole(files, target, raw); err != nil {
 		return err
 	}
 	done.Written = append(done.Written, target)
@@ -160,15 +175,16 @@ func (done *Installed) Copy(source, target string, replace bool) error {
 // writeWhole writes a temporary file beside the target and renames it into
 // place. A write cut short then leaves the old file whole, not half of the
 // new one.
-func writeWhole(target string, raw []byte) error {
-	if err := os.MkdirAll(filepath.Dir(target), 0o755); err != nil {
+func writeWhole(files host.Files, target string, raw []byte) error {
+	if err := files.MkdirAll(filepath.Dir(target), 0o755); err != nil {
 		return err
 	}
-	temporary, err := os.CreateTemp(filepath.Dir(target), ".install-*")
+	temporary, err := files.CreateTemp(filepath.Dir(target), ".install-*")
 	if err != nil {
 		return err
 	}
-	defer os.Remove(temporary.Name())
+	name := temporary.Name()
+	defer files.Remove(name)
 	if _, err := temporary.Write(raw); err != nil {
 		temporary.Close()
 		return err
@@ -180,7 +196,7 @@ func writeWhole(target string, raw []byte) error {
 	if err := temporary.Close(); err != nil {
 		return err
 	}
-	return os.Rename(temporary.Name(), target)
+	return files.Rename(name, target)
 }
 
 // Say tells the reader what an install did, under the command they ran. It
@@ -200,7 +216,6 @@ func (done Installed) Say(out io.Writer, home string) {
 	}
 	if len(done.Kept) > 0 {
 		fmt.Fprintln(out, "install again asking to replace "+
-			"(colourway install --replace, or paratune -install "+
-			"with -replace) to take ours in their place")
+			"(paratune -install -replace) to take ours there")
 	}
 }

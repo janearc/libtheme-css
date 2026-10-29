@@ -6,14 +6,22 @@
 // The source is the truth. Every rendered file says which source it came
 // from, and nobody edits it. To change a colourway, change its source, write
 // it back with Write, and render again.
+//
+// The source holds sRGB. Its colours are the bytes in its hex; the oklch
+// beside each only describes it. A source written from a colour between two
+// bytes, or past what a screen can make, holds the nearest byte colour, and
+// every file rendered from it says that colour.
 package colourway
 
 import (
+	"fmt"
 	"os"
 	"path/filepath"
+	"strconv"
 	"strings"
 
 	"github.com/janearc/libtheme-css/css"
+	"github.com/janearc/libtheme-css/internal/plain"
 )
 
 // Source is a colourway's source. Name comes from the file name. About is
@@ -26,16 +34,34 @@ type Source struct {
 	Origin string
 }
 
-// Read reads a source sheet. Its name is the file's, without .css.
+// nothing is the count of colours that could not be read that there should
+// be. It is defined here.
+const nothing = 0
+
+// Read reads a source sheet. Its name is the file's without .css. Colours
+// in it that are not complete ones are errors, since the role would
+// silently be missing from every file rendered. So are roles written in
+// another form of colour, such as oklch or rgb.
 func Read(path string) (Source, error) {
 	raw, err := os.ReadFile(path)
 	if err != nil {
 		return Source{}, err
 	}
 	base := filepath.Base(path)
-	return Source{Name: strings.TrimSuffix(base, filepath.Ext(base)),
-		About: Opening(string(raw)), Roles: css.Read(string(raw)).Roles,
-		Origin: "sources/" + base}, nil
+	name := strings.TrimSuffix(base, filepath.Ext(base))
+	if err := plain.Name(name); err != nil {
+		return Source{}, fmt.Errorf("colourway: %s cannot name one: %w",
+			strconv.Quote(base), err)
+	}
+	read := css.Read(string(raw))
+	named := read.Named(isRole)
+	refused := append(read.Skipped(), named...)
+	if len(refused) > nothing {
+		return Source{}, fmt.Errorf("colourway: %s: %s",
+			strconv.Quote(base), strings.Join(refused, "; "))
+	}
+	return Source{Name: name, About: Opening(string(raw)),
+		Roles: read.Roles, Origin: "sources/" + base}, nil
 }
 
 // Write saves the source to path as a css sheet. It writes the opening
@@ -50,12 +76,17 @@ func (source Source) Write(path string) error {
 // empty string if the file does not open with a comment.
 func Opening(text string) string {
 	text = strings.TrimSpace(text)
-	end := strings.Index(text, "*/")
-	if !strings.HasPrefix(text, "/*") || end < 0 {
+	if !strings.HasPrefix(text, "/*") {
+		return ""
+	}
+	// The comment closes at the first "*/" after its own opening, so "/*/"
+	// opens one and does not close it.
+	words, _, closed := strings.Cut(text[len("/*"):], "*/")
+	if !closed {
 		return ""
 	}
 	lines := []string{}
-	for line := range strings.SplitSeq(text[2:end], "\n") {
+	for line := range strings.SplitSeq(words, "\n") {
 		line = strings.TrimPrefix(strings.TrimSpace(line), "*")
 		lines = append(lines, strings.TrimSpace(line))
 	}
@@ -67,7 +98,7 @@ func Commented(about string) string {
 	if about == "" {
 		return ""
 	}
-	lines := strings.Split(about, "\n")
+	lines := strings.Split(strings.ReplaceAll(about, "*/", "* /"), "\n")
 	for position := range lines {
 		lines[position] = strings.TrimRight(" * "+lines[position], " ")
 	}

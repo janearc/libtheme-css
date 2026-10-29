@@ -1,0 +1,55 @@
+{
+  "picked by": "the radiation test author, 2026-10-24.",
+  "named ranges": {
+    "source": "the ranges as radiation.go types them under iso 21348:2007. The standard is not open and was not read this session. Extreme ultraviolet 10 to 121 nm, ultraviolet 100 to 400 nm and infrared from 760 nm are what I recall the standard giving (recalled). Gamma, x-ray, microwave and radio could not be checked.",
+    "gamma ray": {"lo": 1e-5, "hi": 1e-3},
+    "x-ray": {"lo": 1e-3, "hi": 10},
+    "extreme ultraviolet": {"lo": 10, "hi": 121},
+    "ultraviolet": {"lo": 100, "hi": 400},
+    "infrared": {"lo": 760, "hi": 1e6},
+    "microwave": {"lo": 1e6, "hi": 1.5e7},
+    "radio": {"lo": 1e5, "hi": 1e11}
+  },
+  "fermi": {
+    "about": "the short edge is 300 GeV and the long edge is 10 keV, as radiation.go types them",
+    "highest ev": 300e9,
+    "lowest ev": 10e3,
+    "tolerance": 1e-9
+  },
+  "ladders": {
+    "about": "the SI prefixes, which are exact powers of ten",
+    "energy": [1, 1e3, 1e6, 1e9, 1e12],
+    "frequency": [1, 1e3, 1e6, 1e9, 1e12]
+  },
+  "profiles": {
+    "flat": {"name": "flat", "source": {"lo": 100, "hi": 400}, "render": {"lo": 500, "hi": 500}},
+    "backwards render": {"name": "backwards render", "source": {"lo": 100, "hi": 400}, "render": {"lo": 500, "hi": 400}},
+    "backwards source": {"name": "backwards source", "source": {"lo": 400, "hi": 100}, "render": {"lo": 360, "hi": 830}},
+    "sound": {"name": "sound", "source": {"lo": 100, "hi": 400}, "render": {"lo": 500, "hi": 600}},
+    "short": {"name": "short", "source": {"lo": 300, "hi": 400}, "render": {"lo": 300, "hi": 400}},
+    "outside": {"name": "outside", "source": {"lo": 100, "hi": 200}, "render": {"lo": 500, "hi": 600}},
+    "inside nm": 200,
+    "below nm": 50,
+    "above nm": 1000
+  },
+  "of": {
+    "wavelengths": [420, 530],
+    "deep violet nm": 380,
+    "between": {"low nm": 480, "high nm": 481},
+    "within nm": 1,
+    "half nm": 0.5,
+    "off the sweep": {"degrees": -30, "radius": 0.1},
+    "one row": 1,
+    "far red": {"source": "measured in the deceit review, 2026-10-24: the rows at 775 and 785 nm have bit-identical directions from white, so they tie", "short nm": 775, "long nm": 785, "within nm": 1e-6},
+    "magenta": "#ff00ff",
+    "half turn degrees": 180
+  },
+  "light": {
+    "line nm": 550,
+    "power": 3,
+    "lead nm": 5,
+    "squeezed render": {"lo": 500.3, "hi": 500.5},
+    "cell nm": 500,
+    "tolerance": 1e-9
+  }
+}

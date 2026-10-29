@@ -4,6 +4,14 @@
 // It holds names in the order they were given. It writes itself out as the
 // custom properties that a browser or a colourway file would read.
 // That is all it does until it has to do more.
+//
+// A sheet in memory holds exact swatches. A sheet on disk holds sRGB bytes.
+// The hex is the colour. The oklch beside it only describes it, and is not
+// read back.
+//
+// A colour between two bytes, or one the lamps cannot make, is written as
+// the nearest byte colour. Reading gives that colour, not the original,
+// and writing it again keeps it. To hold a colour exactly, keep the swatch.
 package css
 
 import (

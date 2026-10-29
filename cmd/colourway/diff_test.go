@@ -2,6 +2,7 @@ package main
 
 import (
 	"bytes"
+	"io"
 	"os"
 	"strings"
 	"testing"
@@ -54,7 +55,7 @@ func TestReportVisible(t *testing.T) {
 
 // git's /dev/null, for a file added or removed, is no roles.
 func TestNothingFromDevNull(t *testing.T) {
-	roles, err := rolesOf(os.DevNull)
+	roles, err := rolesOf(filed(os.DevNull))
 	if err != nil || len(roles.Names()) != 0 {
 		t.Errorf("/dev/null gave %v, %v", roles.Names(), err)
 	}
@@ -69,8 +70,9 @@ func TestGitDriverNeverFails(t *testing.T) {
 		{"a.css", os.DevNull, "0", "0", os.DevNull, "0", "0", "b.css", "similarity index 100%"},
 		{"a.css", "/no/such/file.css", "0", "0", os.DevNull, "0", "0"},
 	} {
-		if differed, err := diff(append([]string{"--git"}, arguments...)); differed || err != nil {
-			t.Errorf("%d arguments: %v, %v", len(arguments), differed, err)
+		call := append([]string{"--git"}, arguments...)
+		if err := diff(call, streams{out: io.Discard}); err != nil {
+			t.Errorf("%d arguments: %v", len(arguments), err)
 		}
 	}
 }

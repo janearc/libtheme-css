@@ -45,7 +45,10 @@ func FromXYZ(x, y, z float64) Swatch { return Swatch{x, y, z} }
 // XYZ is the swatch as stored.
 func (s Swatch) XYZ() (x, y, z float64) { return s.x, s.y, s.z }
 
-// White and Black are in observer.go, where White is derived.
+// White and Black are in observer.go, where White is derived. They are
+// variables, and a program can still assign to them. The library does not
+// read them. It computes with WhitePoint and NoLight, which an assignment
+// does not change.
 
 // XY is a CIE 1931 chromaticity: a place on the horseshoe, with the
 // brightness taken out. It is what a lamp means when it reports a
@@ -59,7 +62,7 @@ type XY struct {
 // zero has no light in it and is black.
 func FromXY(c XY, luminance float64) Swatch {
 	if c.Y <= 0 {
-		return Black
+		return noLight
 	}
 	return Swatch{c.X / c.Y * luminance, luminance,
 		(1 - c.X - c.Y) / c.Y * luminance}
@@ -71,7 +74,7 @@ func FromXY(c XY, luminance float64) Swatch {
 func (s Swatch) XY() XY {
 	sum := s.x + s.y + s.z
 	if sum <= 0 {
-		return White.XY()
+		return white.XY()
 	}
 	return XY{s.x / sum, s.y / sum}
 }

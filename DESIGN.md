@@ -59,13 +59,14 @@ writes it back out. it handles colour and nothing else.
                            and show, which git uses as a textconv
     cmd/visualdocs         the documentation, one page per idea
     internal/mat           the matrix arithmetic the spaces share
-    internal/si            the si's defining constants, typed once
+    primitives/si          the si's defining constants, typed once;
+                           public, so other libraries use the same ones
 
 ## what imports what
 
 a package imports only packages from an earlier step:
 
-1. internal/si and internal/mat import nothing.
+1. primitives/si and internal/mat import nothing.
 2. swatch imports si. functions and bands import swatch.
 3. the spaces import swatch, plus functions or bands.
 4. css imports the spaces.

@@ -64,11 +64,16 @@ func (c OKLab) Polar() OKLCH {
 	return OKLCH{c.L, ch, h}
 }
 
-// String is the colour as CSS says it: oklch(74% 0.200 345.3). Below Eye
-// there is not enough chroma for an eye to see a hue, the angle is
-// arithmetic on noise, and CSS has a word for exactly that: none.
+// String is the colour as CSS says it: oklch(74% 0.200 345.3). Where there
+// is almost no chroma the angle is arithmetic on noise, and CSS has a word
+// for exactly that: none.
+//
+// Dropping a hue moves a colour by up to twice its chroma, and the
+// lightness is written to a whole percent, so none is only for chroma below
+// a quarter of Eye. Any more and a colour written and read back could move
+// by more than an eye can tell.
 func (c OKLCH) String() string {
-	if c.C < Eye {
+	if c.C < Eye/quarter {
 		return fmt.Sprintf("oklch(%.0f%% %.3f none)", c.L*100, c.C)
 	}
 	return fmt.Sprintf("oklch(%.0f%% %.3f %.1f)", c.L*100, c.C, c.H)
@@ -101,13 +106,20 @@ func Distance(a, b OKLab) float64 {
 		(a.B-b.B)*(a.B-b.B))
 }
 
+// quarter is the part of the eye's distance below which a hue is dropped. It
+// is defined by quartering.
+const quarter = 4
+
 // The tolerances. A distance below Exact is arithmetic noise: two float sums
 // walked in a different order, a round trip through a matrix and its inverse.
 //
 // A distance below Eye is one most people cannot see side by side. That is
-// what "the same colour" means to a person. 0.02 is the figure the space's
-// author gives for a just-noticeable difference. It is why the space exists:
-// 0.02 means the same thing for a dark blue as for a pale yellow.
+// what "the same colour" means to a person.
+//
+// 0.02 is the figure I recall the space's author giving for a
+// just-noticeable difference (recalled, not checked against the source). It
+// is why the space exists: 0.02 means the same for a dark blue as for a pale
+// yellow.
 //
 // Anything a device can or cannot resolve is that device's fact and lives with
 // the device, to be compared against these.

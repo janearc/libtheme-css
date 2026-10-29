@@ -35,6 +35,21 @@ import (
 //go:embed base.json
 var base []byte
 
+// styleOf reads a base style, which is one json object. The base is embedded,
+// so a base that does not read is the program's own fault and stops it,
+// naming the file.
+func styleOf(raw []byte) map[string]any {
+	style := map[string]any{}
+	if err := json.Unmarshal(raw, &style); err != nil {
+		panic(fmt.Errorf("glamour: base.json: %w", err))
+	}
+	return style
+}
+
+// The embedded base is read once at start-up, so a bad one stops the
+// program there and not at the first colourway.
+var _ = styleOf(base)
+
 // chroma is where chroma's token colours sit in a style.
 const chroma = "code_block.chroma."
 
@@ -121,10 +136,7 @@ func Of(roles *css.Sheet) ([]byte, error) {
 	if _, found := lastResort(roles); !found {
 		return nil, fmt.Errorf("glamour: no ink, and no md-body")
 	}
-	style := map[string]any{}
-	if err := json.Unmarshal(base, &style); err != nil {
-		return nil, fmt.Errorf("glamour: base.json: %w", err)
-	}
+	style := styleOf(base)
 	for _, entry := range Roles {
 		value, found := resolve(roles, entry.Name, entry.Fallbacks)
 		for _, key := range entry.Keys {
@@ -184,8 +196,12 @@ func lastResort(roles *css.Sheet) (swatch.Swatch, bool) {
 }
 
 // Read is a style's colours as a colourway's roles. Each role takes its
-// colour from the first of its keys that the style sets. A key that is
-// not a colour is an error that names the key.
+// colour from the first of its keys that the style sets. Keys that are not
+// colours are errors that name the key.
+//
+// Colours are hex codes with their #. Glamour also reads a number such as
+// "252" as one of the 256 terminal colours. This reader does not, and says
+// so. Read as hex it would be a different colour altogether: #225522.
 func Read(source []byte) (*css.Sheet, error) {
 	style := map[string]any{}
 	if err := json.Unmarshal(source, &style); err != nil {
@@ -194,9 +210,15 @@ func Read(source []byte) (*css.Sheet, error) {
 	roles := css.New()
 	for _, entry := range Roles {
 		for _, key := range entry.Keys {
-			text, found := lookup(style, key)
+			text, found, err := lookup(style, key)
+			if err != nil {
+				return nil, err
+			}
 			if !found {
 				continue
+			}
+			if !strings.HasPrefix(text, "#") {
+				return nil, noHash(key, text)
 			}
 			lamps, err := srgb.FromHex(text)
 			if err != nil {
@@ -210,47 +232,97 @@ func Read(source []byte) (*css.Sheet, error) {
 	return roles, nil
 }
 
-// lookup is the string at a dotted key, as "heading.color".
-func lookup(style map[string]any, key string) (string, bool) {
-	var node any = style
-	for _, part := range strings.Split(key, ".") {
-		object, found := node.(map[string]any)
-		if !found {
-			return "", false
-		}
-		node = object[part]
-	}
-	text, found := node.(string)
-	return text, found
+// noHash is the complaint for a colour with no # in front of it.
+func noHash(key, text string) error {
+	return fmt.Errorf("glamour: %s: %q is not a #rrggbb; glamour reads a "+
+		"bare number as a terminal colour, and this reader does not",
+		key, text)
 }
 
-// set writes a value at a dotted key, making the objects on the way.
-func set(style map[string]any, key, value string) {
+// lookup is the string at a dotted key, as "heading.color", and whether the
+// style sets it.
+//
+// A key that is not there at all is not set, which is fine: a style need
+// not set every colour. A key that is there and is not what it should be is
+// an error that names it: a colour that is not a string, or a parent on the
+// way that is not an object. Null is there, and wrong.
+func lookup(style map[string]any, key string) (text string, set bool,
+	err error) {
+	var node any = style
+	path := ""
+	for _, part := range strings.Split(key, ".") {
+		object, isObject := node.(map[string]any)
+		if !isObject {
+			return "", false, fmt.Errorf("glamour: %s is %s, "+
+				"not an object, so no %s", path, kind(node),
+				key)
+		}
+		next, present := object[part]
+		if !present {
+			return "", false, nil
+		}
+		node = next
+		path = strings.TrimPrefix(path+"."+part, ".")
+	}
+	text, isText := node.(string)
+	if !isText {
+		return "", false, fmt.Errorf("glamour: %s is %s, not a colour",
+			key, kind(node))
+	}
+	return text, true, nil
+}
+
+// kind says what a decoded json value is, for an error.
+func kind(node any) string {
+	switch node.(type) {
+	case nil:
+		return "null"
+	case bool:
+		return "true or false"
+	case float64:
+		return "a number"
+	case []any:
+		return "a list"
+	case map[string]any:
+		return "an object"
+	}
+	return "a string"
+}
+
+// holder is the object that holds the value at a dotted key, and the last
+// part of the key, which names the value in it. An object on the way that
+// is missing, or is not an object, is made when build is true. When it is
+// false there is no holder, and found says so.
+func holder(style map[string]any, key string, build bool) (node map[string]any,
+	last string, found bool) {
 	parts := strings.Split(key, ".")
-	node := style
+	node = style
 	for _, part := range parts[:len(parts)-1] {
-		next, found := node[part].(map[string]any)
-		if !found {
+		next, isObject := node[part].(map[string]any)
+		if !isObject && !build {
+			return nil, "", false
+		}
+		if !isObject {
 			next = map[string]any{}
 			node[part] = next
 		}
 		node = next
 	}
-	node[parts[len(parts)-1]] = value
+	return node, parts[len(parts)-1], true
 }
 
-// remove takes the value at a dotted key out, if it is there.
+// set writes a value at a dotted key, making the objects on the way.
+func set(style map[string]any, key, value string) {
+	node, last, _ := holder(style, key, true)
+	node[last] = value
+}
+
+// remove takes the value at a dotted key out, if it is there. It makes no
+// object that was not.
 func remove(style map[string]any, key string) {
-	parts := strings.Split(key, ".")
-	node := style
-	for _, part := range parts[:len(parts)-1] {
-		next, found := node[part].(map[string]any)
-		if !found {
-			return
-		}
-		node = next
+	if node, last, found := holder(style, key, false); found {
+		delete(node, last)
 	}
-	delete(node, parts[len(parts)-1])
 }
 
 // hex is a swatch as the #rrggbb a style holds.

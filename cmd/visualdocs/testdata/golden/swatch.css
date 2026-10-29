@@ -1,0 +1,4 @@
+:root {
+  --black: #000000; /* oklch(0% 0.000 none) */
+  --white: #ffffff; /* oklch(100% 0.000 none) */
+}

@@ -13,6 +13,7 @@
 package srgb
 
 import (
+	"encoding/hex"
 	"fmt"
 	"math"
 	"strings"
@@ -68,7 +69,7 @@ var rgbToXYZ = func() mat.M {
 	}
 	r, g, b := col(redXY), col(greenXY), col(blueXY)
 	p := mat.M{{r[0], g[0], b[0]}, {r[1], g[1], b[1]}, {r[2], g[2], b[2]}}
-	sr, sg, sb := p.Inverse().Apply(swatch.White.XYZ())
+	sr, sg, sb := p.Inverse().Apply(swatch.WhitePoint().XYZ())
 	return p.Scale(sr, sg, sb)
 }()
 
@@ -109,11 +110,16 @@ const gamutSlack = 1e-4
 // colour.
 //
 // The tolerance is gamutSlack, 1e-4 in linear light, so a colour on the edge
-// of the triangle, like a primary at full, counts as in.
+// of the triangle, like a primary at full, counts as in. A part that is not
+// a number is out, and its lamp is dark.
 func FromSwatch(s swatch.Swatch) (c RGB, inGamut bool) {
 	r, g, b := xyzToRGB.Apply(s.XYZ())
 	inGamut = true
 	clip := func(v float64) float64 {
+		if math.IsNaN(v) {
+			inGamut = false
+			return dark
+		}
 		if v < -gamutSlack || v > 1+gamutSlack {
 			inGamut = false
 		}
@@ -137,15 +143,29 @@ func FromLight(r, g, b float64) swatch.Swatch {
 	return swatch.FromXYZ(rgbToXYZ.Apply(r, g, b))
 }
 
+// Primaries are the three lamps, each lit alone at full: where the
+// standard puts them on the 1931 diagram, at the brightness that has the
+// three add up to the white.
+func Primaries() (red, green, blue swatch.Swatch) {
+	return FromLight(1, 0, 0), FromLight(0, 1, 0), FromLight(0, 0, 1)
+}
+
 // Swatch stores the lamp levels back as a swatch.
 func (c RGB) Swatch() swatch.Swatch {
 	return swatch.FromXYZ(rgbToXYZ.Apply(ToLinear(c.R), ToLinear(c.G),
 		ToLinear(c.B)))
 }
 
+// dark is a lamp with no light in it, in a byte or in 0 to 1. It is defined
+// by the scale.
+const dark = 0
+
 // Bytes is the lamps as the three bytes a terminal wants.
 func (c RGB) Bytes() (r, g, b uint8) {
 	round := func(v float64) uint8 {
+		if math.IsNaN(v) {
+			return dark
+		}
 		return uint8(math.Round(math.Max(0,
 			math.Min(1, v)) * 255))
 	}
@@ -167,6 +187,16 @@ func MustHex(h string) RGB {
 	return c
 }
 
+// Where each lamp is among the three bytes of a hex colour.
+const (
+	// redAt is where red is. It is defined by the notation.
+	redAt = 0
+	// greenAt is where green is. It is defined by the notation.
+	greenAt = 1
+	// blueAt is where blue is. It is defined by the notation.
+	blueAt = 2
+)
+
 // FromHex reads "#rrggbb" or "rrggbb", which is what every hex code you
 // have ever typed silently was: three lamp levels in this space. The
 // short form "#rgb" is each digit doubled, as css has always read it.
@@ -179,11 +209,11 @@ func FromHex(h string) (RGB, error) {
 		return RGB{}, fmt.Errorf("hex colour wants three or six "+
 			"digits, not %q", h)
 	}
-	var r, g, b uint8
-	if _, err := fmt.Sscanf(h, "%02x%02x%02x", &r, &g, &b); err != nil {
+	lamps, err := hex.DecodeString(h)
+	if err != nil {
 		return RGB{}, fmt.Errorf("hex colour %q: %v", h, err)
 	}
-	return RGB{float64(r) / 255, float64(g) / 255, float64(b) / 255}, nil
+	return RGB8(lamps[redAt], lamps[greenAt], lamps[blueAt]), nil
 }
 
 // The lamps at full, one at a time and all three together, and black.

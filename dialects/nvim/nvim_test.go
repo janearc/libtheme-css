@@ -5,6 +5,8 @@ import (
 	"strings"
 	"testing"
 
+	"pgregory.net/rapid"
+
 	"github.com/janearc/libtheme-css/css"
 	"github.com/janearc/libtheme-css/dialects/ghostty"
 	"github.com/janearc/libtheme-css/spaces/srgb"
@@ -199,5 +201,90 @@ func TestNoSixteenSaysNone(t *testing.T) {
 	}
 	if _, found := scheme.Roles().Get("black"); found {
 		t.Error("black was said for a scheme without the sixteen")
+	}
+}
+
+// Inverted turns every colour of the table and of the sixteen into its
+// complement on the byte grid, and keeps the name.
+func TestInvertedIsTheComplementOfEveryColour(t *testing.T) {
+	scheme, err := Of("dusk", colourway())
+	if err != nil {
+		t.Fatal(err)
+	}
+	inverted := scheme.Inverted()
+	if inverted.Name != scheme.Name {
+		t.Errorf("the name went from %q to %q", scheme.Name, inverted.Name)
+	}
+	if len(inverted.Colours) != len(scheme.Colours) ||
+		len(inverted.Terminal) != len(scheme.Terminal) {
+		t.Fatalf("%d colours and %d of the sixteen became %d and %d",
+			len(scheme.Colours), len(scheme.Terminal), len(inverted.Colours),
+			len(inverted.Terminal))
+	}
+	for name, colour := range scheme.Colours {
+		if got, want := ghostty.Hex(inverted.Colours[name]),
+			ghostty.Hex(ghostty.Complement(colour)); got != want {
+			t.Errorf("%s inverted is %s, not %s", name, got, want)
+		}
+	}
+	for number, colour := range scheme.Terminal {
+		if got, want := ghostty.Hex(inverted.Terminal[number]),
+			ghostty.Hex(ghostty.Complement(colour)); got != want {
+			t.Errorf("terminal %d inverted is %s, not %s", number, got, want)
+		}
+	}
+}
+
+// The anti-test: inverting gives another scheme and leaves the first alone,
+// and a light scheme turns dark: the light flag is worked out again and not
+// copied.
+func TestInvertedLeavesTheSchemeAloneAndFlipsTheLight(t *testing.T) {
+	roles := colourway()
+	roles.Set("ground", srgb.MustHex("#f0f0f0").Swatch())
+	roles.Set("ink", srgb.MustHex("#101010").Swatch())
+	scheme, err := Of("paper", roles)
+	if err != nil {
+		t.Fatal(err)
+	}
+	before := written(t, scheme)
+	inverted := scheme.Inverted()
+	if written(t, scheme) != before {
+		t.Error("inverting changed the scheme it was asked of")
+	}
+	if !scheme.Light || inverted.Light {
+		t.Errorf("light went from %v to %v", scheme.Light, inverted.Light)
+	}
+}
+
+// The property: inverting twice is the scheme again, for any colours at all.
+func TestInvertingTwiceIsTheScheme(t *testing.T) {
+	rapid.Check(t, invertsTwice)
+}
+
+// invertsTwice is one draw of the property above.
+func invertsTwice(draw *rapid.T) {
+	byteOf := rapid.Uint8()
+	sheet := css.New()
+	for _, entry := range Roles {
+		sheet.Set(entry.Role, srgb.RGB8(byteOf.Draw(draw, entry.Name+" red"),
+			byteOf.Draw(draw, entry.Name+" green"),
+			byteOf.Draw(draw, entry.Name+" blue")).Swatch())
+	}
+	for _, name := range ghostty.Ansi {
+		sheet.Set(name, srgb.RGB8(byteOf.Draw(draw, name+" red"),
+			byteOf.Draw(draw, name+" green"),
+			byteOf.Draw(draw, name+" blue")).Swatch())
+	}
+	scheme, err := Of("drawn", sheet)
+	if err != nil {
+		draw.Fatal(err)
+	}
+	var once, twice strings.Builder
+	if scheme.Write(&once, "header") != nil ||
+		scheme.Inverted().Inverted().Write(&twice, "header") != nil {
+		draw.Fatal("a scheme made from drawn colours was not written")
+	}
+	if once.String() != twice.String() {
+		draw.Fatal("inverting twice changed the scheme")
 	}
 }

@@ -1,5 +1,10 @@
 # changelog
 
+## unreleased
+
+- the si's defining constants are public now, at primitives/si, so other
+  libraries take h, c, e and k from the same place. internal/si is gone.
+
 ## v0.4.1, 2026-10-09
 
 mistakes were made. 0.4.0 went out without the license we had carefully

@@ -1,6 +1,19 @@
 package ok
 
-import "github.com/janearc/libtheme-css/primitives/swatch"
+import (
+	"math"
+
+	"github.com/janearc/libtheme-css/primitives/swatch"
+)
+
+const (
+	// leastChroma is grey, the least a cell's share of the way to the edge
+	// can be. It is defined by Reach: Chroma runs from 0 to 1.
+	leastChroma = 0
+	// mostChroma is all the way to the edge, the most a share can be. It is
+	// defined by Reach: Chroma runs from 0 to 1.
+	mostChroma = 1
+)
 
 // Reach is a grid of the colours a gamut can reach: hue across, lightness
 // down. Chroma is one setting for the whole grid, not a third axis. At every
@@ -50,13 +63,8 @@ func (r Reach) At(col, row int) OKLCH {
 			float64(row) / float64(r.Rows-1)
 	}
 	edge, _ := Fit(OKLCH{L: l, C: 0.4, H: h}, r.In)
-	chroma := r.Chroma
-	if chroma < 0 {
-		chroma = 0
-	}
-	if chroma > 1 {
-		chroma = 1
-	}
+	// held at both ends; a negative zero becomes the zero, as Max has it
+	chroma := math.Max(leastChroma, math.Min(mostChroma, r.Chroma))
 	return OKLCH{L: l, C: edge.C * chroma, H: h}
 }
 

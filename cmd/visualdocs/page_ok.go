@@ -22,7 +22,7 @@ wheel. anything with a hue is defined elsewhere and measured here.`
 // okPage paints the page: the axes an eye agrees with.
 func okPage() {
 	title("ok: the axes an eye agrees with")
-	grey := functions.Even(ok.Mix, swatch.Black, swatch.White)
+	grey := functions.Even(ok.Mix, swatch.NoLight(), swatch.WhitePoint())
 	fmt.Printf("   %s  L: black to white\n", bar(grey, 40))
 	var wheel strings.Builder
 	for i := 0; i < 40; i++ {
@@ -41,7 +41,7 @@ func okPage() {
 
 // okCSS is the page as a css sheet: the grey line and the wheel.
 func okCSS() string {
-	grey := functions.Even(ok.Mix, swatch.Black, swatch.White)
+	grey := functions.Even(ok.Mix, swatch.NoLight(), swatch.WhitePoint())
 	var wheel []string
 	for i := 0; i <= 8; i++ {
 		c := ok.OKLCH{L: 0.7, C: 0.12, H: float64(i%8) * 45}

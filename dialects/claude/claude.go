@@ -27,6 +27,9 @@ import (
 // From is the general role a slot follows when a colourway does not set
 // it. Toward is used for the bands of a diff. It says how far the ground
 // is mixed toward that role, instead of taking the role's colour.
+//
+// A colourway that sets a slot's number itself, as palette-N, keeps its
+// own colour there.
 var Slots = []struct {
 	Role   string
 	Number int
@@ -50,6 +53,9 @@ var Slots = []struct {
 	{"claude-removed", 52, "the band of a removed line in a diff",
 		"err", 0.25},
 	{"claude-diff-code", 231, "the code on those bands", "ink", 0},
+	{"claude-thinking", 18, "the box its thinking is drawn in", "panel", 0},
+	{"claude-highlight", 66,
+		"a teal-grey highlight; where, not yet recorded", "dim", 0},
 }
 
 // Palette is the claude code colours a colourway sets, keyed by palette

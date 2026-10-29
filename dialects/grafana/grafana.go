@@ -57,9 +57,9 @@ func Shade(c swatch.Swatch, shade string) swatch.Swatch {
 	if !known || d == 0 {
 		return c
 	}
-	end := swatch.White
+	end := swatch.WhitePoint()
 	if d < 0 {
-		end, d = swatch.Black, -d
+		end, d = swatch.NoLight(), -d
 	}
 	line := functions.Even(ok.Mix, c, end)
 	fit, _ := ok.Fit(ok.FromSwatch(line.At(d)).Polar(), InGamut)
@@ -68,10 +68,7 @@ func Shade(c swatch.Swatch, shade string) swatch.Swatch {
 
 // InGamut reports whether sRGB can name the swatch. That is the only
 // question grafana's hex field can answer.
-func InGamut(s swatch.Swatch) bool {
-	_, in := srgb.FromSwatch(s)
-	return in
-}
+func InGamut(s swatch.Swatch) bool { return srgb.In(s) }
 
 // Name is grafana's name for a hue at a shade: "semi-dark-blue", or
 // "blue" for the bare hue.

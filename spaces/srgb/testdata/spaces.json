@@ -1,0 +1,43 @@
+{
+  "picked by": "the srgb test author, 2026-10-24. Figures with a source say where it is from.",
+  "gamut": {
+    "source": "the sRGB primaries, IEC 61966-2-1, the same as Rec. 709 (recalled)",
+    "red": {"x": 0.64, "y": 0.33},
+    "green": {"x": 0.30, "y": 0.60},
+    "blue": {"x": 0.15, "y": 0.06}
+  },
+  "curve": {
+    "source": "the sRGB curve, IEC 61966-2-1 (recalled). The two pieces differ by 7e-7 of their value at the break, so a tolerance of 1e-8 tells them apart.",
+    "break": 0.04045,
+    "linear break": 0.0031308,
+    "slope": 12.92,
+    "offset": 0.055,
+    "scale": 1.055,
+    "power": 2.4,
+    "tolerance": 1e-8
+  },
+  "slack": {
+    "about": "the slack FromSwatch allows a channel, 1e-4 in linear light, as its doc comment says. The upper bound is 1 plus that, written out so it rounds as the constant does.",
+    "below": -1e-4,
+    "above": 1.0001,
+    "search reach": 4000,
+    "way over": 1.5
+  },
+  "wrap": [
+    {"hsv": {"H": 400, "S": 1, "V": 1}, "same as": {"H": 40, "S": 1, "V": 1}},
+    {"hsv": {"H": 720, "S": 1, "V": 1}, "same as": {"H": 0, "S": 1, "V": 1}}
+  ],
+  "wheel tolerance": 1e-12,
+  "dark": {
+    "about": "1e-12 is the threshold below which a lamp is called dark, from hueAndRange.",
+    "at the threshold": {"R": 1e-12, "G": 0, "B": 0},
+    "past the threshold": {"R": 2e-12, "G": 0, "B": 0},
+    "green at the threshold": {"R": 0, "G": 1e-12, "B": 0},
+    "green hue": 120
+  },
+  "rgba": {
+    "about": "image/color wants 16-bit channels from 0 to 0xffff",
+    "levels": {"R": -0.5, "G": 0.5, "B": 1.5},
+    "want": {"R": 0, "G": 32768, "B": 65535, "A": 65535}
+  }
+}

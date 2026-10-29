@@ -1,0 +1,8 @@
+-- the same five as a css sheet. the cell before each rule is its value.
+     :root {
+     --black: #000000;  /* oklch(0% 0.000 none) */
+     --white: #ffffff;  /* oklch(100% 0.000 none) */
+     --red:   #ff0000;  /* oklch(63% 0.258 29.2) */
+     --green: #00ff00;  /* oklch(87% 0.295 142.5) */
+     --blue:  #0000ff;  /* oklch(45% 0.313 264.1) */
+     }

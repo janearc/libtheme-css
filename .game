@@ -31,3 +31,7 @@ run known .           :: go run ./cmd/libtheme roundtrip
 run visualdocs .      :: go run ./cmd/visualdocs
 run visualdocs-css .  :: go run ./cmd/visualdocs --css
 run visualdocs-go .   :: go run ./cmd/visualdocs --go
+
+# the mocks, generated from the interfaces they stand in for. mockgen is
+# a tool of go.mod, so no one installs it.
+run mocks .           :: go tool mockgen -write_package_comment=false -destination internal/mocks/host.go -package mocks github.com/janearc/libtheme-css/internal/host Files,File,Stopper

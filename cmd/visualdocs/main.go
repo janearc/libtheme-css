@@ -24,6 +24,7 @@ import (
 	"time"
 
 	"github.com/janearc/libtheme-css/internal/age"
+	"github.com/janearc/libtheme-css/internal/host"
 	"github.com/janearc/libtheme-css/primitives/functions"
 	"github.com/janearc/libtheme-css/primitives/swatch"
 	"github.com/janearc/libtheme-css/spaces/srgb"
@@ -55,17 +56,44 @@ var pages = []page{
 // commit's time. --age prints them.
 var build, built = "dev", ""
 
-// main is the pager: a page name and a mode, or every page in turn.
+// The exit statuses. They are defined by the shell's convention.
+const (
+	// succeeded is the status of a call that did what it was asked. It is
+	// defined by the shell.
+	succeeded = 0
+	// failed is the status of a call that could not. It is defined by the
+	// shell.
+	failed = 1
+	// wrongCall is the status of a call the command cannot make sense of.
+	// It is defined by the shell.
+	wrongCall = 2
+)
+
+// afterProgram is where the command's own arguments start in os.Args. It is
+// defined by os.Args.
+const afterProgram = 1
+
+// program stops the program with a status. It is os.Exit. A test holds a
+// mock in its place, so main can run and say what it stopped with.
+var program host.Stopper = host.ExitFunc(os.Exit)
+
+// main stops with the status of the call.
 func main() {
-	if len(os.Args) > 1 &&
-		(os.Args[1] == "--age" || os.Args[1] == "version") {
+	program.Exit(run(os.Args[afterProgram:]))
+}
+
+// run is the pager: a page name and a mode, or every page in turn. It returns
+// the status to stop with.
+func run(arguments []string) int {
+	if len(arguments) > nothing &&
+		(arguments[first] == "--age" || arguments[first] == "version") {
 		fmt.Println(age.Of("visualdocs", build, built, time.Now()))
-		return
+		return succeeded
 	}
 	// arguments in any order: an optional page name and an optional mode.
 	// no page means every page; no mode means paint.
 	var name, mode string
-	for _, a := range os.Args[1:] {
+	for _, a := range arguments {
 		if strings.HasPrefix(a, "--") {
 			mode = a
 		} else {
@@ -75,7 +103,7 @@ func main() {
 	if mode != "" && mode != "--css" && mode != "--go" {
 		fmt.Fprintf(os.Stderr,
 			"visualdocs: modes are --css and --go, not %q\n", mode)
-		os.Exit(2)
+		return wrongCall
 	}
 	chosen := pages
 	if name != "" {
@@ -89,28 +117,30 @@ func main() {
 			fmt.Fprintf(os.Stderr,
 				"no page called %q; there is "+
 					"%s\n", name, names())
-			os.Exit(2)
+			return wrongCall
 		}
 	}
+	return pageThrough(chosen, mode)
+}
+
+// nothing is the count of arguments there are none of. It is defined by
+// counting.
+const nothing = 0
+
+// first is where the first argument is. It is defined by counting.
+const first = 0
+
+// pageThrough shows the pages in the mode, one after the other. With no mode
+// it waits between them for enter, and q stops it. It returns the status to
+// stop with.
+func pageThrough(chosen []page, mode string) int {
 	in := bufio.NewReader(os.Stdin)
 	for i, p := range chosen {
-		switch mode {
-		case "--css":
-			fmt.Printf("/* %s */\n", p.name)
-			fmt.Print(p.css())
-		case "--go":
-			src, err := sources.ReadFile("page_" + p.name + ".go")
-			if err != nil {
-				fmt.Fprintln(os.Stderr, "visualdocs:", err)
-				os.Exit(1)
-			}
-			fmt.Printf("// page_%s.go\n", p.name)
-			os.Stdout.Write(src)
-		default:
-			p.show()
+		if status := showOne(p, mode); status != succeeded {
+			return status
 		}
 		if i == len(chosen)-1 {
-			return
+			break
 		}
 		if mode != "" {
 			fmt.Println()
@@ -120,10 +150,31 @@ func main() {
 			len(chosen), chosen[i+1].name)
 		line, _ := in.ReadString('\n')
 		if strings.TrimSpace(line) == "q" {
-			return
+			break
 		}
 		fmt.Println()
 	}
+	return succeeded
+}
+
+// showOne shows one page in the mode: painted, as css, or as its go.
+func showOne(shown page, mode string) int {
+	switch mode {
+	case "--css":
+		fmt.Printf("/* %s */\n", shown.name)
+		fmt.Print(shown.css())
+	case "--go":
+		src, err := sources.ReadFile("page_" + shown.name + ".go")
+		if err != nil {
+			fmt.Fprintln(os.Stderr, "visualdocs:", err)
+			return failed
+		}
+		fmt.Printf("// page_%s.go\n", shown.name)
+		os.Stdout.Write(src)
+	default:
+		shown.show()
+	}
+	return succeeded
 }
 
 // names is every page, for the usage line.

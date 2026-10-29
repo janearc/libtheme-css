@@ -1,0 +1,13 @@
+-- testdata/dusk.css: 5 roles
+     :root {
+     --ground:   #160d2b;  /* oklch(19% 0.058 294.0) */
+     --ink:      #ffa2ff;  /* oklch(84% 0.160 326.9) */
+     --sunset-1: #2b1055;  /* oklch(26% 0.115 294.9) */
+     --sunset-2: #7597de;  /* oklch(68% 0.112 264.1) */
+     --sunset-3: #ffd1a0;  /* oklch(89% 0.082 68.2) */
+     }
+-- ramp sunset, 3 stops
+    0.0%    #2b1055
+   50.0%    #7597de
+  100.0%    #ffd1a0
+  

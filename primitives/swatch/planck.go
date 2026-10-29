@@ -3,7 +3,7 @@ package swatch
 import (
 	"math"
 
-	"github.com/janearc/libtheme-css/internal/si"
+	"github.com/janearc/libtheme-css/primitives/si"
 )
 
 // Planckian is the swatch of a black body at a temperature in kelvin: the
@@ -15,7 +15,7 @@ import (
 // result is black.
 func Planckian(kelvin float64) Swatch {
 	if kelvin <= 0 {
-		return Black
+		return noLight
 	}
 	return Illuminant(Blackbody(kelvin))
 }

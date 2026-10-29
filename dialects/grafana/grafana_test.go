@@ -1,6 +1,7 @@
 package grafana
 
 import (
+	"strings"
 	"testing"
 
 	"github.com/janearc/libtheme-css/primitives/swatch"
@@ -34,6 +35,45 @@ func TestShadesAreInGamut(t *testing.T) {
 		if !InGamut(Shade(pink, s)) {
 			t.Errorf("shade %q left the gamut", s)
 		}
+	}
+}
+
+// shaded is each shade of some colours, by hue and shade, as the hex a
+// dashboard would hold. They were written by the code as it stood before the
+// shade was mixed directly: the two ends of the gamut, a primary at its edge
+// and two hues with room to move, so a change to the mix, the fit or the
+// steps shows.
+var shaded = map[string]string{
+	"#ff6ec7 dark": "#63264c", "#ff6ec7 semi-dark": "#ae4987",
+	"#ff6ec7 ": "#ff6ec7", "#ff6ec7 light": "#ff99d4",
+	"#ff6ec7 super-light": "#ffbee1",
+	"#1f60c4 dark":        "#06204a", "#1f60c4 semi-dark": "#113f85",
+	"#1f60c4 ": "#1f60c4", "#1f60c4 light": "#5989d6",
+	"#1f60c4 super-light": "#8fb1e5",
+	"#00ff00 dark":        "#006300", "#00ff00 semi-dark": "#00ae00",
+	"#00ff00 ": "#00ff00", "#00ff00 light": "#84ff7c",
+	"#00ff00 super-light": "#b7ffb0",
+	"#000000 dark":        "#000000", "#000000 semi-dark": "#000000",
+	"#000000 ": "#000000", "#000000 light": "#222222",
+	"#000000 super-light": "#636363",
+	"#ffffff dark":        "#636363", "#ffffff semi-dark": "#aeaeae",
+	"#ffffff ": "#ffffff", "#ffffff light": "#ffffff",
+	"#ffffff super-light": "#ffffff",
+}
+
+// Every shade of every one of those colours is the hex it always was, and a
+// shade nobody named leaves the colour as it was.
+func TestShadesAreWhatTheyWere(t *testing.T) {
+	for key, want := range shaded {
+		hue, shade, _ := strings.Cut(key, " ")
+		moved := Shade(srgb.MustHex(hue).Swatch(), shade)
+		lamps, _ := srgb.FromSwatch(moved)
+		if got := lamps.Hex(); got != want {
+			t.Errorf("%s: %s, want %s", key, got, want)
+		}
+	}
+	if Shade(pink, "nonesuch") != pink {
+		t.Error("an unknown shade moved the colour")
 	}
 }
 

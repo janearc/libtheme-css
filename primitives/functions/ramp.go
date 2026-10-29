@@ -71,7 +71,7 @@ func New(in Mixer, stops ...Stop) Ramp {
 // At is the swatch t of the way along the ramp.
 func (r Ramp) At(t float64) swatch.Swatch {
 	if len(r.Stops) == 0 {
-		return swatch.Black
+		return swatch.NoLight()
 	}
 	if t <= r.Stops[0].At {
 		return r.Stops[0].Swatch
@@ -84,9 +84,6 @@ func (r Ramp) At(t float64) swatch.Swatch {
 		a, b := r.Stops[i-1], r.Stops[i]
 		if t <= b.At {
 			span := b.At - a.At
-			if span <= 0 {
-				return b.Swatch
-			}
 			return r.In.Mix(a.Swatch, b.Swatch, (t-a.At)/span)
 		}
 	}

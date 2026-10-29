@@ -1,6 +1,8 @@
 package colourway
 
 import (
+	"errors"
+	"io"
 	"os"
 	"path/filepath"
 	"strings"
@@ -114,6 +116,33 @@ func TestRenderDerivesTheSelection(t *testing.T) {
 	}
 }
 
+// The inverted twin a caller asks for is the one Render writes: named for
+// the source, said to be inverted, and made of the complement of the
+// source's resolved roles.
+func TestInvertedIsTheTwinOfTheResolvedRoles(t *testing.T) {
+	source := terminal()
+	twin := source.Inverted()
+	if twin.Name != "test-dusk-inverted" || !strings.Contains(twin.About, "inverted") ||
+		twin.Origin != source.Origin {
+		t.Errorf("the twin is %q, %q, %q", twin.Name, twin.About, twin.Origin)
+	}
+	if want := inverted(Resolve(source.Roles).Roles); twin.Roles.String() != want.String() {
+		t.Errorf("the twin's roles are not the complement:\n%s", twin.Roles.String())
+	}
+}
+
+// The scheme of a source is the editors' scheme, named for it; a source
+// that cannot fill the editors has the reason, not a scheme.
+func TestASourceHasItsEditorScheme(t *testing.T) {
+	scheme, err := terminal().Scheme()
+	if err != nil || scheme.Name != "test-dusk" {
+		t.Errorf("the scheme is %q, %v", scheme.Name, err)
+	}
+	if _, err := (Source{Name: "bare", Roles: css.New()}).Scheme(); err == nil {
+		t.Error("a bare source had a scheme")
+	}
+}
+
 // the terminal theme carries claude code's colours the colourway does not
 // set, derived, so claude code follows the colourway with none set.
 func TestRenderDerivesClaude(t *testing.T) {
@@ -126,5 +155,34 @@ func TestRenderDerivesClaude(t *testing.T) {
 	}
 	if want := "palette = 180=" + ghostty.Hex(mode); !strings.Contains(string(raw), want) {
 		t.Errorf("no %q in the theme", want)
+	}
+}
+
+// errMade is the reason a write function gives in the test below.
+var errMade = errors.New("the write failed")
+
+// writeFails is a writer that fails.
+func writeFails(io.Writer) error { return errMade }
+
+// writesA is a writer that writes an a.
+func writesA(out io.Writer) error {
+	_, err := out.Write([]byte("a"))
+	return err
+}
+
+// writeFile gives back what its writer fails with, and writes nothing. The
+// anti-test is the same call with a writer that works: it writes.
+func TestWriteFileStopsWhenTheWriterFails(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "a", "file")
+	err := writeFile(path, writeFails)
+	if !errors.Is(err, errMade) {
+		t.Errorf("the writer's failure came back as %v", err)
+	}
+	if _, err := os.Stat(filepath.Dir(path)); err == nil {
+		t.Error("a folder was made for a file that was not written")
+	}
+	err = writeFile(path, writesA)
+	if raw, _ := os.ReadFile(path); err != nil || string(raw) != "a" {
+		t.Errorf("a working writer wrote %q, %v", raw, err)
 	}
 }

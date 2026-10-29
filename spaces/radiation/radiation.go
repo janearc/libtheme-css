@@ -60,6 +60,14 @@ var Fermi = Profile{
 	Visible,
 }
 
+// Seen is visible light as itself: the light the eye sees, shown as that
+// light. Of on it is a colour's dominant wavelength, and Swatch is the
+// colour of one wavelength alone. It is not in Profiles, which are the
+// radiation the eye cannot see.
+func Seen() Profile {
+	return Profile{"visible", Visible, Visible}
+}
+
 // enumerated list of available profiles in order, plus fermi (thx guys)
 var Profiles = []Profile{
 	Gamma, XRay, ExtremeUltraviolet, Ultraviolet,
@@ -78,7 +86,7 @@ func (p Profile) String() string {
 // rather than decide for the user what kind of radiation they would like.
 func (p Profile) Swatch(nm float64) swatch.Swatch {
 	if !p.holds(nm) {
-		return swatch.Black
+		return swatch.NoLight()
 	}
 	return swatch.Monochrome(int(math.Round(p.onto(nm))))
 }
@@ -90,14 +98,14 @@ func (p Profile) Swatch(nm float64) swatch.Swatch {
 // purple. Past about 690 nm of Render every wavelength looks the same red,
 // so a colour there names the shortest of them.
 func (p Profile) Of(s swatch.Swatch) (nm float64, ok bool) {
-	w, c := swatch.White.XY(), s.XY()
+	w, c := swatch.WhitePoint().XY(), s.XY()
 	d := swatch.XY{X: c.X - w.X, Y: c.Y - w.Y}
 	if math.Hypot(d.X, d.Y) < 1e-9 || !p.spectral(d) {
 		return 0, false
 	}
 	best, closest := 0, math.Inf(1)
 	for n := int(math.Ceil(p.Render.Lo)); float64(n) < p.Render.Hi; n++ {
-		if swatch.Monochrome(n) == swatch.Black {
+		if swatch.Monochrome(n) == swatch.NoLight() {
 			continue
 		}
 		if a := angle(d, towards(n)); a < closest {
@@ -158,7 +166,7 @@ func (p Profile) back(nm float64) float64 {
 
 // towards is the direction from white to the colour of one wavelength.
 func towards(nm int) swatch.XY {
-	w, c := swatch.White.XY(), swatch.Monochrome(nm).XY()
+	w, c := swatch.WhitePoint().XY(), swatch.Monochrome(nm).XY()
 	return swatch.XY{X: c.X - w.X, Y: c.Y - w.Y}
 }
 
@@ -174,7 +182,7 @@ func (p Profile) spectral(d swatch.XY) bool {
 	lo, hi := math.Inf(1), math.Inf(-1)
 	var prev float64
 	for n := int(math.Ceil(p.Render.Lo)); float64(n) < p.Render.Hi; n++ {
-		if swatch.Monochrome(n) == swatch.Black {
+		if swatch.Monochrome(n) == swatch.NoLight() {
 			continue
 		}
 		v := towards(n)

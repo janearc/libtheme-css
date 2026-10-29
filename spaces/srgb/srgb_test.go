@@ -5,6 +5,8 @@ import (
 	"math"
 	"testing"
 
+	"pgregory.net/rapid"
+
 	"github.com/janearc/libtheme-css/primitives/swatch"
 	"github.com/janearc/libtheme-css/spaces/ok"
 )
@@ -168,5 +170,76 @@ func TestBytesColorAndEqual(t *testing.T) {
 	if !In(Red.Swatch()) || In(ok.OKLCH{L: 0.7, C: 0.4,
 		H: 145}.Rect().Swatch()) {
 		t.Error("In does not agree with FromSwatch")
+	}
+}
+
+// Each primary falls where the standard puts it on the 1931 diagram, and
+// the three lit together are the white, to a trillionth.
+func TestPrimaries(t *testing.T) {
+	red, green, blue := Primaries()
+	placed(t, "red", red, redXY)
+	placed(t, "green", green, greenXY)
+	placed(t, "blue", blue, blueXY)
+	rx, ry, rz := red.XYZ()
+	gx, gy, gz := green.XYZ()
+	bx, by, bz := blue.XYZ()
+	wx, wy, wz := swatch.White.XYZ()
+	if !near(rx+gx+bx, wx, 1e-12) || !near(ry+gy+by, wy, 1e-12) ||
+		!near(rz+gz+bz, wz, 1e-12) {
+		t.Errorf("the three add up to %v %v %v, want %v %v %v",
+			rx+gx+bx, ry+gy+by, rz+gz+bz, wx, wy, wz)
+	}
+}
+
+// The numbers the cylinder property picks. Each is defined by this test.
+const (
+	// cylinderTolerance is how far a lamp may be from itself after a trip
+	// round a cylinder. It is defined by this test: far below one byte,
+	// above float error.
+	cylinderTolerance = 1e-9
+	// wheelStart is the hue of red, where the wheel starts. It is defined by
+	// the wheel.
+	wheelStart = 0.0
+	// wheelTurn is a whole turn of the hue wheel, in degrees. It is defined
+	// by geometry.
+	wheelTurn = 360.0
+)
+
+// returned is whether two lamps are the same to the tolerance.
+func returned(left, right RGB) bool {
+	return math.Abs(left.R-right.R) <= cylinderTolerance &&
+		math.Abs(left.G-right.G) <= cylinderTolerance &&
+		math.Abs(left.B-right.B) <= cylinderTolerance
+}
+
+// The property: the hue wheel's two cylinders are the lamps in other words.
+// A colour turned to hue, saturation and lightness, or to hue, saturation
+// and value, and back, is the colour; and its hue is on the wheel.
+func TestTheCylindersReturnTheLamps(t *testing.T) {
+	rapid.Check(t, cylindersReturn)
+}
+
+// cylindersReturn is one draw of the property above.
+func cylindersReturn(t *rapid.T) {
+	byteOf := rapid.Uint8()
+	colour := RGB8(byteOf.Draw(t, "red"), byteOf.Draw(t, "green"),
+		byteOf.Draw(t, "blue"))
+	if back := colour.HSL().RGB(); !returned(back, colour) {
+		t.Fatalf("%v through hsl came back %v", colour, back)
+	}
+	if back := colour.HSV().RGB(); !returned(back, colour) {
+		t.Fatalf("%v through hsv came back %v", colour, back)
+	}
+	if hue := colour.HSL().H; hue < wheelStart || hue >= wheelTurn {
+		t.Fatalf("%v has a hue off the wheel: %v", colour, hue)
+	}
+}
+
+// placed fails the test when a lamp is not where the standard puts it.
+func placed(t *testing.T, name string, lamp swatch.Swatch, want [2]float64) {
+	t.Helper()
+	at := lamp.XY()
+	if !near(at.X, want[0], 1e-9) || !near(at.Y, want[1], 1e-9) {
+		t.Errorf("%s is at %v, want %v", name, at, want)
 	}
 }

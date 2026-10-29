@@ -1,11 +1,11 @@
 package radiation
 
-import "github.com/janearc/libtheme-css/internal/si"
+import "github.com/janearc/libtheme-css/primitives/si"
 
 // in order to accommodate assorted nonvisible wavelengths in our css theme
 // library, we need to convert down to our smaller wavelengths, like gamma
 // radiation. the constants this takes are the si's own, fixed by definition,
-// in internal/si.
+// in primitives/si.
 const (
 	planck = si.Planck
 	speed  = si.Speed

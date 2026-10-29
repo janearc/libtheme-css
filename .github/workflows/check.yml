@@ -14,7 +14,7 @@ permissions:
 
 jobs:
   check:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     env:
       NO_COLOR: "1"
     steps:
@@ -29,6 +29,18 @@ jobs:
 
       - name: vet
         run: go vet ./...
+
+      # the smoke tests load the generated schemes in a real vim and
+      # neovim, and fail when either is missing: a check that cannot run
+      # does not pass, and does not skip. the runner image is named above
+      # (not -latest), so these are the versions that release of ubuntu
+      # carries; the step prints them, and stops if either will not start.
+      - name: vim and neovim, for the smoke tests
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends neovim vim
+          nvim --version | head -n 1
+          vim --version | head -n 1
 
       - name: test
         run: go test ./...

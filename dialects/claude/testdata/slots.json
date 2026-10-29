@@ -1,0 +1,22 @@
+{
+  "about": "claude code's slots as the dialect documents them: the role a colourway names each by, the palette number claude code draws it in, what it is for, the role it follows, and how far a diff band mixes toward it. Written from the package's own documentation by the test author, 2026-10-24.",
+  "slots": [
+    {"Role": "claude-text", "Number": 252, "Use": "its text, the prompt mark and the status line", "From": "ink", "Toward": 0},
+    {"Role": "claude-words", "Number": 188, "Use": "the words typed to it, and the dot of a reply", "From": "ink", "Toward": 0},
+    {"Role": "claude-code", "Number": 153, "Use": "a code span in a reply", "From": "code", "Toward": 0},
+    {"Role": "black", "Number": 0, "Use": "the band behind those words; the terminal's black", "From": "", "Toward": 0},
+    {"Role": "claude-mode", "Number": 180, "Use": "the mode line", "From": "info", "Toward": 0},
+    {"Role": "claude-rules", "Number": 175, "Use": "the rules round the prompt, and the badge", "From": "border", "Toward": 0},
+    {"Role": "claude-spinner", "Number": 219, "Use": "the spinner, its dot, and the input cursor", "From": "heading", "Toward": 0},
+    {"Role": "claude-added", "Number": 22, "Use": "the band of an added line in a diff", "From": "ok", "Toward": 0.25},
+    {"Role": "claude-removed", "Number": 52, "Use": "the band of a removed line in a diff", "From": "err", "Toward": 0.25},
+    {"Role": "claude-diff-code", "Number": 231, "Use": "the code on those bands", "From": "ink", "Toward": 0},
+    {"Role": "claude-thinking", "Number": 18, "Use": "the box its thinking is drawn in", "From": "panel", "Toward": 0},
+    {"Role": "claude-highlight", "Number": 66, "Use": "a teal-grey highlight; where, not yet recorded", "From": "dim", "Toward": 0}
+  ],
+  "edges": {
+    "picked by": "the test author, 2026-10-24: the first palette number claude code names by role, and one step either side of it",
+    "first": 16,
+    "step": 1
+  }
+}

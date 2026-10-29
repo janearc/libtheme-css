@@ -1,0 +1,5 @@
+:root {
+  --in-oklab: linear-gradient(in oklab, #160d2b 0%, #ffa2ff 100%);
+  --in-srgb: linear-gradient(in srgb, #160d2b 0%, #ffa2ff 100%);
+  --three: linear-gradient(in oklab, #2a0f4d 0%, #d94a8c 50%, #fff4c0 100%);
+}

@@ -1,0 +1,7 @@
+:root {
+  --base: oklab(0.600 0.100 -0.050);
+  --same-to-a-person: oklab(0.610 0.100 -0.050);
+  --just-tellable: oklab(0.620 0.100 -0.050);
+  --different: oklab(0.700 0.100 -0.050);
+  /* 0.02 apart in oklab: where a person starts to see it */
+}

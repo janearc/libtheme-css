@@ -6,6 +6,7 @@ import (
 
 	"github.com/janearc/libtheme-css/primitives/bands"
 	"github.com/janearc/libtheme-css/primitives/swatch"
+	"github.com/janearc/libtheme-css/spaces/srgb"
 )
 
 // near is two numbers the same to a part in a billion.
@@ -190,5 +191,30 @@ func TestALineInBandsKeepsItsVisibleBand(t *testing.T) {
 				"named %g, in band %d", p.Name, nm, want, got,
 				at)
 		}
+	}
+}
+
+// Seen names the wavelength a colour has the hue of. One wavelength's own
+// colour names itself, and the srgb lamps name 611, 549 and 464 nm, the
+// dominant wavelengths usually given for them.
+func TestSeenNamesAColoursWavelength(t *testing.T) {
+	for shown := 450.0; shown <= 650; shown += 50 {
+		got, ok := Seen().Of(Seen().Swatch(shown))
+		if !ok || math.Abs(got-shown) > 1 {
+			t.Errorf("%g nm named %g, ok %v", shown, got, ok)
+		}
+	}
+	red, green, blue := srgb.Primaries()
+	dominant(t, "red", red, 611)
+	dominant(t, "green", green, 549)
+	dominant(t, "blue", blue, 464)
+}
+
+// dominant fails the test when a lamp does not name its wavelength.
+func dominant(t *testing.T, name string, lamp swatch.Swatch, want float64) {
+	t.Helper()
+	if got, ok := Seen().Of(lamp); !ok || !near(got, want) {
+		t.Errorf("the %s lamp names %g nm, ok %v; want %g",
+			name, got, ok, want)
 	}
 }

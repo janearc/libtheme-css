@@ -1,0 +1,17 @@
+{
+  "name": "reference-dark-2026-09-03",
+  "measured_on": "2026-09-03",
+  "method": "rendered specimens rated side by side in a browser, in a dark console, by the reference reader. Contrast was bisected to a floor and a ceiling from a ladder of ratios; the hue rule came from a chip that passed the ratio and could not be read.",
+  "source": "libreadme profile reference-dark-2026-09-03.json, and bookshelf legibility/contrast.md",
+  "contrast": {
+    "low": 10.0,
+    "high": 12.5,
+    "state_min": 4.5,
+    "note": "prose lives in the band. State colours are scanned rather than read; they are held to the floor, not the band."
+  },
+  "hue": {
+    "min_separation_degrees": 40,
+    "neutral_saturation": 0.35,
+    "note": "a contrast ratio is blind to hue. Either the hues are this far apart, or the surface is desaturated below this, so the ink's own chroma makes the edge."
+  }
+}

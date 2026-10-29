@@ -21,15 +21,16 @@ does not look straight.`
 // swatchPage paints the page: one colour, complete.
 func swatchPage() {
 	title("swatch: one colour, complete")
-	fmt.Printf("   %s black    %s white\n\n",
-		paint(swatch.Black, 6), paint(swatch.White, 6))
+	black, white := swatch.NoLight(), swatch.WhitePoint()
+	fmt.Printf("   %s black    %s white\n\n", paint(black, 6),
+		paint(white, 6))
 	say(lines(swatchPageProse)...)
 }
 
 // swatchCSS is the page as a css sheet: white, black and the monochromes.
 func swatchCSS() string {
 	sheet := css.New()
-	sheet.Set("black", swatch.Black)
-	sheet.Set("white", swatch.White)
+	sheet.Set("black", swatch.NoLight())
+	sheet.Set("white", swatch.WhitePoint())
 	return sheet.String()
 }

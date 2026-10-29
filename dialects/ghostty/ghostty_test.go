@@ -130,6 +130,23 @@ func TestInvertedTwiceIsTheTheme(t *testing.T) {
 	}
 }
 
+// The anti-test: Inverted gives another theme and leaves the first alone, so
+// inverting cannot change the theme it was asked of.
+func TestInvertedLeavesTheThemeAlone(t *testing.T) {
+	theme, err := Of(colourway())
+	if err != nil {
+		t.Fatal(err)
+	}
+	before := written(t, theme)
+	inverted := theme.Inverted()
+	if written(t, theme) != before {
+		t.Error("inverting changed the theme it was asked of")
+	}
+	if written(t, inverted) == before {
+		t.Error("the inverse is the same theme")
+	}
+}
+
 // every byte survives the trip from hex into a swatch and back.
 func TestEveryByteSurvives(t *testing.T) {
 	for level := range 256 {

@@ -1,0 +1,21 @@
+{
+  "about": "numbers the readable tests pick. Each range is a document in the shape of the reference range; the refused ones each break one rule. They are picked by the test author, 2026-10-24, to sit one step either side of each rule.",
+  "refused": {
+    "band backwards": {"contrast": {"low": 12.5, "high": 10, "state_min": 4.5}, "hue": {"min_separation_degrees": 40, "neutral_saturation": 0.35}},
+    "band with no room": {"contrast": {"low": 10, "high": 10, "state_min": 4.5}, "hue": {"min_separation_degrees": 40, "neutral_saturation": 0.35}},
+    "floor above the band": {"contrast": {"low": 10, "high": 12.5, "state_min": 11}, "hue": {"min_separation_degrees": 40, "neutral_saturation": 0.35}},
+    "floor of one": {"contrast": {"low": 10, "high": 12.5, "state_min": 1}, "hue": {"min_separation_degrees": 40, "neutral_saturation": 0.35}},
+    "no hue gap": {"contrast": {"low": 10, "high": 12.5, "state_min": 4.5}, "hue": {"min_separation_degrees": 0, "neutral_saturation": 0.35}},
+    "hue gap past the half": {"contrast": {"low": 10, "high": 12.5, "state_min": 4.5}, "hue": {"min_separation_degrees": 181, "neutral_saturation": 0.35}},
+    "no neutral": {"contrast": {"low": 10, "high": 12.5, "state_min": 4.5}, "hue": {"min_separation_degrees": 40, "neutral_saturation": 0}},
+    "all neutral": {"contrast": {"low": 10, "high": 12.5, "state_min": 4.5}, "hue": {"min_separation_degrees": 40, "neutral_saturation": 1}},
+    "a word for a number": {"contrast": {"low": "ten", "high": 12.5, "state_min": 4.5}, "hue": {"min_separation_degrees": 40, "neutral_saturation": 0.35}},
+    "a number missing": {"contrast": {"low": 10, "high": 12.5}},
+    "nothing in it": {},
+    "a list": []
+  },
+  "newer": {"contrast": {"low": 4.5, "high": 7, "state_min": 3}, "hue": {"min_separation_degrees": 30, "neutral_saturation": 0.2}},
+  "reference band": {"low": 10, "high": 12.5},
+  "nesting draws": {"lowest": -1, "highest": 200},
+  "rules": {"minimum ratio": 1, "half circle": 180}
+}

@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/janearc/libtheme-css/css"
+	"github.com/janearc/libtheme-css/dialects/claude"
 	"github.com/janearc/libtheme-css/spaces/ok"
 	"github.com/janearc/libtheme-css/spaces/srgb"
 )
@@ -125,5 +126,99 @@ func TestResolveClaude(t *testing.T) {
 	}
 	if _, said := resolved.From["black"]; said {
 		t.Error("black, the sixteen's own, was derived")
+	}
+}
+
+// Claude code draws its thinking box in slot 18. Left to itself, 18
+// follows the panel and is written as palette-18. Nine of her colourways
+// set palette-18 by hand. That colour is kept, and nothing refuses it as
+// set twice.
+func TestThinkingBoxFollowsThePanelOrKeepsItsOwn(t *testing.T) {
+	source := terminal().Roles
+	resolved := Resolve(source)
+	panel, _ := resolved.Of("panel")
+	if got, found := resolved.Of("claude-thinking"); !found || got != panel {
+		t.Errorf("claude-thinking is %v (found %v), not the panel %v", got, found, panel)
+	}
+	said, err := claude.Into(resolved.Roles)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got, _ := said.Get("palette-18"); got != panel {
+		t.Errorf("palette-18 is %v, not the panel", got)
+	}
+
+	own := terminal().Roles
+	hers := srgb.MustHex("#101b34").Swatch()
+	own.Set("palette-18", hers)
+	resolved = Resolve(own)
+	if _, derived := resolved.Of("claude-thinking"); derived {
+		t.Error("claude-thinking derived over a palette-18 the colourway sets")
+	}
+	said, err = claude.Into(resolved.Roles)
+	if err != nil {
+		t.Fatalf("a hand-set palette-18 refused: %v", err)
+	}
+	if got, _ := said.Get("palette-18"); got != hers {
+		t.Errorf("palette-18 moved from hers to %v", got)
+	}
+}
+
+// Slots 18 and 66 are set by hand in all four ways. Where a colourway
+// sets a slot, its colour is kept. Where it leaves one, the slot follows
+// its role: 18 the panel and 66 dim. Into refuses none of the four.
+func TestEachHandSetSlotStandsAlone(t *testing.T) {
+	thinking := srgb.MustHex("#101b34").Swatch()
+	highlight := srgb.MustHex("#123456").Swatch()
+	for _, each := range []struct {
+		name         string
+		set18, set66 bool
+	}{{"neither", false, false}, {"18 alone", true, false},
+		{"66 alone", false, true}, {"both", true, true}} {
+		source := terminal().Roles
+		if each.set18 {
+			source.Set("palette-18", thinking)
+		}
+		if each.set66 {
+			source.Set("palette-66", highlight)
+		}
+		resolved := Resolve(source)
+		want18, _ := resolved.Of("panel")
+		want66, _ := resolved.Of("dim")
+		if each.set18 {
+			want18 = thinking
+		}
+		if each.set66 {
+			want66 = highlight
+		}
+		said, err := claude.Into(resolved.Roles)
+		if err != nil {
+			t.Fatalf("%s: refused: %v", each.name, err)
+		}
+		if got, _ := said.Get("palette-18"); got != want18 {
+			t.Errorf("%s: palette-18 is %v, not %v", each.name,
+				got, want18)
+		}
+		if got, _ := said.Get("palette-66"); got != want66 {
+			t.Errorf("%s: palette-66 is %v, not %v", each.name,
+				got, want66)
+		}
+		_, derived18 := resolved.Of("claude-thinking")
+		_, derived66 := resolved.Of("claude-highlight")
+		if derived18 == each.set18 || derived66 == each.set66 {
+			t.Errorf("%s: derived 18 %v and 66 %v", each.name,
+				derived18, derived66)
+		}
+	}
+}
+
+// Setting claude-thinking and palette-18 both says one colour twice.
+// Into refuses it, as it does for every slot.
+func TestThinkingByNameAndNumberIsRefused(t *testing.T) {
+	both := terminal().Roles
+	both.Set("claude-thinking", srgb.MustHex("#101b34").Swatch())
+	both.Set("palette-18", srgb.MustHex("#101b34").Swatch())
+	if _, err := claude.Into(Resolve(both).Roles); err == nil {
+		t.Error("claude-thinking and palette-18 both set were taken")
 	}
 }

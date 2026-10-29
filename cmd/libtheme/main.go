@@ -21,6 +21,7 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 	"math"
 	"os"
@@ -30,6 +31,7 @@ import (
 
 	"github.com/janearc/libtheme-css/css"
 	"github.com/janearc/libtheme-css/internal/age"
+	"github.com/janearc/libtheme-css/internal/host"
 	"github.com/janearc/libtheme-css/primitives/functions"
 	"github.com/janearc/libtheme-css/primitives/swatch"
 	"github.com/janearc/libtheme-css/spaces/ok"
@@ -41,59 +43,133 @@ import (
 // commit's time. --age prints them.
 var build, built = "dev", ""
 
-// main is the verb table.
+// The exit statuses. They are defined by the shell's convention.
+const (
+	// succeeded is the status of a verb that did what it was asked. It is
+	// defined by the shell.
+	succeeded = 0
+	// failed is the status of a verb that could not. It is defined by the
+	// shell.
+	failed = 1
+	// wrongCall is the status of a call the command cannot make sense of.
+	// It is defined by the shell.
+	wrongCall = 2
+)
+
+// The places in a call.
+const (
+	// afterProgram is where the command's own arguments start in os.Args.
+	// It is defined by os.Args.
+	afterProgram = 1
+	// verbAt is where the verb is among the arguments. It is defined by the
+	// usage line.
+	verbAt = 0
+	// argumentsFrom is where the verb's own arguments start. It is defined
+	// by the usage line.
+	argumentsFrom = 1
+	// onlyAt is where a verb that takes one argument finds it, and where
+	// known finds its mode. It is defined by the usage line.
+	onlyAt = 0
+	// firstColour is where ramp's first colour is among its arguments. It
+	// is defined by the usage line.
+	firstColour = 0
+	// secondColour is where ramp's second colour is among its arguments. It
+	// is defined by the usage line.
+	secondColour = 1
+	// stepsAt is where ramp's count of steps is among its arguments. It is
+	// defined by the usage line.
+	stepsAt = 2
+)
+
+// defaultSteps is how many steps a ramp has when the call does not say. It
+// is defined by the usage line.
+const defaultSteps = 24
+
+// errUsage is a call the command cannot make sense of. It has no verb, or a
+// verb nobody has, or too few arguments for the verb. The caller made the
+// mistake, so the usage is shown and the status is wrongCall.
+var errUsage = errors.New("usage")
+
+// program stops the program with a status. It is os.Exit. A test holds a
+// mock in its place, so main can run and say what it stopped with.
+var program host.Stopper = host.ExitFunc(os.Exit)
+
+// main runs the verb and stops with its status.
 func main() {
-	if len(os.Args) < 2 {
+	program.Exit(run(os.Args[afterProgram:]))
+}
+
+// run is the command: the verb's name, then its arguments. It returns the
+// status to stop with.
+func run(arguments []string) int {
+	err := dispatch(arguments)
+	switch {
+	case err == nil:
+		return succeeded
+	case errors.Is(err, errUsage):
 		usage()
-		os.Exit(2)
+		return wrongCall
 	}
-	var err error
-	switch os.Args[1] {
+	fmt.Fprintln(os.Stderr, "libtheme:", err)
+	return failed
+}
+
+// dispatch is the verb table.
+func dispatch(arguments []string) error {
+	if len(arguments) == nothing {
+		return errUsage
+	}
+	rest := arguments[argumentsFrom:]
+	switch arguments[verbAt] {
 	case "--age", "version":
 		fmt.Println(age.Of("libtheme", build, built, time.Now()))
-		return
 	case "known":
 		mode := ""
-		if len(os.Args) > 2 {
-			mode = os.Args[2]
+		if len(rest) > onlyAt {
+			mode = rest[onlyAt]
 		}
-		err = known(mode)
+		return known(mode)
 	case "roundtrip":
-		err = roundtrip()
-
+		return roundtrip()
 	case "show":
-		if len(os.Args) < 3 {
-			usage()
-			os.Exit(2)
-		}
-		err = show(os.Args[2])
+		return withOne(rest, show)
 	case "read":
-		if len(os.Args) < 3 {
-			usage()
-			os.Exit(2)
-		}
-		err = read(os.Args[2])
+		return withOne(rest, read)
 	case "ramp":
-		n := 24
-		if len(os.Args) > 4 {
-			n, err = strconv.Atoi(os.Args[4])
-			if err != nil {
-				break
-			}
-		}
-		if len(os.Args) < 4 {
-			usage()
-			os.Exit(2)
-		}
-		err = ramp(os.Args[2], os.Args[3], n)
+		return rampOf(rest)
 	default:
-		usage()
-		os.Exit(2)
+		return errUsage
 	}
-	if err != nil {
-		fmt.Fprintln(os.Stderr, "libtheme:", err)
-		os.Exit(1)
+	return nil
+}
+
+// nothing is the count of arguments there are none of. It is defined by
+// counting.
+const nothing = 0
+
+// withOne runs a verb on the first of its arguments, or refuses a call with
+// none.
+func withOne(rest []string, verb func(string) error) error {
+	if len(rest) == nothing {
+		return errUsage
 	}
+	return verb(rest[onlyAt])
+}
+
+// rampOf runs ramp on a call's arguments: two colours, and a count if there
+// is one.
+func rampOf(rest []string) error {
+	steps := defaultSteps
+	if len(rest) > stepsAt {
+		var err error
+		if steps, err = strconv.Atoi(rest[stepsAt]); err != nil {
+			return err
+		}
+	}
+	if len(rest) <= secondColour {
+		return errUsage
+	}
+	return ramp(rest[firstColour], rest[secondColour], steps)
 }
 
 // usage is the one line to type when the verb was wrong.
@@ -112,32 +188,31 @@ func parse(s string) (swatch.Swatch, error) {
 			")")
 		fields := strings.Fields(inner)
 		if len(fields) != 3 {
-			return swatch.Black,
+			return swatch.NoLight(),
 				fmt.Errorf("oklch wants three numbers, not %q",
 					s)
 		}
 		var c ok.OKLCH
 		var err error
 		if c.L, err = percentOrNumber(fields[0]); err != nil {
-			return swatch.Black, err
+			return swatch.NoLight(), err
 		}
-		if c.C, err = strconv.ParseFloat(fields[1], 64); err != nil {
-			return swatch.Black, err
+		if c.C, err = finite(fields[1]); err != nil {
+			return swatch.NoLight(), err
 		}
-		// css's "none" for a hue means there is no hue to speak of.
-		// The colour is grey to an eye, so any angle would do. Zero is
-		// used.
+		// css's "none" for a hue is a missing part, which css reads as
+		// zero. The writer prints it only for a chroma too small to
+		// have a hue, so zero is used.
 		if fields[2] == "none" {
 			c.H = 0
-		} else if c.H, err = strconv.ParseFloat(
-			fields[2], 64); err != nil {
-			return swatch.Black, err
+		} else if c.H, err = finite(fields[2]); err != nil {
+			return swatch.NoLight(), err
 		}
 		return c.Rect().Swatch(), nil
 	}
 	c, err := srgb.FromHex(s)
 	if err != nil {
-		return swatch.Black, err
+		return swatch.NoLight(), err
 	}
 	return c.Swatch(), nil
 }
@@ -150,16 +225,41 @@ func parse(s string) (swatch.Swatch, error) {
 // percentOrNumber reads "74%" as 0.74 and "0.74" as itself.
 func percentOrNumber(s string) (float64, error) {
 	if strings.HasSuffix(s, "%") {
-		v, err := strconv.ParseFloat(strings.TrimSuffix(s, "%"), 64)
-		return v / 100, err
+		v, err := finite(strings.TrimSuffix(s, "%"))
+		return v / percent, err
 	}
-	return strconv.ParseFloat(s, 64)
+	return finite(s)
+}
+
+// eitherSign asks math.IsInf for an infinity of either sign. It is defined
+// by math.IsInf.
+const eitherSign = 0
+
+// percent is how many parts make a whole in a percentage. It is defined by
+// the word.
+const percent = 100
+
+// finite reads a number. A word that is not a number, one too big for a
+// float, and the spellings of not-a-number and infinity are all refused,
+// since a colour made of them means nothing and would be written to a
+// device.
+func finite(word string) (found float64, err error) {
+	found, err = strconv.ParseFloat(word, 64)
+	if err == nil && (math.IsNaN(found) || math.IsInf(found, eitherSign)) {
+		err = fmt.Errorf("%q is not a finite number", word)
+	}
+	return found, err
 }
 
 // painting is whether colour cells are drawn: only into a terminal, and
 // not when NO_COLOR asks for none. Piped into a file, a diff or a screen
 // reader, the names and numbers say it all, and nothing is drawn.
-func painting() bool {
+//
+// It is a variable so that a test can draw the cells into a file.
+var painting = paintingToStdout
+
+// paintingToStdout is the real answer to painting.
+func paintingToStdout() bool {
 	if os.Getenv("NO_COLOR") != "" {
 		return false
 	}
@@ -251,11 +351,6 @@ func hex(s swatch.Swatch) string {
 //
 // Telling a light terminal from a dark one depends on the terminal, and
 // this does not try.
-const (
-	dim   = ""
-	bold  = ""
-	plain = ""
-)
 
 // heading prints one line saying what the block under it is. It separates
 // the output from whatever printed above it.
@@ -272,10 +367,9 @@ func paintSheet(sheet *css.Sheet) {
 	}
 	fmt.Printf("     :root {\n")
 	for _, r := range rules {
-		fmt.Printf("  %s   %s--%s:%s%*s %s;  %s/* %s */%s\n",
-			paint(r.Swatch,
-				2), bold, r.Name, plain, width-len(r.Name), "",
-			r.Value, dim, r.Comment, plain)
+		fmt.Printf("  %s   --%s:%*s %s;  /* %s */\n",
+			paint(r.Swatch, 2), r.Name, width-len(r.Name), "",
+			r.Value, r.Comment)
 	}
 	fmt.Printf("     }\n")
 }
@@ -288,16 +382,24 @@ func paintSheet(sheet *css.Sheet) {
 // the same colour to a person, which is all the oklch spelling, printed to
 // three places, can promise. A colourway file is only as good as this trip.
 func roundtrip() error {
-	type entry struct {
-		name string
-		s    swatch.Swatch
-	}
-	list := []entry{
-		{"black", swatch.Black}, {"white", swatch.White},
+	return roundtripOf([]labelled{
+		{"black", swatch.NoLight()}, {"white", swatch.WhitePoint()},
 		{"red", srgb.Red.Swatch()},
 		{"green", srgb.Green.Swatch()},
 		{"blue", srgb.Blue.Swatch()},
-	}
+	}, radiation.Profiles)
+}
+
+// labelled is a colour and the name it is shown under.
+type labelled struct {
+	name string
+	s    swatch.Swatch
+}
+
+// roundtripOf is roundtrip for the colours and the radiation profiles it is
+// given. It fails when a colour is lost to more than an eye can miss, or
+// cannot be read back.
+func roundtripOf(list []labelled, profiles []radiation.Profile) error {
 	heading("each colour written two ways and read back through the same" +
 		" parser.")
 	heading("apart: the distance in oklab between the two readings.")
@@ -311,33 +413,34 @@ func roundtrip() error {
 	for _, e := range list {
 		h := hex(e.s)
 		l := ok.FromSwatch(e.s).Polar().String()
-		fromHex, err := parse(h)
-		if err != nil {
-			return err
-		}
+		fromHex := srgb.MustHex(h).Swatch()
 		fromLCH, err := parse(l)
 		if err != nil {
 			return err
 		}
 		d := ok.Distance(ok.FromSwatch(fromHex), ok.FromSwatch(fromLCH))
-		verdict := "same to a person"
-		switch {
-		case d <= ok.Exact:
-			verdict = "identical"
-		case d > ok.Eye:
-			verdict = "different to a person"
-			failed = true
-		}
+		verdict, lost := verdictOf(d)
+		failed = failed || lost
 		fmt.Printf("%s %-6s %-8s %-24s %-8.5f %s\n",
 			paint(e.s, 2), e.name, h, l, d, verdict)
 	}
-	if err := roundtripRadiation(); err != nil {
-		return err
-	}
+	roundtripRadiation(profiles)
 	if failed {
 		return fmt.Errorf("a round trip lost more than an eye can miss")
 	}
 	return nil
+}
+
+// verdictOf is what a distance in oklab between two readings of a colour
+// says, and whether it is a loss: more than an eye can miss.
+func verdictOf(apart float64) (verdict string, lost bool) {
+	switch {
+	case apart <= ok.Exact:
+		return "identical", false
+	case apart > ok.Eye:
+		return "different to a person", true
+	}
+	return "same to a person", false
 }
 
 // roundtripRadiation is the same trip for radiation. Each wavelength is
@@ -351,15 +454,12 @@ func roundtrip() error {
 // 690 nm of the render, every wavelength looks the same red.
 //
 // Nothing here fails. The count says how much a colourway file can carry.
-func roundtripRadiation() error {
+func roundtripRadiation(profiles []radiation.Profile) {
 	fmt.Println()
 	heading("radiation: each wavelength drawn, written as hex, read back")
 	heading("and named again. x marks one that lands in another cell.")
-	for _, group := range byRender(radiation.Profiles) {
-		bar, marks, back, err := tripAcross(group[0])
-		if err != nil {
-			return err
-		}
+	for _, group := range byRender(profiles) {
+		bar, marks, back := tripAcross(group[0])
 		names := "profiles are"
 		if len(group) == 1 {
 			names = "profile is"
@@ -370,7 +470,6 @@ func roundtripRadiation() error {
 		fmt.Printf("%s\n%s  %d of %d come back\n", bar, marks, back,
 			cells)
 	}
-	return nil
 }
 
 // tripAcross takes one profile's wavelengths through the trip. It returns
@@ -378,15 +477,12 @@ func roundtripRadiation() error {
 // many did.
 func tripAcross(
 	profile radiation.Profile,
-) (bar, marks string, back int, err error) {
+) (bar, marks string, back int) {
 	var drawn, missed strings.Builder
 	for i, nm := range across(profile) {
 		colour := profile.Swatch(nm)
 		drawn.WriteString(paint(colour, 2))
-		read, parseErr := parse(hex(colour))
-		if parseErr != nil {
-			return "", "", 0, parseErr
-		}
+		read := srgb.MustHex(hex(colour)).Swatch()
 		named, found := profile.Of(read)
 		if found && cellOf(profile, named) == i {
 			back++
@@ -395,7 +491,7 @@ func tripAcross(
 			missed.WriteString(" x")
 		}
 	}
-	return drawn.String(), missed.String(), back, nil
+	return drawn.String(), missed.String(), back
 }
 
 // byRender groups profiles by the range they are drawn onto, in the order
@@ -440,8 +536,8 @@ func known(mode string) error {
 		s          swatch.Swatch
 	}
 	list := []entry{
-		{"black", "swatch: no light", swatch.Black},
-		{"white", "swatch: d65 via the observer", swatch.White},
+		{"black", "swatch: no light", swatch.NoLight()},
+		{"white", "swatch: d65 via the observer", swatch.WhitePoint()},
 		{"red", "srgb: the red lamp at full", srgb.Red.Swatch()},
 		{"green", "srgb: the green lamp at full", srgb.Green.Swatch()},
 		{"blue", "srgb: the blue lamp at full", srgb.Blue.Swatch()},
@@ -475,7 +571,7 @@ func known(mode string) error {
 	// between the spaces about what a straight line is shows on screen.
 	fmt.Println()
 	for _, in := range []functions.Mixer{ok.Mix, srgb.Mix} {
-		r := functions.Even(in, swatch.Black, swatch.White)
+		r := functions.Even(in, swatch.NoLight(), swatch.WhitePoint())
 		var line strings.Builder
 		for _, s := range r.Samples(24) {
 			line.WriteString(paint(s, 2))

@@ -1,0 +1,43 @@
+{
+  "picked by": "the ok test author, 2026-10-24.",
+  "fit": {
+    "about": "the start chroma is picked so that 23, 24 and 25 halvings of it leave three different answers against a box of chroma 0.1. It was found by checking the binary digits of 0.1 over 0.36.",
+    "colour": {"L": 0.5, "C": 0.36, "H": 40},
+    "halvings": 24,
+    "box edge": 0.1,
+    "tolerance": 1e-12
+  },
+  "polar": {
+    "about": "a hair of chroma is below ok.Exact, which is 1e-9. Exactly Exact is above the grey line.",
+    "grey": {"L": 0.5, "C": 0, "H": 0},
+    "a hair": {"L": 0.5, "A": 1e-12, "B": -1e-12},
+    "exactly exact": {"L": 0.5, "A": 1e-9, "B": 0},
+    "wheel": [
+      {"lab": {"L": 0.5, "A": 0, "B": -0.1}, "hue": 270},
+      {"lab": {"L": 0.5, "A": 0.1, "B": -0.1}, "hue": 315},
+      {"lab": {"L": 0.5, "A": 0.1, "B": 0.1}, "hue": 45},
+      {"lab": {"L": 0.5, "A": -0.1, "B": 0.1}, "hue": 135},
+      {"lab": {"L": 0.5, "A": -0.1, "B": -0.1}, "hue": 225}
+    ],
+    "tolerance degrees": 1e-9
+  },
+  "white": {
+    "about": "the reference values of the space are given to three places, so white agrees to 1e-3.",
+    "tolerance": 1e-3
+  },
+  "same": {"apart": {"L": 0.5, "A": 0, "B": 0}},
+  "reach": {
+    "cols": 5,
+    "rows": 5,
+    "tolerance": 1e-12,
+    "box edge": 0.1,
+    "defaults": {"hue from": 0, "hue to": 360, "light from": 0.95, "light to": 0.15, "chroma": 1},
+    "probe chroma": 0.4,
+    "half chroma": 0.5,
+    "small": {"two": 2, "one": 1},
+    "hues": {"from": 90, "to": 270},
+    "far": {"light": {"L": 4, "A": 0, "B": 0}, "dark": {"L": -4, "A": 0, "B": 0}},
+    "twin": {"col": 0, "row": 2},
+    "off the grid": {"col": 1, "row": 1}
+  }
+}

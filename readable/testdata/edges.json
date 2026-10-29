@@ -1,0 +1,28 @@
+{
+  "picked by": "the test author, 2026-10-24. Each number sits on a rule's edge or one step either side of it, so a comparison that is off by one shows.",
+  "typical": {"low": 10, "high": 12, "state_min": 4.5, "gap": 40, "neutral": 0.35},
+  "room": 5,
+  "unreachable": {"low": 100, "high": 200, "state_min": 50},
+  "range cases": [
+    {"name": "state floor of one and a half", "low": 10, "high": 12, "state_min": 1.5, "gap": 40, "neutral": 0.35, "read": true},
+    {"name": "state floor at the band's low end", "low": 10, "high": 12, "state_min": 10, "gap": 40, "neutral": 0.35, "read": true},
+    {"name": "gap of the half circle", "low": 10, "high": 12, "state_min": 4.5, "gap": 180, "neutral": 0.35, "read": true},
+    {"name": "state floor of one", "low": 10, "high": 12, "state_min": 1, "gap": 40, "neutral": 0.35, "read": false},
+    {"name": "state floor past the band", "low": 10, "high": 12, "state_min": 10.5, "gap": 40, "neutral": 0.35, "read": false},
+    {"name": "gap past the half circle", "low": 10, "high": 12, "state_min": 4.5, "gap": 180.5, "neutral": 0.35, "read": false},
+    {"name": "band with no room", "low": 10, "high": 10, "state_min": 4.5, "gap": 40, "neutral": 0.35, "read": false}
+  ],
+  "hue pairs": [
+    {"name": "plain difference", "ground": "#608020", "ink": "#40ff20"},
+    {"name": "across the top", "ground": "#802010", "ink": "#ff3060"}
+  ],
+  "edge ground": "#802010",
+  "light scheme": {
+    "bg": "#f0f0f0", "cursorln": "#ececec", "visual": "#eaeaea",
+    "panel": "#eeeeee", "ink": "#303030", "dim": "#333333",
+    "heading": "#313131", "link": "#323232", "code": "#343434",
+    "string": "#2f2f2f", "gutter": "#a0a0a0", "border": "#b0b0b0",
+    "err": "#8a1f1f", "warn": "#7a4a00", "info": "#1f4a8a",
+    "hint": "#1f6a55"
+  }
+}

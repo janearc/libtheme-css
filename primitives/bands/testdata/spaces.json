@@ -1,0 +1,12 @@
+{
+  "about": "numbers the bands tests pick. Picked by the test author, 2026-10-24. The visible bands are worked from the Band comment in bands.go, 380 and 780 nm at 24 to an octave.",
+  "cool lamp": 3000,
+  "warm lamp": 9000,
+  "middle lamp": 5000,
+  "shift": 7,
+  "visible": {"short nm": 380, "long nm": 780, "first band": 205, "last band": 230, "width": 26},
+  "weight band": 220,
+  "line power": 3,
+  "line nm": 550,
+  "relative tolerance": 1e-9
+}

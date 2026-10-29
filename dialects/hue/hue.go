@@ -34,7 +34,7 @@ func Of(s swatch.Swatch) swatch.XY { return s.XY() }
 // less is black.
 func Mirek(m int) swatch.Swatch {
 	if m <= 0 {
-		return swatch.Black
+		return swatch.NoLight()
 	}
 	return swatch.Planckian(1e6 / float64(m))
 }

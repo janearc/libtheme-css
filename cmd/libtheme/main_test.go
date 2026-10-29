@@ -70,6 +70,31 @@ func TestVerbsAssumeNothingAboutTheTerminal(t *testing.T) {
 	}
 }
 
+// knownPaint is the verb that lays the five known colours out as a sheet.
+func knownPaint() error { return known("--paint") }
+
+// readDusk is the verb that lays out the roles and ramp of a small file.
+func readDusk() error { return read("testdata/dusk.css") }
+
+// The two verbs that lay a sheet out in aligned columns write the bytes
+// they always did. The goldens were written by the command before the
+// layout was tidied, with nothing painted.
+func TestSheetLayoutIsByteForByte(t *testing.T) {
+	t.Setenv("NO_COLOR", "1")
+	for golden, run := range map[string]func() error{
+		"testdata/known-paint.txt": knownPaint,
+		"testdata/read-dusk.txt":   readDusk,
+	} {
+		want, err := os.ReadFile(golden)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if got := capture(t, run); got != string(want) {
+			t.Errorf("%s: the output changed:\n%s", golden, got)
+		}
+	}
+}
+
 // The plain css from known is a :root block a browser would read.
 func TestKnownCSSIsCSS(t *testing.T) {
 	out := capture(t, func() error { return known("--css") })

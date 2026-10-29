@@ -1,0 +1,7 @@
+:root {
+  --red: #ff0000; /* oklch(63% 0.258 29.2) */
+  --green: #00ff00; /* oklch(87% 0.295 142.5) */
+  --blue: #0000ff; /* oklch(45% 0.313 264.1) */
+  --white: #ffffff; /* oklch(100% 0.000 none) */
+  --louder-green: #00d200; /* oklch(70% 0.400 145.0), clipped */
+}

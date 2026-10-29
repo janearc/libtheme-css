@@ -1,0 +1,15 @@
+== srgb: the screen's three lamps
+
+   [48;2;255;0;0m      [0m red   [48;2;0;255;0m      [0m green   [48;2;0;0;255m      [0m blue   [48;2;255;255;255m      [0m all three: the white
+
+   [48;2;0;210;0m      [0m a green greener than the green lamp. in gamut? false.
+   what you see is the nearest the lamps can do.
+
+   a screen makes colour with three lamps, and srgb is where each lamp
+   sits on the 1931 diagram: numbers written down for television
+   phosphors in 1990 and adopted for every computer screen in 1996. the
+   library types only the standard's four facts, the three lamps and
+   the curve, and derives the matrix everyone else copies from them
+   plus the white. hex is this space. so are hsl and hsv, the same
+   lamps described by angle. a swatch may fall outside the lamps'
+   reach; every exit here says whether it did.

@@ -1,0 +1,16 @@
+:root {
+  --l: linear-gradient(in oklab, #000000 0%, #ffffff 100%);
+  --h: linear-gradient(in oklch longer hue,
+    oklch(70% 0.120 0.0) 0%,
+    oklch(70% 0.120 45.0) 12%,
+    oklch(70% 0.120 90.0) 25%,
+    oklch(70% 0.120 135.0) 38%,
+    oklch(70% 0.120 180.0) 50%,
+    oklch(70% 0.120 225.0) 62%,
+    oklch(70% 0.120 270.0) 75%,
+    oklch(70% 0.120 315.0) 88%,
+    oklch(70% 0.120 0.0) 100%);
+  --c: linear-gradient(in oklch,
+    oklch(70% 0.000 none) 0%,
+    oklch(70% 0.200 345.0) 100%);
+}

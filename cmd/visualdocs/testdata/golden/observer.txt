@@ -1,0 +1,14 @@
+== observer: what 'visible' means here
+
+   [48;2;49;0;255m [0m[48;2;58;0;255m [0m[48;2;74;0;255m [0m[48;2;86;0;255m [0m[48;2;95;0;255m [0m[48;2;100;0;255m [0m[48;2;105;0;255m [0m[48;2;107;0;255m [0m[48;2;109;0;255m [0m[48;2;114;0;255m [0m[48;2;127;0;255m [0m[48;2;132;0;255m [0m[48;2;130;0;255m [0m[48;2;122;0;255m [0m[48;2;107;0;255m [0m[48;2;84;0;255m [0m[48;2;36;0;255m [0m[48;2;0;0;255m [0m[48;2;0;52;255m [0m[48;2;0;96;255m [0m[48;2;0;134;255m [0m[48;2;0;180;255m [0m[48;2;0;236;255m [0m[48;2;0;255;212m [0m[48;2;0;255;161m [0m[48;2;0;255;118m [0m[48;2;0;255;74m [0m[48;2;0;255;0m [0m[48;2;0;255;0m [0m[48;2;0;255;0m [0m[48;2;0;255;0m [0m[48;2;0;255;0m [0m[48;2;0;255;0m [0m[48;2;0;255;0m [0m[48;2;0;255;0m [0m[48;2;97;255;0m [0m[48;2;169;255;0m [0m[48;2;217;255;0m [0m[48;2;255;255;0m [0m[48;2;255;244;0m [0m[48;2;255;224;0m [0m[48;2;255;201;0m [0m[48;2;255;174;0m [0m[48;2;255;144;0m [0m[48;2;255;109;0m [0m[48;2;255;63;0m [0m[48;2;255;0;0m [0m[48;2;255;0;0m [0m[48;2;255;0;0m [0m[48;2;255;0;0m [0m[48;2;255;0;0m [0m[48;2;255;0;0m [0m[48;2;255;0;0m [0m[48;2;255;0;0m [0m[48;2;255;0;0m [0m[48;2;255;0;0m [0m[48;2;255;0;0m [0m[48;2;255;0;0m [0m[48;2;255;0;0m [0m[48;2;255;0;0m [0m[48;2;255;0;0m [0m[48;2;255;0;0m [0m[48;2;255;0;0m [0m[48;2;255;0;0m [0m[48;2;255;0;0m [0m
+   380 nm                                                     up to 700 nm
+
+   the visible spectrum, one cell per five nanometres, as the 1931
+   observer sees it: seventeen adults in two english labs, matching
+   lamp light in a dark room, averaged into a table. that table is the
+   library's whole definition of visible; ultraviolet and infrared
+   contribute nothing because the table has no row for them. almost
+   every colour in this bar is outside what a screen can make, so what
+   you see is the nearest the lamps can do, which is what every screen
+   has always shown you of a rainbow. the white, d65, is daylight run
+   through the same table, derived at start-up, not typed.
