@@ -1,0 +1,20 @@
+== bands: light before it is a colour
+
+   #################################################################  the eye
+   #################################################################  in bands
+
+   ####################################  1000 K to 12000 K
+   ####################################  the same, in bands
+
+   ###################################################  daylight, redshifted
+
+   ###### + ###### = ######  light adds
+
+   light before it is a colour: power in slices of the spectrum, 24 to
+   an octave. the first bar is the eye's own, one cell per five
+   nanometres; the second is the same light carried in bands, so each
+   slice is one colour and you can count them. below, black bodies as
+   the observer sees them and the same lamps through bands: the pairs
+   should look the same. then daylight redshifted, one step a cell,
+   each step 2.9 percent redder. last, light adds: a red lamp and a
+   brighter green one on the same place are yellow.

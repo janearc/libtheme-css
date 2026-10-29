@@ -1,0 +1,13 @@
+== css: the container everything normalises to
+
+   ##  --ground: #160d2b;  /* oklch(19% 0.058 294.0) */
+   ##  --ink: #d8d0e0;  /* oklch(87% 0.023 308.0) */
+   ##  --pink: #ff6ec7;  /* oklch(74% 0.200 345.3) */
+
+   a sheet is named swatches in order, written as the custom properties
+   a browser, an editor theme or a lamp's config would read: the hex a
+   screen can make, and the same colour as oklch beside it, which is the
+   form that says what it is. a hex code in css is srgb by definition and
+   a painted cell is srgb by construction, so the bar and the rule
+   beside it are the same three bytes in two syntaxes; if they ever
+   disagree, something between here and the screen is lying.

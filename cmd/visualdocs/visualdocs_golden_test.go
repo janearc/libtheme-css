@@ -45,12 +45,28 @@ func goldenFor(t *testing.T, name, got string) string {
 }
 
 // Each page paints what its golden file holds, escapes included. That holds
-// the place, width and colour of every cell.
+// the place, width and colour of every cell. The test says which mode it
+// wants rather than taking the machine's: NO_COLOR is cleared here, so a
+// shell or a CI job that sets it cannot turn this test plain.
 func TestPagesPaintTheirGolden(t *testing.T) {
+	t.Setenv("NO_COLOR", "")
 	for _, each := range pages {
 		got := capture(t, each.show)
 		if want := goldenFor(t, each.name+".txt", got); got != want {
 			t.Errorf("%s: painted\n%q\nwant\n%q", each.name, got, want)
+		}
+	}
+}
+
+// With NO_COLOR set, each page prints what its plain golden file holds:
+// the same words and places, with no escape at all. The docs ship in this
+// mode too, so it has its own golden rather than none.
+func TestPagesPrintTheirPlainGolden(t *testing.T) {
+	t.Setenv("NO_COLOR", "1")
+	for _, each := range pages {
+		got := capture(t, each.show)
+		if want := goldenFor(t, each.name+".plain.txt", got); got != want {
+			t.Errorf("%s: printed\n%q\nwant\n%q", each.name, got, want)
 		}
 	}
 }

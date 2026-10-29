@@ -5,6 +5,7 @@ import (
 	"slices"
 	"testing"
 
+	"github.com/janearc/libtheme-css/primitives/si"
 	"github.com/janearc/libtheme-css/primitives/swatch"
 	"github.com/janearc/libtheme-css/spaces/radiation"
 )
@@ -44,15 +45,17 @@ func TestFermiEdgesCarryTheirEnergies(t *testing.T) {
 	}
 }
 
-// The units are the SI's powers of ten.
+// ladder is a unit and its kilo, mega, giga and tera multiples.
+func ladder(unit float64) []float64 {
+	return []float64{unit, si.Kilo(unit), si.Mega(unit), si.Giga(unit),
+		si.Tera(unit)}
+}
+
+// The units' multiples, from the si's prefixes, are its powers of ten.
 func TestTheUnitsArePowersOfTen(t *testing.T) {
 	ladders := pickedNumbers(t).Ladders
-	energy := []float64{
-		radiation.Electronvolt, radiation.KeV, radiation.MeV, radiation.GeV, radiation.TeV,
-	}
-	frequency := []float64{
-		radiation.Hz, radiation.KHz, radiation.MHz, radiation.GHz, radiation.THz,
-	}
+	energy := ladder(radiation.Electronvolt)
+	frequency := ladder(radiation.Hertz)
 	if !slices.Equal(energy, ladders.Energy) {
 		t.Errorf("the energy units are %v, not %v", energy, ladders.Energy)
 	}

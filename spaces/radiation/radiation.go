@@ -11,6 +11,7 @@ import (
 	"math"
 
 	"github.com/janearc/libtheme-css/primitives/bands"
+	"github.com/janearc/libtheme-css/primitives/si"
 	"github.com/janearc/libtheme-css/primitives/swatch"
 )
 
@@ -56,7 +57,8 @@ var (
 // collected.
 var Fermi = Profile{
 	"fermi",
-	Range{FromEnergy(300 * GeV), FromEnergy(10 * KeV)},
+	Range{FromEnergy(300 * si.Giga(Electronvolt)),
+		FromEnergy(10 * si.Kilo(Electronvolt))},
 	Visible,
 }
 

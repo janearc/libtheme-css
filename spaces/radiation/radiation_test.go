@@ -5,6 +5,8 @@ import (
 	"testing"
 
 	"github.com/janearc/libtheme-css/primitives/bands"
+	"github.com/janearc/libtheme-css/primitives/length"
+	"github.com/janearc/libtheme-css/primitives/si"
 	"github.com/janearc/libtheme-css/primitives/swatch"
 	"github.com/janearc/libtheme-css/spaces/srgb"
 )
@@ -24,7 +26,7 @@ func TestPhotonUnits(t *testing.T) {
 	if math.Abs(hc-1239.84198) > 1e-4 {
 		t.Errorf("hc is %v eV nm", hc)
 	}
-	if nm := FromEnergy(1 * KeV); math.Abs(nm-1.23984) > 1e-4 {
+	if nm := FromEnergy(si.Kilo(Electronvolt)); math.Abs(nm-1.23984) > 1e-4 {
 		t.Errorf("a 1 keV photon is %v nm", nm)
 	}
 	for _, nm := range []float64{1e-5, 0.5, 550, 1e6} {
@@ -41,12 +43,38 @@ func TestPhotonUnits(t *testing.T) {
 
 // The hydrogen line, at 1420.405751 megahertz, is the 21 centimetre line.
 func TestTheHydrogenLine(t *testing.T) {
-	cm := HertzToNm(1420.405751*MHz) / 1e7
+	nm := HertzToNm(1420.405751 * si.Mega(Hertz))
+	cm := NmToMetres(nm) / si.Centi(length.Metre)
 	if math.Abs(cm-21.106) > 1e-3 {
 		t.Errorf("the hydrogen line is %v cm", cm)
 	}
-	if !Radio.holds(cm * 1e7) {
+	if !Radio.holds(nm) {
 		t.Error("radio does not hold the hydrogen line")
+	}
+}
+
+// Lengths in metres come into nanometres and go back: a metre is a
+// thousand million nanometres, a one metre wave is c hertz, WISE's
+// first band of 3.4 microns is 3400 nm, and an angstrom is a tenth of a
+// nanometre.
+func TestMetresAndNanometres(t *testing.T) {
+	if !near(MetresToNm(length.Metre), 1/si.Nano(length.Metre)) {
+		t.Errorf("a metre is %v nm", MetresToNm(length.Metre))
+	}
+	if !near(NmToHertz(MetresToNm(length.Metre)), speed) {
+		t.Error("a one metre wave is not c hertz")
+	}
+	if nm := MetresToNm(3.4 * si.Micro(length.Metre)); !near(nm, 3400) {
+		t.Errorf("3.4 microns is %v nm", nm)
+	}
+	if nm := MetresToNm(length.Angstrom); !near(nm, 0.1) {
+		t.Errorf("an angstrom is %v nm", nm)
+	}
+	for _, nm := range []float64{1e-5, 0.5, 550, 1e6} {
+		if !near(MetresToNm(NmToMetres(nm)), nm) {
+			t.Errorf("%v nm through metres came back %v", nm,
+				MetresToNm(NmToMetres(nm)))
+		}
 	}
 }
 
@@ -57,7 +85,7 @@ func TestFermiIsARange(t *testing.T) {
 		t.Errorf("fermi runs %v to %v nm", Fermi.Source.Lo,
 			Fermi.Source.Hi)
 	}
-	if !near(Energy(Fermi.Source.Lo), 300*GeV) {
+	if !near(Energy(Fermi.Source.Lo), 300*si.Giga(Electronvolt)) {
 		t.Errorf("fermi's short end is %v eV", Energy(Fermi.Source.Lo))
 	}
 }

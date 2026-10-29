@@ -1,0 +1,13 @@
+== eye: precision, set once
+
+   ###### ######  0.01 apart in oklab: the same to a person
+   ###### ######  0.02 apart in oklab: just about tellable
+   ###### ######  0.10 apart in oklab: different
+
+   there are two tolerances in the library and no others. Exact, a
+   billionth, is arithmetic noise: a round trip, a sum walked in a
+   different order. Eye, 0.02, is the smallest difference most people
+   notice side by side, a measurement of people, averaged, and the
+   reason oklab exists is that 0.02 means the same for a dark blue as
+   for a pale yellow. every 'are these the same' compares against one
+   of the two, so precision is a decision made once, not per call.

@@ -1,9 +1,16 @@
 # changelog
 
-## unreleased
+## v0.4.5 SAME DAY HOLY BISCUITS
 
-- the si's defining constants are public now, at primitives/si, so other
-  libraries take h, c, e and k from the same place. internal/si is gone.
+- moved si out of internal into primitives so `nilgai` can use them in
+  searching for blazars.
+- fixed slightly broken ci 
+- created primitives/length so callers can refer to angstrom or pc or
+  whatever, normal css stuff
+- si.Gravitation is G, kept apart from the defining constants because
+  it is measured, with its uncertainty stated.
+- radiation's MetresToNm and NmToMetres bring lengths into nanometres:
+  MetresToNm(3.4 * si.Micro(length.Metre)) is 3400 nm.
 
 ## v0.4.1, 2026-10-09
 

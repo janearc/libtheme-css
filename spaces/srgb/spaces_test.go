@@ -97,13 +97,40 @@ func TestAChannelExactlyOnTheSlackIsInGamut(t *testing.T) {
 	}
 }
 
-// Channels a hair past the slack are out at both ends. So are channels far past it.
+// justPast finds the swatch whose red lamp is the first one past the bound,
+// moving x one float at a time away from the swatch the bound should make.
+// Red rises with x, so towards minus infinity walks red down and towards
+// plus infinity walks it up. It does not ask for any one exact lamp: the
+// float just past a bound is often one no swatch reaches, and which one is
+// reached depends on how the machine rounds. It asks for the nearest that
+// is past, which every machine has.
+func justPast(t *testing.T, bound, towards float64) swatch.Swatch {
+	t.Helper()
+	reach := pickedNumbers(t).Slack.Reach
+	x, y, z := srgb.FromLight(bound, nothing, nothing).XYZ()
+	for step := 0; step <= reach; step++ {
+		candidate := swatch.FromXYZ(x, y, z)
+		red, _, _ := srgb.Light(candidate)
+		if (towards < 0 && red < bound) || (towards > 0 && red > bound) {
+			return candidate
+		}
+		x = math.Nextafter(x, towards)
+	}
+	t.Fatalf("no swatch within %d floats has a red lamp past %v", reach, bound)
+	return swatch.NoLight()
+}
+
+// Channels a hair past the slack are out at both ends: the first red lamp
+// past each edge of the slack, a few floats away. So are channels far past
+// it.
 func TestAChannelPastTheSlackIsOutOfGamut(t *testing.T) {
 	slack := pickedNumbers(t).Slack
-	below := math.Nextafter(slack.Below, slack.Below-unit)
-	above := math.Nextafter(slack.Above, slack.Above+unit)
-	for name, bound := range map[string]float64{"below": below, "above": above} {
-		if _, in := srgb.FromSwatch(exactly(t, bound)); in {
+	pasts := map[string]swatch.Swatch{
+		"below": justPast(t, slack.Below, math.Inf(-1)),
+		"above": justPast(t, slack.Above, math.Inf(1)),
+	}
+	for name, past := range pasts {
+		if _, in := srgb.FromSwatch(past); in {
 			t.Errorf("a red lamp a hair past the slack %s is in gamut", name)
 		}
 	}

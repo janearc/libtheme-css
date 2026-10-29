@@ -6,10 +6,16 @@ package mat
 type M [3][3]float64
 
 // Apply is the matrix times a column of three.
+//
+// Each product is rounded on its own before it is added. Go lets arm64
+// fuse x*y + z into one instruction that rounds once, and amd64 does not,
+// so without the conversions the same colour lands on a different last
+// bit on a mac and on a linux runner. A conversion to float64 rounds and
+// stops the fusing: the Go spec, "Arithmetic operators", floating-point.
 func (m M) Apply(a, b, c float64) (float64, float64, float64) {
-	return m[0][0]*a + m[0][1]*b + m[0][2]*c,
-		m[1][0]*a + m[1][1]*b + m[1][2]*c,
-		m[2][0]*a + m[2][1]*b + m[2][2]*c
+	return float64(m[0][0]*a) + float64(m[0][1]*b) + float64(m[0][2]*c),
+		float64(m[1][0]*a) + float64(m[1][1]*b) + float64(m[1][2]*c),
+		float64(m[2][0]*a) + float64(m[2][1]*b) + float64(m[2][2]*c)
 }
 
 // Inverse is the matrix that undoes this one, by the adjugate over the

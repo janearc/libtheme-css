@@ -1,0 +1,13 @@
+== ok: the axes an eye agrees with
+
+   ########################################  L: black to white
+   ########################################  h: once round the wheel
+   ########################################  C: grey out to the pink
+
+   oklab is the swatch in three numbers an eye agrees with: L, how
+   light; a and b, which way round the wheel and how far out. its polar
+   form, oklch, is the one you say aloud: lightness, chroma, hue. the
+   point of it is distance: equal distances look equally different
+   wherever they sit, so blending, ramps and 'nearest' all happen here.
+   it has no primaries; it has a white, a black, the grey line and the
+   wheel. anything with a hue is defined elsewhere and measured here.

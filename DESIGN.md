@@ -60,15 +60,22 @@ writes it back out. it handles colour and nothing else.
     cmd/visualdocs         the documentation, one page per idea
     internal/mat           the matrix arithmetic the spaces share
     primitives/si          the si's defining constants, typed once;
-                           public, so other libraries use the same ones
+                           public, so other libraries use the same ones.
+                           the prefixes, as functions of a unit: a unit
+                           has one name and kilo of it is si.Kilo(unit).
+                           G, kept apart as measured, not defined
+    primitives/length      lengths in metres, each named once: the
+                           angstrom, AU, parsec, light-year and the
+                           planck length
 
 ## what imports what
 
 a package imports only packages from an earlier step:
 
 1. primitives/si and internal/mat import nothing.
-2. swatch imports si. functions and bands import swatch.
-3. the spaces import swatch, plus functions or bands.
+2. swatch and length import si. functions and bands import swatch.
+3. the spaces import swatch, plus functions or bands. radiation also
+   imports si and length.
 4. css imports the spaces.
 5. most dialects import css. hue and grafana work from the spaces.
 6. colourway imports the dialects, and each command imports what it
