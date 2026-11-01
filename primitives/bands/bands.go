@@ -21,15 +21,22 @@ import (
 // The bands are even in the logarithm of wavelength, not in nanometres.
 // Redshift multiplies every wavelength by the same factor, so it is a slide
 // along the bands, not a resampling.
+//
+// Deprecated: use celestial's bands.PerOctave, a function there, read
+// from its research data.
 const PerOctave = 24
 
 // Band is one slice of the spectrum. Band i runs from 2^(i/PerOctave)
 // nanometres up to, but not including, 2^((i+1)/PerOctave). Band 0 starts
 // at one nanometre, and the wavelength doubles every PerOctave bands.
 // Visible light is about bands 205 to 230.
+//
+// Deprecated: use github.com/janearc/celestial/bands's Band.
 type Band int
 
 // Of is the band a wavelength in nanometres falls in.
+//
+// Deprecated: use celestial's bands.Of.
 func Of(nm float64) Band { return grid(PerOctave).of(nm) }
 
 // Edges is where a band starts and where the next one does, in nanometres.
@@ -53,6 +60,9 @@ func (g grid) edges(b Band) (lo, hi float64) {
 // Light is the power in each of a run of neighbouring bands, starting at
 // band First. Its units are whatever the spectrum it came from used, times
 // a nanometre. The zero value is no light.
+//
+// Deprecated: use celestial's bands.Light. In libtheme-css v0.5.0 the
+// Swatch method becomes a function here that takes one.
 type Light struct {
 	g     grid
 	first Band
@@ -64,6 +74,8 @@ type Light struct {
 //
 // Every wavelength counts, including those an eye never sees. Light in
 // infrared bands is still light, and it adds nothing to Swatch.
+//
+// Deprecated: use celestial's bands.Split.
 func Split(spectrum map[int]float64) Light {
 	return grid(PerOctave).split(spectrum)
 }
@@ -113,6 +125,8 @@ func (l Light) Scale(k float64) Light {
 }
 
 // Add is two lights shining on the same place: in every band, the sum.
+//
+// Deprecated: use celestial's bands.Add.
 func Add(a, b Light) Light {
 	if len(a.power) == 0 {
 		return b.Scale(1)
@@ -196,6 +210,8 @@ func unit() float64 {
 // light given at any wavelength is grouped into bands by nanometer wavelength,
 // and for smaller bands, we have lines. gamma rays are a few thousandths of a
 // nanometer, so we need to make room for that.
+//
+// Deprecated: use celestial's bands.Lines.
 func Lines(spectrum map[float64]float64) Light {
 	return grid(PerOctave).lines(spectrum)
 }

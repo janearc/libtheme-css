@@ -16,6 +16,9 @@ import (
 )
 
 // we define the range in nm of a band of radiation
+//
+// Deprecated: use github.com/janearc/celestial/radiation's Range, made
+// with NewRange, whose ends come from Edges.
 type Range struct{ Lo, Hi float64 }
 
 // create a named object from a range of radiation and what it is mapped  to

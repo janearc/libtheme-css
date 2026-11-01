@@ -26,20 +26,27 @@ func (m M) Apply(a, b, c float64) (float64, float64, float64) {
 // Published inverses are rounded to ten places and do not quite undo their
 // forward matrices; computing the inverse makes a round trip exact to the
 // float, so the only numbers anyone types are the forward ones.
+//
+// Each product is rounded on its own, as in Apply, so the inverse is the
+// same to the bit on arm64 and amd64.
 func (m M) Inverse() M {
-	det := m[0][0]*(m[1][1]*m[2][2]-m[1][2]*m[2][1]) -
-		m[0][1]*(m[1][0]*m[2][2]-m[1][2]*m[2][0]) +
-		m[0][2]*(m[1][0]*m[2][1]-m[1][1]*m[2][0])
+	// minor is ad - bc, each product rounded before the subtraction.
+	minor := func(a, d, b, c float64) float64 {
+		return float64(a*d) - float64(b*c)
+	}
+	det := float64(m[0][0]*minor(m[1][1], m[2][2], m[1][2], m[2][1])) -
+		float64(m[0][1]*minor(m[1][0], m[2][2], m[1][2], m[2][0])) +
+		float64(m[0][2]*minor(m[1][0], m[2][1], m[1][1], m[2][0]))
 	return M{
-		{(m[1][1]*m[2][2] - m[1][2]*m[2][1]) / det,
-			(m[0][2]*m[2][1] - m[0][1]*m[2][2]) / det,
-			(m[0][1]*m[1][2] - m[0][2]*m[1][1]) / det},
-		{(m[1][2]*m[2][0] - m[1][0]*m[2][2]) / det,
-			(m[0][0]*m[2][2] - m[0][2]*m[2][0]) / det,
-			(m[0][2]*m[1][0] - m[0][0]*m[1][2]) / det},
-		{(m[1][0]*m[2][1] - m[1][1]*m[2][0]) / det,
-			(m[0][1]*m[2][0] - m[0][0]*m[2][1]) / det,
-			(m[0][0]*m[1][1] - m[0][1]*m[1][0]) / det},
+		{minor(m[1][1], m[2][2], m[1][2], m[2][1]) / det,
+			minor(m[0][2], m[2][1], m[0][1], m[2][2]) / det,
+			minor(m[0][1], m[1][2], m[0][2], m[1][1]) / det},
+		{minor(m[1][2], m[2][0], m[1][0], m[2][2]) / det,
+			minor(m[0][0], m[2][2], m[0][2], m[2][0]) / det,
+			minor(m[0][2], m[1][0], m[0][0], m[1][2]) / det},
+		{minor(m[1][0], m[2][1], m[1][1], m[2][0]) / det,
+			minor(m[0][1], m[2][0], m[0][0], m[2][1]) / det,
+			minor(m[0][0], m[1][1], m[0][1], m[1][0]) / det},
 	}
 }
 

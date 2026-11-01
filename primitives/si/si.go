@@ -1,6 +1,10 @@
 // Package si holds the physical constants libtheme uses. Each is one of the
 // si's defining constants, fixed by definition since 2019. They are exact,
 // not measured, and each is typed here once.
+//
+// Deprecated: libtheme's physics lives in celestial now. Use
+// github.com/janearc/celestial/si, where Gravitation is a function read
+// from its research data. This package goes in libtheme-css v0.5.0.
 package si
 
 // The constants.

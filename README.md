@@ -1,20 +1,18 @@
 # libtheme
 
-one person keeps a theme in a terminal, an editor, a web page and a lamp,
-and matches them by eye. libtheme starts from one primitive, the swatch, so
-a colour is the same colour wherever it lands.
+libtheme is a physics based package to coordinate theme across many different
+spaces or "dialects." internally it uses css, but it is not any kind of css
+processing library.
 
-colour is just light that you can see with your eyes, however they see, and
-light is just radiation, and radiation, when you're a programmer, is just
-math. so libtheme manages all forms of radiation as easily as it manages srgb.
-xrays, microwave, gamma, in your vim theme. yep.
+color is just light. light is just radiation. your eyes are just radiation
+detecting organs. and all of this is just math. that's the pitch.
 
 ## quick reference
 
 ```
 # build the package
 $ go install github.com/janearc/game/cmd/game@latest
-$ ./bin/game build
+$ game build
 
 # demonstrates what theme understands from derivation
 $ game run known
@@ -41,7 +39,6 @@ screen. `--css` prints a page as css, and `--go` the code that painted it.
     palette               colour work a render keeps, opt-in
     spaces/ok             oklab and oklch
     spaces/srgb           the screen: hex, hsl, hsv
-    spaces/radiation      radiation the eye does not ordinarily see
     css                   a sheet of named swatches
     colourway             one sheet, rendered into every dialect
     dialects/             hue, grafana, ghostty, claude, nvim, vim, glamour

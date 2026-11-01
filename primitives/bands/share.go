@@ -14,6 +14,8 @@ import (
 //
 // Outside its run a share passes nothing, unless it was made Even, which
 // passes the same part in every band. The zero value passes nothing.
+//
+// Deprecated: use celestial's bands.Share.
 type Share struct {
 	first  Band
 	part   []float64
@@ -32,6 +34,8 @@ func whole(part float64) error {
 
 // Even is a share that passes the same part of the light in every band:
 // a grey filter, or a perfectly grey surface.
+//
+// Deprecated: use celestial's bands.Even, which returns a *Share.
 func Even(part float64) (Share, error) {
 	if err := whole(part); err != nil {
 		return Share{}, err
@@ -46,6 +50,8 @@ func Even(part float64) (Share, error) {
 // is a fraction and fractions do not add. A band inside the run with none
 // given takes the straight line between its neighbours, read at its
 // centre. Outside the run nothing passes.
+//
+// Deprecated: use celestial's bands.Shares, which returns a *Share.
 func Shares(spectrum map[int]float64) (Share, error) {
 	if len(spectrum) == 0 {
 		return Share{}, errors.New("a share needs at least one " +
@@ -111,6 +117,8 @@ func (share Share) Part(band Band) float64 {
 
 // Lit is light after a share of it: in every band, the light's power
 // times the part passed there.
+//
+// Deprecated: use celestial's bands.Lit, which takes a *Share.
 func Lit(light Light, share Share) Light {
 	out := Light{g: light.g, first: light.first,
 		power: make([]float64, len(light.power))}

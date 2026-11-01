@@ -4,6 +4,10 @@
 //
 // Every length here but the Planck length is exact, by a definition
 // cited beside it.
+//
+// Deprecated: libtheme's physics lives in celestial now. Use
+// github.com/janearc/celestial/length, where PlanckLength is a function.
+// This package goes in libtheme-css v0.5.0.
 package length
 
 import (
